@@ -1,68 +1,62 @@
 import React from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
 import useAlgorithmStore from '../store/algorithmStore'
 
 const Navbar = () => {
-  const { speed, setSpeed, isRunning } = useAlgorithmStore()
-  const navigate = useNavigate()
-  const location = useLocation()
+  const { 
+    currentAlgorithm, 
+    searchQuery, 
+    setSearchQuery, 
+    searchAlgorithms 
+  } = useAlgorithmStore()
 
-  const toggleRaceMode = () => {
-    if (location.pathname === '/race') {
-      navigate('/')
-    } else {
-      navigate('/race')
-    }
+  const handleSearch = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
   }
 
   return (
-    <nav className="bg-slate-800 shadow-lg px-6 py-4 border-b border-slate-700">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold text-sky-400">Algorithm Arena</h1>
-          <span className="text-sm text-slate-400">Feel the heartbeat of dynamic DSA</span>
+    <nav className="w-full bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 fixed top-0 left-0 z-10 p-4 border-b border-sky-500/20 shadow-lg shadow-sky-500/10">
+      <div className="container mx-auto flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-600">
+            Algorithm Arena
+          </h1>
+          <p className="text-sky-400/80 text-sm italic animate-pulse">
+            Feel the heartbeat of dynamic DSA
+          </p>
         </div>
         
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3">
-            <label htmlFor="speed" className="text-sm text-slate-300">
-              Speed:
-            </label>
+        <div className="flex items-center gap-4">
+          <div className="relative">
             <input
-              id="speed"
-              type="range"
-              min="0.5"
-              max="2"
-              step="0.1"
-              value={speed}
-              onChange={(e) => setSpeed(parseFloat(e.target.value))}
-              disabled={isRunning}
-              className="w-32 accent-sky-400"
+              type="text"
+              placeholder="Search algorithms..."
+              value={searchQuery}
+              onChange={handleSearch}
+              className="bg-gray-900/50 text-white px-4 py-2 rounded-lg pl-10 w-64 
+                focus:outline-none focus:ring-2 focus:ring-sky-500 
+                border border-sky-500/20 shadow-lg shadow-sky-500/10
+                backdrop-blur-sm"
             />
+            <svg
+              className="absolute left-3 top-3 h-4 w-4 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
           </div>
           
-          <button 
-            onClick={toggleRaceMode}
-            className={`btn-primary flex items-center gap-2 ${
-              location.pathname === '/race' ? 'bg-red-600 hover:bg-red-700' : ''
-            }`}
-          >
-            {location.pathname === '/race' ? (
-              <>
-                <span>Exit Race Mode</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"/>
-                </svg>
-              </>
-            ) : (
-              <>
-                <span>Algorithm Race Mode</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M10 3a7 7 0 017 7v3a1 1 0 01-1 1h-1v-1a1 1 0 00-1-1H6a1 1 0 00-1 1v1H4a1 1 0 01-1-1v-3a7 7 0 017-7zm0 4a1 1 0 100 2 1 1 0 000-2z"/>
-                </svg>
-              </>
-            )}
-          </button>
+          <span className="text-sky-400 font-medium px-4 py-2 rounded-lg 
+            bg-sky-500/10 border border-sky-500/20">
+            {currentAlgorithm || 'Select Algorithm'}
+          </span>
         </div>
       </div>
     </nav>

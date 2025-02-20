@@ -76,6 +76,24 @@ button:focus-visible {
   }
 }
 
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(14, 165, 233, 0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(14, 165, 233, 0.7);
+}
+
 @layer components {
   .btn-primary {
     @apply px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors;
