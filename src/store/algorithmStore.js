@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { getSortingAlgorithm } from '../algorithms/sorting/index.jsx'
+import { nanoid } from 'nanoid';
 
 const useAlgorithmStore = create((set, get) => ({
   currentAlgorithm: null,
@@ -42,6 +43,7 @@ const useAlgorithmStore = create((set, get) => ({
   compareIndex: -1,
   isSorted: false,
   isPaused: false,  // Add this state
+  isAscending: true, // Add this line
 
   setArraySize: (size) => {
     const { currentAlgorithm } = get()
@@ -63,6 +65,7 @@ const useAlgorithmStore = create((set, get) => ({
     const newArray = Array.from({ length: arraySize }, () => 
       Math.floor(Math.random() * 300) + 10
     )
+    
     set({ 
       array: newArray,
       currentIndex: -1,
@@ -73,8 +76,6 @@ const useAlgorithmStore = create((set, get) => ({
       isPaused: false,
       currentAlgorithm // Maintain current algorithm
     })
-    // Force a UI update
-    setTimeout(() => set({ array: [...newArray] }), 0)
   },
 
   setCurrentAlgorithm: (algorithm) => {
@@ -116,7 +117,7 @@ const useAlgorithmStore = create((set, get) => ({
   },
 
   startSorting: async () => {
-    const { array, currentAlgorithm } = get()
+    const { array, currentAlgorithm, isAscending } = get()
 
     if (!array.length || !currentAlgorithm) return
 
@@ -142,7 +143,8 @@ const useAlgorithmStore = create((set, get) => ({
           (index) => set({ currentIndex: index }),
           (index) => set({ compareIndex: index }),
           () => get().speed,
-          () => get().isPlaying
+          () => get().isPlaying,
+          isAscending // Pass sort order to algorithm
         )
         set({ 
           isSorting: false, 
@@ -178,6 +180,28 @@ const useAlgorithmStore = create((set, get) => ({
         isPaused: false
       })
     }
+  },
+
+  setCustomArray: (values) => {
+    // Ensure we're working with simple numbers
+    const processedValues = values.map(value => 
+      typeof value === 'object' ? value.value : Number(value)
+    )
+    
+    set({ 
+      array: processedValues,
+      arraySize: processedValues.length,
+      currentIndex: -1,
+      compareIndex: -1,
+      isPlaying: false,
+      isSorting: false,
+      isSorted: false,
+      isPaused: false
+    })
+  },
+
+  toggleSortOrder: () => {
+    set(state => ({ isAscending: !state.isAscending }))
   }
 }))
 

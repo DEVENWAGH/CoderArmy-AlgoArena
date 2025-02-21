@@ -15,7 +15,7 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="fixed top-0 left-0 z-10 w-full p-4 border-b shadow-lg bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border-sky-500/20 shadow-sky-500/10">
+    <nav className="fixed top-0 left-0 right-0 bg-slate-900 border-b border-sky-500/20 shadow-lg z-50">
       <div className="container flex items-center justify-between mx-auto">
         <div>
           <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-600">
