@@ -1,20 +1,20 @@
 import React from 'react'
-import Navbar from './components/Navbar'
-import Sidebar from './components/Sidebar'
+import { Routes, Route, Outlet } from 'react-router-dom'
+import Layout from './components/Layout'
 import Home from './components/Home'
+import SortingVisualizer from './components/sorting/SortingVisualizer'
 
 const App = () => {
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden">
-      <Navbar />
-      <div className="flex flex-1 w-full">
-        <aside className="w-64 flex-shrink-0">
-          <Sidebar />
-        </aside>
-        <main className="flex-1 w-full">
-          <Home />
-        </main>
-      </div>
+    <div className="flex flex-col w-screen h-screen overflow-hidden">
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="sorting">
+            <Route path=":algorithm" element={<SortingVisualizer />} />
+          </Route>
+        </Route>
+      </Routes>
     </div>
   )
 }

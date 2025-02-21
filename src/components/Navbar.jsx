@@ -15,13 +15,13 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="w-full bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 fixed top-0 left-0 z-10 p-4 border-b border-sky-500/20 shadow-lg shadow-sky-500/10">
-      <div className="container mx-auto flex justify-between items-center">
+    <nav className="fixed top-0 left-0 z-10 w-full p-4 border-b shadow-lg bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border-sky-500/20 shadow-sky-500/10">
+      <div className="container flex items-center justify-between mx-auto">
         <div>
           <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-600">
             Algorithm Arena
           </h1>
-          <p className="text-sky-400/80 text-sm italic animate-pulse">
+          <p className="text-sm italic text-sky-400/80 animate-pulse">
             Feel the heartbeat of dynamic DSA
           </p>
         </div>
@@ -33,13 +33,10 @@ const Navbar = () => {
               placeholder="Search algorithms..."
               value={searchQuery}
               onChange={handleSearch}
-              className="bg-gray-900/50 text-white px-4 py-2 rounded-lg pl-10 w-64 
-                focus:outline-none focus:ring-2 focus:ring-sky-500 
-                border border-sky-500/20 shadow-lg shadow-sky-500/10
-                backdrop-blur-sm"
+              className="w-64 px-4 py-2 pl-10 text-white border rounded-lg shadow-lg bg-gray-900/50 focus:outline-none focus:ring-2 focus:ring-sky-500 border-sky-500/20 shadow-sky-500/10 backdrop-blur-sm"
             />
             <svg
-              className="absolute left-3 top-3 h-4 w-4 text-gray-400"
+              className="absolute w-4 h-4 text-gray-400 left-3 top-3"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -53,8 +50,7 @@ const Navbar = () => {
             </svg>
           </div>
           
-          <span className="text-sky-400 font-medium px-4 py-2 rounded-lg 
-            bg-sky-500/10 border border-sky-500/20">
+          <span className="px-4 py-2 font-medium border rounded-lg text-sky-400 bg-sky-500/10 border-sky-500/20">
             {currentAlgorithm || 'Select Algorithm'}
           </span>
         </div>
