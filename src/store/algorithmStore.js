@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { getSortingAlgorithm } from '../algorithms/sorting/index.jsx'
+import { getSearchAlgorithm } from '../algorithms/searching/index.jsx'
 import { nanoid } from 'nanoid';
 
 const useAlgorithmStore = create((set, get) => ({
@@ -34,7 +35,7 @@ const useAlgorithmStore = create((set, get) => ({
   },
 
   array: [],
-  arraySize: 50,
+  arraySize: 36, // Changed from 50 to 36
   isSorting: false,
   isPlaying: false,
   speed: 50, // Set initial speed to middle value
@@ -44,6 +45,16 @@ const useAlgorithmStore = create((set, get) => ({
   isSorted: false,
   isPaused: false,  // Add this state
   isAscending: true, // Add this line
+
+  // Add new search-specific state
+  searchArray: [],
+  currentSearchIndex: -1,
+  searchTarget: null,
+  searchResult: null,
+  isSearching: false,
+  searchArraySize: 15,
+  isSearchPlaying: false,
+  isSearchPaused: false,
 
   setArraySize: (size) => {
     const { currentAlgorithm } = get()
@@ -75,6 +86,28 @@ const useAlgorithmStore = create((set, get) => ({
       isSorted: false,
       isPaused: false,
       currentAlgorithm // Maintain current algorithm
+    })
+  },
+
+  generateSearchArray: () => {
+    const { searchArraySize, currentAlgorithm } = get()
+    const newArray = Array.from({ length: searchArraySize }, () => 
+      Math.floor(Math.random() * 999) + 1 // Increased range for larger numbers
+    )
+    // Only sort for binary search
+    const shouldSort = currentAlgorithm?.toLowerCase().includes('binary')
+    if (shouldSort) {
+      newArray.sort((a, b) => a - b)
+    }
+    
+    set({ 
+      searchArray: newArray,
+      currentSearchIndex: -1,
+      searchResult: null,
+      searchTarget: null,
+      isSearching: false,
+      isSearchPlaying: false,
+      isSearchPaused: false
     })
   },
 
@@ -165,6 +198,49 @@ const useAlgorithmStore = create((set, get) => ({
     }
   },
 
+  startSearch: async (target) => {
+    const { searchArray, currentAlgorithm } = get()
+    if (!currentAlgorithm) return
+
+    const algorithm = getSearchAlgorithm(
+      currentAlgorithm.toLowerCase().replace(/\s+/g, '-')
+    )
+
+    if (!algorithm) return
+
+    set({ 
+      isSearching: true,
+      isSearchPlaying: true,
+      isSearchPaused: false,
+      searchTarget: target,
+      searchResult: null,
+      currentSearchIndex: -1
+    })
+
+    try {
+      const result = await algorithm(
+        searchArray,
+        parseInt(target),
+        (index) => set({ currentSearchIndex: index }),
+        () => get().isSearchPlaying,
+        () => get().speed // Pass speed getter
+      )
+      
+      set({ 
+        searchResult: result !== -1,
+        currentSearchIndex: result,
+        isSearching: false,
+        isSearchPlaying: false
+      })
+    } catch (error) {
+      console.error('Search error:', error)
+      set({ 
+        isSearching: false,
+        isSearchPlaying: false 
+      })
+    }
+  },
+
   pauseSorting: () => {
     set({ 
       isPlaying: false,
@@ -202,7 +278,15 @@ const useAlgorithmStore = create((set, get) => ({
 
   toggleSortOrder: () => {
     set(state => ({ isAscending: !state.isAscending }))
-  }
+  },
+
+  setSearchArraySize: (size) => {
+    set({ searchArraySize: size })
+    get().generateSearchArray()
+  },
+
+  pauseSearch: () => set({ isSearchPlaying: false, isSearchPaused: true }),
+  resumeSearch: () => set({ isSearchPlaying: true, isSearchPaused: false })
 }))
 
 export default useAlgorithmStore

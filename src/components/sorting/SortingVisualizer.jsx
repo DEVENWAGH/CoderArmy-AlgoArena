@@ -182,7 +182,7 @@ const SortingVisualizer = () => {
 
     const containerWidth = window.innerWidth - 300; // Account for sidebar
     const rightPadding = 200; // Increased padding for better scrolling
-    const minGap = 2;
+    const minGap = 4; // Increased gap between bars
     const maxBarWidth = 40;
     const minBarWidth = 15;
 
@@ -225,7 +225,7 @@ const SortingVisualizer = () => {
     <div className="flex flex-col w-full overflow-y-auto bg-slate-800">
       {/* Fixed Header Section */}
       <div className="fixed right-0 z-40 p-4 border-b shadow-lg top-16 left-64 bg-slate-800 border-slate-700">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between h-14"> {/* Added h-14 for fixed height */}
           <div className="flex items-center gap-4">
             <h2 className="text-2xl font-bold text-blue-400 capitalize">
               {algorithm?.replace('-', ' ')}
@@ -237,7 +237,7 @@ const SortingVisualizer = () => {
             )}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-center h-full gap-4"> {/* Added justify-center and h-full */}
             {/* Array Size Input */}
             <div className="flex items-center gap-2">
               <label className="text-gray-300">Size:</label>
@@ -299,7 +299,7 @@ const SortingVisualizer = () => {
                 onChange={handleSpeedChange}
                 className="w-24"
               />
-              <span className="w-12 text-gray-300">
+              <span className="w-12 text-center text-gray-300">
                 {speed}%
               </span>
             </div>
@@ -378,13 +378,13 @@ const SortingVisualizer = () => {
                       style={{ 
                         height: getBarHeight(numericValue),
                         width: barWidth,
-                        bottom: '0px'
+                        bottom: '24px', // Added bottom margin for index numbers
                       }}
                     >
                       {/* Value label */}
                       <motion.div 
-                        className={`absolute w-full text-center -top-4
-                          text-[10px] font-medium ${isSwapping ? 'text-orange-300' : 'text-gray-300'}`}
+                        className={`absolute w-full text-center -top-6
+                          text-[11px] font-medium ${isSwapping ? 'text-orange-300' : 'text-gray-300'}`}
                         animate={{ scale: isSwapping ? 1.1 : 1 }}
                       >
                         {numericValue}
@@ -392,8 +392,8 @@ const SortingVisualizer = () => {
 
                       {/* Index label */}
                       <motion.div 
-                        className={`absolute w-full text-center bottom-[-0.5rem]
-                          text-[10px] font-medium ${isSwapping ? 'text-orange-300' : 'text-green-400'}`}
+                        className={`absolute w-full text-center -bottom-6
+                          text-[11px] font-medium ${isSwapping ? 'text-orange-300' : 'text-green-400'}`}
                         animate={{ scale: isSwapping ? 1.1 : 1 }}
                       >
                         {idx}
