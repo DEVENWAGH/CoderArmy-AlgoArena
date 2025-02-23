@@ -199,14 +199,24 @@ const useGraphStore = create((set, get) => ({
     const { nodes, edges, currentAlgorithm, isDirected } = get()
     if (!nodes.length || !currentAlgorithm) return
 
-    // Convert algorithm name to match route format
-    const algoName = currentAlgorithm?.toLowerCase().replace(/\s+/g, '-')
-    const algorithm = getGraphAlgorithm(algoName)
+    console.log('Starting algorithm:', currentAlgorithm)
 
-    if (!algorithm) return
+    // Clean algorithm name for matching
+    const cleanName = currentAlgorithm
+      .toLowerCase()
+      .replace(/'s algorithm$/, '')  // Remove "'s algorithm"
+      .replace(/[^a-z]/, '')       // Remove special characters
+      .trim()
 
-    // Reset visualization state
-    set({ 
+    console.log('Cleaned name:', cleanName)
+    const algorithm = getGraphAlgorithm(cleanName)
+
+    if (!algorithm) {
+      console.error('Algorithm not found:', cleanName)
+      return
+    }
+
+    set({
       isPlaying: true,
       isPaused: false,
       visitedNodes: [],
@@ -228,16 +238,15 @@ const useGraphStore = create((set, get) => ({
         (explored) => set({ exploredEdges: [...explored] })
       )
 
-      // Update final state
       if (result) {
         set({
-          visitedNodes: Array.from(result.visited || []),
-          parentNodes: result.parentMap || {},
-          exploredEdges: result.exploredPaths || []
+          visitedNodes: Array.from(result.visited),
+          parentNodes: result.parentMap,
+          exploredEdges: result.exploredPaths
         })
       }
     } catch (error) {
-      console.error('Graph traversal error:', error)
+      console.error('Traversal error:', error)
     } finally {
       set({ isPlaying: false })
     }

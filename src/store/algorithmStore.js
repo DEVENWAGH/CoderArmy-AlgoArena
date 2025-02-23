@@ -22,7 +22,9 @@ const useAlgorithmStore = create((set, get) => ({
     'Graph': [
       'BFS',
       'DFS',
-      "Dijkstra's Algorithm"
+      "Dijkstra's Algorithm",
+      "Prim's Algorithm",
+      "Kruskal's Algorithm"
     ],
     'Dynamic Programming': [
       'Fibonacci',

@@ -201,14 +201,204 @@ export const getShortestPath = (parents, target) => {
   return path
 }
 
+export const dijkstra = async (nodes, edges, startNode, setVisited, setCurrent, getSpeed, getIsPlaying, setParentNodes, setExploredEdges) => {
+  const distances = {}
+  const parentMap = {}
+  const visited = new Set()
+  const exploredPaths = []
+  const pq = new PriorityQueue()
+
+  nodes.forEach(node => distances[node.id] = Infinity)
+  distances[startNode] = 0
+  pq.enqueue(startNode, 0)
+
+  while (pq.values.length > 0) {
+    if (!getIsPlaying()) await waitForResume(getIsPlaying)
+
+    const { node: current, priority: currentDistance } = pq.dequeue()
+
+    if (!visited.has(current)) {
+      visited.add(current)
+      setVisited(Array.from(visited))
+      setCurrent(current)
+
+      if (parentMap[current]) {
+        exploredPaths.push({
+          source: parentMap[current],
+          target: current,
+          type: 'tree',
+          distance: currentDistance
+        })
+        setExploredEdges([...exploredPaths])
+      }
+
+      await new Promise(r => setTimeout(r, getDelay(getSpeed())))
+
+      const neighbors = edges.filter(e => e.source === current || e.target === current)
+      for (const edge of neighbors) {
+        const neighbor = edge.source === current ? edge.target : edge.source
+        if (!visited.has(neighbor)) {
+          exploredPaths.push({
+            source: current,
+            target: neighbor,
+            type: 'examining',
+            weight: edge.weight
+          })
+          setExploredEdges([...exploredPaths])
+          
+          const newDistance = distances[current] + edge.weight
+          if (newDistance < distances[neighbor]) {
+            distances[neighbor] = newDistance
+            parentMap[neighbor] = current
+            setParentNodes({...parentMap})
+            pq.enqueue(neighbor, newDistance)
+          }
+          await new Promise(r => setTimeout(r, getDelay(getSpeed()) * 0.3))
+        }
+      }
+    }
+  }
+
+  return { visited, parentMap, exploredPaths, distances }
+}
+
+export const prim = async (nodes, edges, startNode, setVisited, setCurrent, getSpeed, getIsPlaying, setParentNodes, setExploredEdges) => {
+  const visited = new Set()
+  const parentMap = {}
+  const exploredPaths = []
+  const pq = new PriorityQueue()
+
+  // Start with first node
+  pq.enqueue(startNode, 0)
+
+  while (pq.values.length > 0) {
+    if (!getIsPlaying()) await waitForResume(getIsPlaying)
+
+    const { node: current, priority: weight } = pq.dequeue()
+
+    if (!visited.has(current)) {
+      visited.add(current)
+      setVisited(Array.from(visited))
+      setCurrent(current)
+
+      if (parentMap[current]) {
+        exploredPaths.push({
+          source: parentMap[current],
+          target: current,
+          type: 'tree',
+          weight
+        })
+        setExploredEdges([...exploredPaths])
+      }
+
+      await new Promise(r => setTimeout(r, getDelay(getSpeed())))
+
+      const neighbors = edges.filter(e => e.source === current || e.target === current)
+      for (const edge of neighbors) {
+        const neighbor = edge.source === current ? edge.target : edge.source
+        if (!visited.has(neighbor)) {
+          exploredPaths.push({
+            source: current,
+            target: neighbor,
+            type: 'examining',
+            weight: edge.weight
+          })
+          setExploredEdges([...exploredPaths])
+          
+          parentMap[neighbor] = current
+          setParentNodes({...parentMap})
+          pq.enqueue(neighbor, edge.weight)
+          
+          await new Promise(r => setTimeout(r, getDelay(getSpeed()) * 0.3))
+        }
+      }
+    }
+  }
+
+  return { visited, parentMap, exploredPaths }
+}
+
+export const kruskal = async (nodes, edges, startNode, setVisited, setCurrent, getSpeed, getIsPlaying, setParentNodes, setExploredEdges) => {
+  class UnionFind {
+    constructor(nodes) {
+      this.parent = {}
+      nodes.forEach(node => this.parent[node.id] = node.id)
+    }
+    
+    find(node) {
+      if (this.parent[node] !== node) {
+        this.parent[node] = this.find(this.parent[node])
+      }
+      return this.parent[node]
+    }
+    
+    union(a, b) {
+      this.parent[this.find(a)] = this.find(b)
+    }
+  }
+
+  const visited = new Set()
+  const parentMap = {}
+  const exploredPaths = []
+  const uf = new UnionFind(nodes)
+  
+  // Sort edges by weight
+  const sortedEdges = [...edges].sort((a, b) => a.weight - b.weight)
+
+  for (const edge of sortedEdges) {
+    if (!getIsPlaying()) await waitForResume(getIsPlaying)
+
+    const sourceRoot = uf.find(edge.source)
+    const targetRoot = uf.find(edge.target)
+
+    exploredPaths.push({
+      source: edge.source,
+      target: edge.target,
+      type: 'examining',
+      weight: edge.weight
+    })
+    setExploredEdges([...exploredPaths])
+    await new Promise(r => setTimeout(r, getDelay(getSpeed()) * 0.3))
+
+    if (sourceRoot !== targetRoot) {
+      uf.union(edge.source, edge.target)
+      visited.add(edge.source)
+      visited.add(edge.target)
+      setVisited(Array.from(visited))
+      setCurrent(edge.target)
+
+      parentMap[edge.target] = edge.source
+      setParentNodes({...parentMap})
+
+      exploredPaths.push({
+        source: edge.source,
+        target: edge.target,
+        type: 'tree',
+        weight: edge.weight
+      })
+      setExploredEdges([...exploredPaths])
+
+      await new Promise(r => setTimeout(r, getDelay(getSpeed())))
+    }
+  }
+
+  return { visited, parentMap, exploredPaths }
+}
+
 export const getGraphAlgorithm = (name) => {
+  // Simplified name mapping
   const algorithms = {
     'bfs': bfs,
     'dfs': dfs,
-    // Add more algorithms as needed
-    'dijkstra': null, // TODO: Implement
-    'prim': null,    // TODO: Implement
-    'kruskal': null  // TODO: Implement
+    'dijkstra': dijkstra,
+    'dijkstras': dijkstra,
+    'prim': prim,
+    'prims': prim,
+    'kruskal': kruskal,
+    'kruskals': kruskal
   }
-  return algorithms[name]
+
+  const key = name.toLowerCase().replace(/[^a-z]/g, '')
+  console.log('Looking for algorithm:', key)
+  return algorithms[key]
 }
