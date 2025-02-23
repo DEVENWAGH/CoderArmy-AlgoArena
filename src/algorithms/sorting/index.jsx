@@ -33,21 +33,27 @@ const isInOrder = (a, b, isAscending) => {
 
 export const bubbleSort = async (array, setArray, setCurrentIndex, setCompareIndex, getSpeed, getIsPlaying, isAscending) => {
   const arr = [...array]
-  
-  for (let i = 0; i < arr.length; i++) {
-    for (let j = 0; j < arr.length - i - 1; j++) {
+  let hasSwapped
+  let lastUnsorted = arr.length
+
+  // Optimization: Track last swap position
+  do {
+    hasSwapped = false
+    for (let i = 0; i < lastUnsorted - 1; i++) {
       if (!getIsPlaying()) await waitForResume(getIsPlaying)
 
-      setCurrentIndex(j)
-      setCompareIndex(j + 1)
+      setCurrentIndex(i)
+      setCompareIndex(i + 1)
       await new Promise(resolve => setTimeout(resolve, getDelay(getSpeed())))
       
-      if (shouldSwap(arr[j], arr[j + 1], isAscending)) {
-        await animateSwap(arr, j, j + 1, setArray, getSpeed)
+      if (shouldSwap(arr[i], arr[i + 1], isAscending)) {
+        await animateSwap(arr, i, i + 1, setArray, getSpeed)
+        hasSwapped = true
+        lastUnsorted = i + 1 // Update last unsorted position
       }
     }
-  }
-  
+  } while (hasSwapped)
+
   setCurrentIndex(-1)
   setCompareIndex(-1)
   return arr
@@ -57,28 +63,39 @@ export const insertionSort = async (array, setArray, setCurrentIndex, setCompare
   const arr = [...array]
   const n = arr.length
 
+  // Optimization: Binary search for insertion point
+  const binarySearch = (arr, item, start, end, isAscending) => {
+    if (start >= end) return isAscending ? start : start + 1
+    
+    const mid = Math.floor((start + end) / 2)
+    if (arr[mid] === item) return isAscending ? mid : mid + 1
+    
+    if (isAscending ? arr[mid] > item : arr[mid] < item) {
+      return binarySearch(arr, item, start, mid - 1, isAscending)
+    }
+    return binarySearch(arr, item, mid + 1, end, isAscending)
+  }
+
   for (let i = 1; i < n; i++) {
-    let key = arr[i]
-    let j = i - 1
+    if (!getIsPlaying()) await waitForResume(getIsPlaying)
 
     setCurrentIndex(i)
+    const key = arr[i]
     
-    while (j >= 0 && shouldSwap(arr[j], key, isAscending)) {
-      if (!getIsPlaying()) {
-        await waitForResume(getIsPlaying)
+    // Find insertion point using binary search
+    const pos = binarySearch(arr, key, 0, i - 1, isAscending)
+    
+    // Shift elements only if needed
+    if (pos < i) {
+      for (let j = i; j > pos; j--) {
+        setCompareIndex(j - 1)
+        await new Promise(resolve => setTimeout(resolve, getDelay(getSpeed())))
+        arr[j] = arr[j - 1]
+        setArray([...arr])
       }
-
-      setCompareIndex(j)
-      await new Promise(resolve => setTimeout(resolve, getDelay(getSpeed())))
-
-      arr[j + 1] = arr[j]
+      arr[pos] = key
       setArray([...arr])
-      j--
     }
-    
-    arr[j + 1] = key
-    setArray([...arr])
-    await new Promise(resolve => setTimeout(resolve, getDelay(getSpeed())))
   }
 
   setCurrentIndex(-1)
@@ -192,8 +209,50 @@ export const mergeSort = async (array, setArray, setCurrentIndex, setCompareInde
 export const quickSort = async (array, setArray, setCurrentIndex, setCompareIndex, getSpeed, getIsPlaying, isAscending) => {
   const arr = [...array]
   
+  // Optimization: Median-of-three pivot selection
+  const medianOfThree = (arr, low, high) => {
+    const mid = Math.floor((low + high) / 2)
+    const a = arr[low]
+    const b = arr[mid]
+    const c = arr[high]
+    
+    // Sort a, b, c and put median at high-1
+    if (a > b) [arr[low], arr[mid]] = [arr[mid], arr[low]]
+    if (b > c) [arr[mid], arr[high]] = [arr[high], arr[mid]]
+    if (a > b) [arr[low], arr[mid]] = [arr[mid], arr[low]]
+    
+    return mid
+  }
+  
+  // Insertion sort for small subarrays
+  const insertionSortRange = async (start, end) => {
+    for (let i = start + 1; i <= end; i++) {
+      if (!getIsPlaying()) await waitForResume(getIsPlaying)
+      
+      let key = arr[i]
+      let j = i - 1
+      
+      while (j >= start && shouldSwap(arr[j], key, isAscending)) {
+        setCurrentIndex(j + 1)
+        setCompareIndex(j)
+        await new Promise(resolve => setTimeout(resolve, getDelay(getSpeed())))
+        
+        arr[j + 1] = arr[j]
+        setArray([...arr])
+        j--
+      }
+      
+      arr[j + 1] = key
+      setArray([...arr])
+    }
+  }
+
   const partition = async (low, high) => {
-    const pivot = arr[high]
+    // Use median-of-three for pivot selection
+    const pivotIndex = medianOfThree(arr, low, high)
+    const pivot = arr[pivotIndex]
+    await animateSwap(arr, pivotIndex, high, setArray, getSpeed)
+    
     let i = low - 1
     
     for (let j = low; j < high; j++) {
@@ -214,8 +273,14 @@ export const quickSort = async (array, setArray, setCurrentIndex, setCompareInde
     await animateSwap(arr, i + 1, high, setArray, getSpeed)
     return i + 1
   }
-  
+
   const quickSortHelper = async (low, high) => {
+    // Use insertion sort for small subarrays
+    if (high - low < 10) {
+      await insertionSortRange(low, high)
+      return
+    }
+    
     if (low < high) {
       const pi = await partition(low, high)
       await quickSortHelper(low, pi - 1)

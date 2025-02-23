@@ -15,6 +15,7 @@ const useGraphStore = create((set, get) => ({
   currentAlgorithm: null,  // Add this line
   layoutType: 'circular', // Add this line
   gridVariant: 'square', // Add this line
+  parentNodes: {}, // Add this line
 
   setGraphType: (isDirected) => set({ isDirected }),
   setGraphSize: (isLarge) => {
@@ -29,7 +30,8 @@ const useGraphStore = create((set, get) => ({
       visitedNodes: [],
       currentNode: null,
       isPlaying: false,
-      isPaused: false
+      isPaused: false,
+      parentNodes: {} // Reset parent nodes
     })
   },
 
@@ -44,6 +46,8 @@ const useGraphStore = create((set, get) => ({
       get().updateLayout()
     }
   },
+
+  setParentNodes: (parentNodes) => set({ parentNodes }),
 
   updateLayout: () => {
     const { nodes, layoutType, gridVariant } = get()
@@ -134,7 +138,7 @@ const useGraphStore = create((set, get) => ({
   },
 
   generateGraph: () => {
-    const { isLarge, isDirected } = get()
+    const { isLarge, isDirected, parentNodes } = get()
     const nodeCount = isLarge ? 15 : 8
     const width = 800
     const height = 500
@@ -172,11 +176,24 @@ const useGraphStore = create((set, get) => ({
       })
     }
 
-    set({ nodes, edges, visitedNodes: [], currentNode: null })
-    get().updateLayout() // Add this line at the end
+    // Only reset visualization state if not currently in a traversal
+    const { isPlaying, isPaused } = get()
+    if (!isPlaying && !isPaused) {
+      set({ 
+        nodes, 
+        edges, 
+        visitedNodes: [], 
+        currentNode: null,
+        parentNodes: {}
+      })
+    } else {
+      set({ nodes, edges }) // Keep traversal state
+    }
+    
+    get().updateLayout()
   },
 
-  startTraversal: async () => {
+  startTraversal: async (startNodeId) => {
     const { nodes, edges, currentAlgorithm } = get()
     if (!nodes.length || !currentAlgorithm) return
 
@@ -186,22 +203,26 @@ const useGraphStore = create((set, get) => ({
 
     if (!algorithm) return
 
+    // Reset visualization state at start of traversal
     set({ 
       isPlaying: true,
       isPaused: false,
       visitedNodes: [],
-      currentNode: null
+      currentNode: null,
+      parentNodes: {},
+      exploredEdges: []
     })
 
     try {
       await algorithm(
         nodes,
         edges,
-        nodes[0].id,
+        startNodeId,
         (visited) => set({ visitedNodes: visited }),
         (current) => set({ currentNode: current }),
         () => get().speed,
-        () => get().isPlaying
+        () => get().isPlaying,
+        (parents) => set({ parentNodes: parents })
       )
     } catch (error) {
       console.error('Graph traversal error:', error)
