@@ -70,49 +70,63 @@ export const bfs = async (nodes, edges, startNode, setVisited, setCurrent, getSp
   const queue = []
   const parentMap = {}
   const exploredPaths = []
-  const adjList = buildAdjacencyList(nodes, edges)
 
-  const processNode = async (current) => {
-    // Mark node as visited
-    visited.add(current)
-    setVisited(Array.from(visited))
-    setCurrent(current)
-    await new Promise(resolve => setTimeout(resolve, getDelay(getSpeed())))
-
-    // Process neighbors in order
-    const neighbors = adjList[current] || []
-    for (const neighbor of neighbors) {
-      if (!visited.has(neighbor)) {
-        // Show examining neighbor
-        exploredPaths.push({
-          source: current,
-          target: neighbor,
-          type: 'examining'
-        })
-        setExploredEdges([...exploredPaths])
-        await new Promise(resolve => setTimeout(resolve, getDelay(getSpeed()) * 0.3))
-
-        // Add to queue and update parent
-        queue.push(neighbor)
-        parentMap[neighbor] = current
-        setParentNodes({...parentMap})
-      }
-    }
-  }
-
-  // Start with initial node
+  // Add start node to queue
   queue.push(startNode)
-  
+
   while (queue.length > 0) {
     if (!getIsPlaying()) await waitForResume(getIsPlaying)
     
     const current = queue.shift()
     if (!visited.has(current)) {
-      await processNode(current)
+      // Visit current node
+      visited.add(current)
+      setVisited(Array.from(visited))
+      setCurrent(current)
+
+      // Show parent relationship if exists
+      if (parentMap[current]) {
+        exploredPaths.push({
+          source: parentMap[current],
+          target: current,
+          type: 'tree'
+        })
+        setExploredEdges([...exploredPaths])
+      }
+
+      await new Promise(r => setTimeout(r, getDelay(getSpeed())))
+
+      // Find and process neighbors
+      const currentNeighbors = edges.filter(e => 
+        e.source === current || e.target === current
+      )
+
+      for (const edge of currentNeighbors) {
+        const neighbor = edge.source === current ? edge.target : edge.source
+        if (!visited.has(neighbor)) {
+          // Show examining edge
+          exploredPaths.push({
+            source: current,
+            target: neighbor,
+            type: 'examining'
+          })
+          setExploredEdges([...exploredPaths])
+          
+          await new Promise(r => setTimeout(r, getDelay(getSpeed()) * 0.3))
+          
+          queue.push(neighbor)
+          parentMap[neighbor] = current
+          setParentNodes({...parentMap})
+        }
+      }
     }
   }
 
-  return { visited, parentMap, exploredPaths }
+  return {
+    visited,
+    parentMap,
+    exploredPaths
+  }
 }
 
 export const dfs = async (nodes, edges, startNode, setVisited, setCurrent, getSpeed, getIsPlaying, setParentNodes, setExploredEdges) => {

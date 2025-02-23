@@ -54,6 +54,16 @@ const GraphVisualizer = () => {
     }
   }, [algorithm, currentAlgorithm])
 
+  useEffect(() => {
+    if (algorithm) {
+      const formattedAlgo = algorithm.split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ')
+      setCurrentAlgorithm(formattedAlgo)
+      generateGraph() // Generate new graph when algorithm changes
+    }
+  }, [algorithm])
+
   const renderEdge = (edge, nodes, allEdges, type = 'default') => {
     const sourceNode = nodes.find(n => n.id === edge.source)
     const targetNode = nodes.find(n => n.id === edge.target)

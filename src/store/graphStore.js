@@ -138,72 +138,74 @@ const useGraphStore = create((set, get) => ({
   },
 
   generateGraph: () => {
-    const { isLarge, isDirected, parentNodes } = get()
+    const { isLarge, isDirected, layoutType } = get()
     const nodeCount = isLarge ? 15 : 8
-    const width = 800
-    const height = 500
-    const centerX = width / 2
-    const centerY = height / 2
-    const radius = Math.min(width, height) / 3
     
-    // Generate nodes in a circle
-    const nodes = Array.from({ length: nodeCount }, (_, i) => {
-      const angle = (i * 2 * Math.PI) / nodeCount
-      return {
-        id: `node-${i}`,
-        label: String.fromCharCode(65 + i),
-        x: centerX + radius * Math.cos(angle),
-        y: centerY + radius * Math.sin(angle)
-      }
-    })
+    // Generate nodes
+    const nodes = Array.from({ length: nodeCount }, (_, i) => ({
+      id: `node-${i}`,
+      label: String.fromCharCode(65 + i),
+      x: 0, // Initial position, will be updated by layout
+      y: 0
+    }))
 
-    // Generate edges
+    // Generate edges (ensure connectivity)
     const edges = []
     const edgeCount = isLarge ? 25 : 12
-    
-    for (let i = 0; i < edgeCount; i++) {
+
+    // Ensure all nodes are connected
+    for (let i = 1; i < nodeCount; i++) {
+      const source = Math.floor(Math.random() * i)
+      edges.push({
+        id: `edge-${edges.length}`,
+        source: nodes[source].id,
+        target: nodes[i].id,
+        weight: Math.floor(Math.random() * 9) + 1
+      })
+    }
+
+    // Add additional random edges
+    while (edges.length < edgeCount) {
       const source = Math.floor(Math.random() * nodeCount)
       let target = Math.floor(Math.random() * nodeCount)
-      while (target === source) {
+      
+      // Avoid self-loops and duplicate edges
+      while (target === source || edges.some(e => 
+        e.source === nodes[source].id && e.target === nodes[target].id)) {
         target = Math.floor(Math.random() * nodeCount)
       }
       
       edges.push({
-        id: `edge-${i}`,
+        id: `edge-${edges.length}`,
         source: nodes[source].id,
         target: nodes[target].id,
         weight: Math.floor(Math.random() * 9) + 1
       })
     }
 
-    // Only reset visualization state if not currently in a traversal
-    const { isPlaying, isPaused } = get()
-    if (!isPlaying && !isPaused) {
-      set({ 
-        nodes, 
-        edges, 
-        visitedNodes: [], 
-        currentNode: null,
-        parentNodes: {}
-      })
-    } else {
-      set({ nodes, edges }) // Keep traversal state
-    }
+    set({ 
+      nodes, 
+      edges,
+      visitedNodes: [],
+      currentNode: null,
+      parentNodes: {},
+      exploredEdges: []
+    })
     
     get().updateLayout()
   },
 
   startTraversal: async (startNodeId) => {
-    const { nodes, edges, currentAlgorithm } = get()
+    const { nodes, edges, currentAlgorithm, isDirected } = get()
     if (!nodes.length || !currentAlgorithm) return
 
-    const algorithm = getGraphAlgorithm(
-      currentAlgorithm?.toLowerCase().replace(/\s+/g, '-')
-    )
+    // Convert algorithm name to match route format
+    const algoName = currentAlgorithm?.toLowerCase().replace(/\s+/g, '-')
+    const algorithm = getGraphAlgorithm(algoName)
 
     if (!algorithm) return
 
-    // Reset visualization state at start of traversal
+    // Reset visualization state
     set({ 
       isPlaying: true,
       isPaused: false,
@@ -214,16 +216,26 @@ const useGraphStore = create((set, get) => ({
     })
 
     try {
-      await algorithm(
+      const result = await algorithm(
         nodes,
         edges,
         startNodeId,
-        (visited) => set({ visitedNodes: visited }),
+        (visited) => set({ visitedNodes: [...visited] }),
         (current) => set({ currentNode: current }),
         () => get().speed,
         () => get().isPlaying,
-        (parents) => set({ parentNodes: parents })
+        (parents) => set({ parentNodes: {...parents} }),
+        (explored) => set({ exploredEdges: [...explored] })
       )
+
+      // Update final state
+      if (result) {
+        set({
+          visitedNodes: Array.from(result.visited || []),
+          parentNodes: result.parentMap || {},
+          exploredEdges: result.exploredPaths || []
+        })
+      }
     } catch (error) {
       console.error('Graph traversal error:', error)
     } finally {
