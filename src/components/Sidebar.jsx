@@ -13,7 +13,9 @@ const Sidebar = () => {
   } = useAlgorithmStore()
 
   const handleAlgorithmSelect = (category, algorithm) => {
-    const urlPath = `/${category.toLowerCase()}/${algorithm.toLowerCase().replace(/\s+/g, '-')}`
+    const categoryPath = category.toLowerCase().replace(/\s+/g, '-')
+    const algorithmPath = algorithm.toLowerCase().replace(/\s+/g, '-')
+    const urlPath = `/${categoryPath}/${algorithmPath}`
     setCurrentAlgorithm(algorithm)
     setArraySize(50) // Reset array size
     generateNewArray() // Generate fresh array

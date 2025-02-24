@@ -1,10 +1,11 @@
 import React from 'react'
-import { Routes, Route, Outlet } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import Home from './components/Home'
 import SortingVisualizer from './components/sorting/SortingVisualizer'
 import SearchVisualizer from './components/searching/SearchVisualizer'
 import GraphVisualizer from './components/graph/GraphVisualizer'
+import DPVisualizer from './components/dp/DPVisualizer'
 import ErrorBoundary from './components/ErrorBoundary'
 
 const App = () => {
@@ -17,6 +18,7 @@ const App = () => {
             <Route path="sorting/:algorithm" element={<SortingVisualizer />} />
             <Route path="searching/:algorithm" element={<SearchVisualizer />} />
             <Route path="graph/:algorithm" element={<GraphVisualizer />} />
+            <Route path="dynamic-programming/:algorithm" element={<DPVisualizer />} />
           </Route>
         </Routes>
       </ErrorBoundary>
