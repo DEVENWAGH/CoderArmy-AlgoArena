@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import useDPStore from '../../store/dpStore'
@@ -7,6 +7,7 @@ import { algorithmInfo } from '../../store/algorithmData'
 
 const DPVisualizer = () => {
   const { algorithm } = useParams()
+  const scrollRef = useRef()
   const {
     table,
     currentCell,
@@ -55,6 +56,17 @@ const DPVisualizer = () => {
       setCurrentCell(null)
     }
   }, [algorithm])
+
+  useEffect(() => {
+    const container = scrollRef.current
+    if (container) {
+      // Set scroll to 60% of total scrollable width
+      requestAnimationFrame(() => {
+        const maxScroll = container.scrollWidth - container.clientWidth
+        container.scrollLeft = maxScroll * 0.6
+      })
+    }
+  }, [table]) // Re-run when table updates
 
   const renderControls = () => (
     <div className="flex items-center gap-4 p-4 rounded-lg bg-slate-700">
@@ -202,14 +214,20 @@ const DPVisualizer = () => {
         {renderControls()}
       </div>
 
-      {/* Main Content - Single Scrollable Container */}
+      {/* Main Content with Initial Scroll Position */}
       <div className="p-4 mt-32 flex flex-col h-[calc(100vh-12rem)]">
-        <div className="flex-1 bg-slate-900 rounded-lg p-4 overflow-auto">
-          <DPTreeVisualizer 
-            data={table}
-            currentCell={currentCell}
-            type={algorithm?.toLowerCase().replace(/[^a-z]/g, '')}
-          />
+        <div 
+          ref={scrollRef}
+          className="flex-1 bg-slate-900 rounded-lg p-4 overflow-x-auto"
+          style={{ scrollBehavior: 'smooth' }}
+        >
+          <div className="min-w-max">
+            <DPTreeVisualizer 
+              data={table}
+              currentCell={currentCell}
+              type={algorithm?.toLowerCase().replace(/[^a-z]/g, '')}
+            />
+          </div>
         </div>
       </div>
     </div>

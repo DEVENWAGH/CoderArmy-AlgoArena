@@ -4,7 +4,6 @@ import * as d3 from 'd3'
 
 const DPTreeVisualizer = ({ data, currentCell, type }) => {
   const svgRef = useRef()
-  const containerRef = useRef()
   
   // Adjust width calculations for better centering
   const width = data?.length <= 8 
@@ -13,18 +12,6 @@ const DPTreeVisualizer = ({ data, currentCell, type }) => {
   
   const height = Math.max(600, data?.length * 100)
   const isLargeTree = data?.length > 8
-
-  // Update scroll position on tree changes
-  useEffect(() => {
-    if (containerRef.current && data?.length > 8) {
-      requestAnimationFrame(() => {
-        const container = containerRef.current
-        const scrollWidth = container.scrollWidth - container.clientWidth
-        // Set scroll to 70% of total scroll width
-        container.scrollLeft = scrollWidth * 0.7
-      })
-    }
-  }, [data, width])
 
   useEffect(() => {
     if (!data || !data.length) return
@@ -195,19 +182,9 @@ const DPTreeVisualizer = ({ data, currentCell, type }) => {
 
   }, [data, currentCell, type])
 
-  // Center scroll on load for large trees
-  useEffect(() => {
-    if (containerRef.current && data?.length > 8) {
-      setTimeout(() => {
-        const container = containerRef.current
-        container.scrollLeft = (container.scrollWidth - container.clientWidth) / 2
-      }, 100)
-    }
-  }, [data?.length])
-
   return (
     <div className="relative min-h-full">
-      {/* Fixed Info panel - adjusted top position */}
+      {/* Fixed Info panel */}
       <div className="fixed z-50 border rounded-lg shadow-lg left-72 top-48 bg-slate-800 border-slate-700">
         <div className="flex flex-col p-3 space-y-1 text-xs">
           <div className="font-medium text-yellow-400">Current: F({currentCell})</div>
@@ -216,33 +193,19 @@ const DPTreeVisualizer = ({ data, currentCell, type }) => {
         </div>
       </div>
 
-      {/* Container with different styles based on tree size */}
-      <div 
-        ref={containerRef}
-        className={`mt-16 ${
-          data?.length <= 8 
-            ? 'flex justify-center px-4' 
-            : 'min-w-max overflow-x-auto px-8'
-        }`}
-        style={data?.length > 8 ? { 
-          scrollBehavior: 'smooth',
-          scrollPaddingLeft: '70%' 
-        } : {}}
-      >
-        <div className={data?.length <= 8 ? 'w-[90%]' : ''}>
-          <svg
-            ref={svgRef}
-            className="rounded-lg bg-slate-900"
-            width={width}
-            height={height}
-            style={{ 
-              width: data?.length <= 8 ? '100%' : width,
-              minWidth: data?.length <= 8 ? 'auto' : width,
-              maxWidth: data?.length <= 8 ? '100%' : 'none'
-            }}
-            preserveAspectRatio="xMidYMin meet"
-          />
-        </div>
+      <div className={`mt-16 ${data?.length <= 8 ? 'flex justify-center px-4' : 'px-8'}`}>
+        <svg
+          ref={svgRef}
+          className="rounded-lg bg-slate-900"
+          width={width}
+          height={height}
+          style={{ 
+            width: data?.length <= 8 ? '100%' : width,
+            minWidth: data?.length <= 8 ? 'auto' : width,
+            maxWidth: data?.length <= 8 ? '100%' : 'none'
+          }}
+          preserveAspectRatio="xMidYMin meet"
+        />
       </div>
     </div>
   )
