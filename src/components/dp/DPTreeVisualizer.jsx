@@ -1,9 +1,11 @@
-import React, { useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
+import React, { useEffect, useRef, useState } from 'react'
+import { motion, animate } from 'framer-motion'
 import * as d3 from 'd3'
 
 const DPTreeVisualizer = ({ data, currentCell, type }) => {
   const svgRef = useRef()
+  const [activeNodes, setActiveNodes] = useState(new Set())
+  const [activePaths, setActivePaths] = useState(new Set())
   
   // Adjust width calculations for better centering
   const width = data?.length <= 8 
@@ -12,6 +14,17 @@ const DPTreeVisualizer = ({ data, currentCell, type }) => {
   
   const height = Math.max(600, data?.length * 100)
   const isLargeTree = data?.length > 8
+
+  // Add animation trigger effect
+  useEffect(() => {
+    if (data?.length > 0) {
+      // Delay animation start to ensure clean render
+      const timer = setTimeout(() => {
+        setShouldAnimate(true)
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [data])
 
   useEffect(() => {
     if (!data || !data.length) return
@@ -111,7 +124,7 @@ const DPTreeVisualizer = ({ data, currentCell, type }) => {
       })
     })
 
-    // Add vertical links
+    // Create links with animated path drawing
     const links = g.selectAll('path.link')
       .data(tree.links())
       .enter()
@@ -120,67 +133,96 @@ const DPTreeVisualizer = ({ data, currentCell, type }) => {
       .attr('d', d3.linkVertical()
         .x(d => d.x)
         .y(d => d.y))
-      .attr('stroke', '#4B5563')
+      .attr('stroke', d => {
+        const pathId = `${d.source.data.name}-${d.target.data.name}`
+        return activePaths.has(pathId) ? '#60A5FA' : '#4B5563'
+      })
       .attr('stroke-width', 2)
       .attr('fill', 'none')
+      .style('opacity', d => {
+        const pathId = `${d.source.data.name}-${d.target.data.name}`
+        return activePaths.has(pathId) ? 1 : 0.3
+      })
+      .style('stroke-dasharray', function() {
+        return this.getTotalLength()
+      })
+      .style('stroke-dashoffset', function() {
+        return this.getTotalLength()
+      })
 
-    // Add nodes with animations
+    // Add nodes with dynamic appearance
     const nodes = g.selectAll('g.node')
       .data(tree.descendants())
       .enter()
       .append('g')
       .attr('class', 'node')
       .attr('transform', d => `translate(${d.x},${d.y})`)
+      .style('opacity', d => activeNodes.has(d.data.name) ? 1 : 0.3)
 
-    // Smaller nodes and text for large trees
+    // Add circles with active state
     nodes.append('circle')
-      .attr('r', 0)
+      .attr('r', d => {
+        const baseSize = isLargeTree ? 10 : 14
+        return d.data.isBase ? baseSize - 2 : baseSize
+      })
       .attr('fill', d => {
+        if (!activeNodes.has(d.data.name)) return '#4B5563'
         if (d.data.isBase) return '#10B981'
         if (d.data.name === `F(${currentCell})`) return '#FCD34D'
         return '#3B82F6'
       })
       .attr('stroke', '#E5E7EB')
       .attr('stroke-width', 1)
-      .transition()
-      .duration(500)
-      .attr('r', d => {
-        const baseSize = isLargeTree ? 10 : 14
-        return d.data.isBase ? baseSize - 2 : baseSize
-      })
 
-    // Add value text
+    // Add labels with dynamic visibility
     nodes.append('text')
       .attr('dy', '0.3em')
       .attr('text-anchor', 'middle')
       .attr('fill', 'white')
       .attr('font-size', isLargeTree ? '8px' : '10px')
+      .style('opacity', d => activeNodes.has(d.data.name) ? 1 : 0.3)
       .text(d => d.data.value)
 
-    // Remove duplicate function labels
     nodes.append('text')
       .attr('dy', isLargeTree ? -10 : -12)
       .attr('text-anchor', 'middle')
       .attr('fill', '#9CA3AF')
       .attr('font-size', isLargeTree ? '7px' : '9px')
+      .style('opacity', d => activeNodes.has(d.data.name) ? 1 : 0.3)
       .text(d => d.data.name)
 
-    // Add recursive formula below current node
-    if (currentCell > 1) {
-      nodes.append('text')
-        .attr('dy', 20)  // Closer to node
-        .attr('text-anchor', 'middle')
-        .attr('fill', '#60A5FA')
-        .attr('font-size', '10px')
-        .text(d => {
-          if (d.data.name === `F(${currentCell})`) {
-            return `${d.data.value} = ${data[currentCell-1]} + ${data[currentCell-2]}`
-          }
-          return ''
-        })
-    }
+  }, [data, currentCell, type, activeNodes, activePaths])
 
-  }, [data, currentCell, type])
+  // Update active nodes and paths based on currentCell
+  useEffect(() => {
+    if (currentCell && data) {
+      const newActiveNodes = new Set()
+      const newActivePaths = new Set()
+      
+      const activateNodeAndParents = (index) => {
+        if (index < 0 || index >= data.length) return
+        const nodeName = `F(${index})`
+        newActiveNodes.add(nodeName)
+        
+        if (index > 1) {
+          // Add parent connections
+          newActivePaths.add(`F(${index})-F(${index-1})`)
+          newActivePaths.add(`F(${index})-F(${index-2})`)
+          activateNodeAndParents(index - 1)
+          activateNodeAndParents(index - 2)
+        }
+      }
+
+      activateNodeAndParents(currentCell)
+      setActiveNodes(newActiveNodes)
+      setActivePaths(newActivePaths)
+    }
+  }, [currentCell, data])
+
+  // Reset animation flag when data changes
+  useEffect(() => {
+    setShouldAnimate(false)
+  }, [data?.length])
 
   return (
     <div className="relative min-h-full">
@@ -202,7 +244,9 @@ const DPTreeVisualizer = ({ data, currentCell, type }) => {
           style={{ 
             width: data?.length <= 8 ? '100%' : width,
             minWidth: data?.length <= 8 ? 'auto' : width,
-            maxWidth: data?.length <= 8 ? '100%' : 'none'
+            maxWidth: data?.length <= 8 ? '100%' : 'none',
+            opacity: shouldAnimate ? 1 : 0,
+            transition: 'opacity 0.3s ease'
           }}
           preserveAspectRatio="xMidYMin meet"
         />

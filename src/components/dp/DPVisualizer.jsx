@@ -218,7 +218,7 @@ const DPVisualizer = () => {
       <div className="p-4 mt-32 flex flex-col h-[calc(100vh-12rem)]">
         <div 
           ref={scrollRef}
-          className="flex-1 bg-slate-900 rounded-lg p-4 overflow-x-auto"
+          className="flex-1 p-4 overflow-x-auto rounded-lg bg-slate-900"
           style={{ scrollBehavior: 'smooth' }}
         >
           <div className="min-w-max">
