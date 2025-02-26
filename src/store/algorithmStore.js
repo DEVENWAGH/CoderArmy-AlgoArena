@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { getSortingAlgorithm } from '../algorithms/sorting/index.jsx'
 import { getSearchAlgorithm } from '../algorithms/searching/index.jsx'
-import { nanoid } from 'nanoid';
 
 const useAlgorithmStore = create((set, get) => ({
   currentAlgorithm: null,

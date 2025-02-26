@@ -1,342 +1,426 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 import * as d3 from 'd3'
+import { gsap } from 'gsap'
+import { useGSAP } from '@gsap/react'
 
 const DPTreeVisualizer = ({ data, currentCell, type }) => {
-  const svgRef = useRef()
-  const [isRendering, setIsRendering] = useState(false)
-  const animationRef = useRef(null)
+  const svgRef = useRef(null)
+  const containerRef = useRef(null)
+  const timelineRef = useRef(null)
+
+  gsap.registerPlugin(useGSAP)
   
-  // Increase initial width for better visibility
-  const width = data?.length <= 8 
-    ? 1200
-    : Math.max(3000, data?.length * 500)
-  
-  const height = Math.max(700, data?.length * 120)
-  const isLargeTree = data?.length > 8
-
-  // Debug to check if data is available
-  useEffect(() => {
-    console.log("Data received:", data, "Type:", type, "Current cell:", currentCell);
-  }, [data, type, currentCell]);
-
-  // Clean up any previous animations when component unmounts or data changes
-  useEffect(() => {
-    return () => {
-      if (animationRef.current) {
-        animationRef.current.forEach(timer => {
-          if (timer) clearTimeout(timer);
-        });
-      }
-    };
-  }, [data, currentCell, type]);
+  useGSAP(() => {
+    if (timelineRef.current) {
+      timelineRef.current.kill()
+    }
+    timelineRef.current = gsap.timeline()
+  }, { scope: containerRef })
 
   useEffect(() => {
-    // Immediate render for debugging - remove isRendering check temporarily
     if (!data || !data.length) return
     
-    // Clear previous timeouts
-    if (animationRef.current) {
-      animationRef.current.forEach(timer => {
-        if (timer) clearTimeout(timer);
-      });
+    const buildTree = () => {
+      switch (type) {
+        case 'fibonacci': 
+          return buildFibonacciTree(data.length - 1)
+        case 'lis':
+          return buildLISTree(data)
+        case 'knapsack':
+          return buildKnapsackTree(data)
+        default:
+          return buildFibonacciTree(data.length - 1)
+      }
     }
-    
-    // Store all timeouts for cleanup
-    const timeouts = [];
-    animationRef.current = timeouts;
+
+    // Build a fibonacci tree recursively
+    const buildFibonacciTree = (n) => {
+      if (n <= 1) {
+        return {
+          id: `fib-${n}`,
+          name: `F(${n})`,
+          value: n,
+          isBaseCase: true,
+          children: []
+        }
+      }
+
+      return {
+        id: `fib-${n}`,
+        name: `F(${n})`,
+        value: data[n],
+        isBaseCase: false,
+        isCurrent: currentCell === n,
+        hasOverlap: false,
+        children: [
+          buildFibonacciTree(n-1),
+          buildFibonacciTree(n-2)
+        ]
+      }
+    }
+
+    // Build an LIS tree
+    const buildLISTree = (dp) => {
+      // Simplified tree for LIS
+      const root = {
+        id: 'lis-root',
+        name: 'LIS',
+        value: Math.max(...dp),
+        isBaseCase: false,
+        children: []
+      }
+      
+      // Create first level nodes for each element
+      for (let i = 0; i < dp.length; i++) {
+        const node = {
+          id: `lis-${i}`,
+          name: `LIS(${i})`,
+          value: dp[i],
+          isBaseCase: dp[i] === 1,
+          isCurrent: currentCell === i,
+          children: []
+        }
+        
+        // Add dependencies
+        for (let j = 0; j < i; j++) {
+          if (data[j] < data[i]) {
+            node.children.push({
+              id: `lis-${j}`,
+              name: `LIS(${j})`,
+              value: dp[j],
+              isBaseCase: dp[j] === 1,
+              isCurrent: false,
+              children: []
+            })
+          }
+        }
+        
+        root.children.push(node)
+      }
+      
+      return root
+    }
+
+    // Build a simplified knapsack tree
+    const buildKnapsackTree = (dp) => {
+      const rows = dp.length
+      const cols = dp[0].length
+      
+      // Create a simplified tree
+      const root = {
+        id: 'knapsack-root',
+        name: `KS(${rows-1},${cols-1})`,
+        value: dp[rows-1][cols-1],
+        isBaseCase: false,
+        isCurrent: currentCell && currentCell[0] === rows-1 && currentCell[1] === cols-1,
+        children: []
+      }
+      
+      // Simplify by showing only a few significant sub-problems
+      const addLevels = (node, i, w, depth = 0) => {
+        if (depth > 3 || i <= 0 || w <= 0) {
+          return
+        }
+        
+        // Not taking the item
+        const notTake = {
+          id: `ks-${i-1}-${w}`,
+          name: `KS(${i-1},${w})`,
+          value: dp[i-1] ? dp[i-1][w] || 0 : 0,
+          isBaseCase: i-1 === 0 || w === 0,
+          isCurrent: currentCell && currentCell[0] === i-1 && currentCell[1] === w,
+          children: []
+        }
+        
+        // Taking the item (if possible)
+        const take = {
+          id: `ks-${i-1}-${w-1}`,
+          name: `KS(${i-1},${w-1})`,
+          value: (i-1 >= 0 && w-1 >= 0 && dp[i-1]) ? dp[i-1][w-1] || 0 : 0,
+          isBaseCase: i-1 === 0 || w-1 === 0,
+          isCurrent: currentCell && currentCell[0] === i-1 && currentCell[1] === w-1,
+          children: []
+        }
+        
+        node.children.push(notTake)
+        node.children.push(take)
+        
+        // Recursively add more levels
+        if (depth < 2) {
+          addLevels(notTake, i-1, w, depth+1)
+          if (w-1 >= 0) addLevels(take, i-1, w-1, depth+1)
+        }
+      }
+      
+      addLevels(root, rows-1, cols-1)
+      return root
+    }
+
+    // Estimate tree size to determine SVG dimensions
+    const estimateTreeSize = (root) => {
+      const countNodes = (node) => {
+        if (!node.children || node.children.length === 0) return 1
+        return 1 + node.children.reduce((sum, child) => sum + countNodes(child), 0)
+      }
+      
+      const totalNodes = countNodes(root)
+      const estimatedWidth = Math.max(1200, totalNodes * 40)
+      const estimatedHeight = Math.max(800, totalNodes * 15)
+      
+      return { width: estimatedWidth, height: estimatedHeight }
+    }
+
+    // Build the tree data
+    const treeData = buildTree()
+    const { width, height } = estimateTreeSize(treeData)
     
     // Clear previous content
-    const svg = d3.select(svgRef.current)
-    svg.selectAll("*").remove()
+    const svgEl = svgRef.current
+    d3.select(svgEl).selectAll("*").remove()
+    
+    const svg = d3.select(svgEl)
+      .attr('width', width)
+      .attr('height', height)
+      .attr('viewBox', `0 0 ${width} ${height}`)
+    
+    // Create a group element to contain all elements
+    const g = svg.append('g')
+      .attr('transform', `translate(${width/2}, 50)`)
+    
+    // Create a hierarchical layout
+    const root = d3.hierarchy(treeData)
+    
+    // Use tree layout
+    const treeLayout = d3.tree()
+      .size([width - 200, height - 150])
+      .nodeSize([70, 100])
+      .separation((a, b) => a.parent === b.parent ? 1.2 : 2)
+    
+    const tree = treeLayout(root)
+    
+    // Draw the links
+    g.selectAll('path.link')
+      .data(tree.links())
+      .enter()
+      .append('path')
+      .attr('class', 'link')
+      .attr('d', d3.linkHorizontal()
+        .x(d => d.y) // Swap x and y for horizontal layout
+        .y(d => d.x))
+      .attr('stroke', '#4B5563')
+      .attr('stroke-width', 2)
+      .attr('fill', 'none')
+      .style('opacity', 0) // Start invisible
+    
+    // Create a group for each node
+    const nodeGroups = g.selectAll('g.node')
+      .data(tree.descendants())
+      .enter()
+      .append('g')
+      .attr('class', 'node')
+      .attr('transform', d => `translate(${d.y},${d.x})`) // Swap x and y for horizontal layout
+      .style('opacity', 0) // Start invisible
+    
+    // Add circles for nodes with different colors based on conditions
+    nodeGroups.append('circle')
+      .attr('r', d => d.data.isBaseCase ? 18 : 22)
+      .attr('fill', d => {
+        if (d.data.isCurrent) return '#FCD34D' // Yellow for current
+        if (d.data.isBaseCase) return '#10B981' // Green for base cases
+        if (d.data.hasOverlap) return '#60A5FA' // Blue for overlapping subproblems
+        return '#3B82F6' // Default blue
+      })
+      .attr('stroke', '#E5E7EB')
+      .attr('stroke-width', 2)
+    
+    // Add text for node names
+    nodeGroups.append('text')
+      .attr('dy', '.3em')
+      .attr('text-anchor', 'middle')
+      .attr('fill', 'white')
+      .attr('font-size', '14px')
+      .text(d => d.data.name)
+    
+    // Add text for return values
+    nodeGroups.append('text')
+      .attr('dy', 30)
+      .attr('text-anchor', 'middle')
+      .attr('fill', '#D1D5DB')
+      .attr('font-size', '12px')
+      .text(d => d.data.value !== undefined ? d.data.value : '?')
 
-    // Add a background rect for debugging
-    svg.append("rect")
-       .attr("width", width)
-       .attr("height", height)
-       .attr("fill", "#1E293B")
-       .attr("stroke", "#475569")
-       .attr("stroke-width", 1);
-
-    // Position the tree more explicitly
-    const g = svg.append("g")
-      .attr("transform", `translate(${width/2},80)`)
-
-    const createTreeData = (table, type, index = null) => {
-      switch (type) {
-        case 'fibonacci':
-          if (index === null) index = table.length - 1
-          if (index <= 1) {
-            return {
-              name: `F(${index})`,
-              value: table[index],
-              isBase: true,
-              index: index,
-              id: `node-${index}`
-            }
-          }
-          return {
-            name: `F(${index})`,
-            value: table[index],
-            index: index,
-            id: `node-${index}`,
-            children: [
-              createTreeData(table, type, index - 1),
-              createTreeData(table, type, index - 2)
-            ]
-          }
-        // ...other cases remain the same
-        default:
-          return {
-            name: 'Root',
-            value: 0,
-            id: 'root',
-            children: []
-          }
-      }
+    // Create a GSAP animation timeline
+    const tl = timelineRef.current
+    
+    // Mark visited nodes first to simulate recursion traversal
+    const markVisitedSequence = (nodes) => {
+      // Sort nodes by depth for animation sequence
+      return nodes.sort((a, b) => a.depth - b.depth)
     }
-
-    try {
-      // Create the tree data
-      console.log("Creating tree data...");
-      const treeData = createTreeData(data, type);
-      console.log("Tree data created:", treeData);
+    
+    // Create a sequence for depth-first-search like in recursion visualization
+    const visitedSequence = markVisitedSequence(tree.descendants())
+    
+    // Animate nodes appearing
+    visitedSequence.forEach((node, i) => {
+      // Animate the node appearance
+      tl.to(nodeGroups.nodes()[tree.descendants().indexOf(node)], {
+        opacity: 1,
+        duration: 0.3,
+        ease: 'power1.inOut'
+      }, i * 0.2)
       
-      const root = d3.hierarchy(treeData);
-      console.log("Hierarchy created:", root);
-
-      // Configure the tree layout
-      const treeLayout = d3.tree()
-        .size([width * 0.8, height - 100]) // Use more space
-        .nodeSize([isLargeTree ? 40 : 60, isLargeTree ? 60 : 90]) // Increase node spacing
-        .separation((a, b) => {
-          return a.parent === b.parent ? 
-            (isLargeTree ? 1.8 : 2.0) : // Increase separation
-            (isLargeTree ? 2.5 : 3.0)
-        });
-
-      const tree = treeLayout(root);
-      console.log("Tree layout applied:", tree.descendants().length, "nodes");
-
-      // Position adjustments - simplify
-      tree.descendants().forEach(d => {
-        d.y = d.depth * 100; // Fixed vertical spacing
-        d.id = d.data.id;
-      });
-
-      // Draw all links first - make them visible immediately for debugging
-      const allLinks = g.selectAll('path.link')
-        .data(tree.links())
-        .enter()
-        .append('path')
-        .attr('class', 'link')
-        .attr('d', d3.linkVertical()
-          .x(d => d.x)
-          .y(d => d.y))
-        .attr('stroke', '#4B5563')
-        .attr('stroke-width', 1.5) // Thicker strokes
-        .attr('fill', 'none')
-        .style('opacity', 0.5); // Start semi-visible for debugging
-
-      // Create all nodes - make them visible immediately for debugging
-      const allNodes = g.selectAll('g.node')
-        .data(tree.descendants())
-        .enter()
-        .append('g')
-        .attr('class', 'node')
-        .attr('transform', d => `translate(${d.x},${d.y})`)
-        .style('opacity', 0.8); // Start semi-visible for debugging
-
-      allNodes.append('circle')
-        .attr('r', d => d.data.isBase ? 15 : 18) // Larger circles
-        .attr('fill', d => {
-          if (d.data.name === `F(${currentCell})`) return '#FCD34D'
-          if (d.data.isBase) return '#10B981'
-          return '#3B82F6'
-        })
-        .attr('stroke', '#E5E7EB')
-        .attr('stroke-width', 2);
-
-      allNodes.append('text')
-        .attr('dy', '.3em')
-        .attr('text-anchor', 'middle')
-        .attr('fill', 'white')
-        .attr('font-size', '14px') // Larger text
-        .text(d => d.data.index); // Display F(n) value inside the circle
-
-      allNodes.append('text')
-        .attr('dy', 30) // Position below the node
-        .attr('text-anchor', 'middle')
-        .attr('fill', '#D1D5DB') // Brighter text
-        .attr('font-size', '12px')
-        .text(d => d.data.value); // Display running output value outside the circle
-
-      // For debugging, let's just show the tree immediately
-      console.log("Tree rendering complete");
-      
-      // Optional: Add gradual animation after debug is complete
-      if (!isRendering) {
-        console.log("Starting animation");
-        setIsRendering(true);
-        
-        // CHANGED: Use a level-order (breadth-first) traversal instead of depth-first
-        // This will create a left-to-right animation pattern
-        function getLevelOrderAnimationSequence(root) {
-          const sequence = [];
-          const queue = [root]; // Start with the root node
-          const nodesByLevel = {};
-          
-          // First, group nodes by their level
-          root.descendants().forEach(node => {
-            if (!nodesByLevel[node.depth]) {
-              nodesByLevel[node.depth] = [];
-            }
-            nodesByLevel[node.depth].push(node);
-          });
-          
-          // Sort nodes at each level from left to right
-          Object.values(nodesByLevel).forEach(nodes => {
-            nodes.sort((a, b) => a.x - b.x);
-          });
-          
-          // Now create the sequence level by level
-          Object.keys(nodesByLevel).sort((a, b) => a - b).forEach(level => {
-            nodesByLevel[level].forEach(node => {
-              // Add node to the sequence
-              sequence.push({
-                node: node,
-                parent: node.parent,
-                type: "visit"
-              });
-              
-              // If this node is completed (has no children or both children are in sequence)
-              sequence.push({
-                node: node,
-                type: "complete"
-              });
-            });
-          });
-          
-          return sequence;
+      // If it has a parent, animate the link too
+      if (node.parent) {
+        const linkIndex = tree.links().findIndex(
+          link => link.source === node.parent && link.target === node
+        )
+        if (linkIndex >= 0) {
+          tl.to(g.selectAll('path.link').nodes()[linkIndex], {
+            opacity: 1,
+            duration: 0.3,
+            ease: 'power1.inOut'
+          }, i * 0.2)
         }
-
-        // Create animation sequence using level-order traversal
-        const animationSequence = getLevelOrderAnimationSequence(root);
-
-        // Create node and link maps
-        const nodeMap = new Map();
-        tree.descendants().forEach((d, i) => {
-          nodeMap.set(d.id, allNodes.nodes()[i]);
-        });
-        
-        const linkMap = new Map();
-        tree.links().forEach((d, i) => {
-          const key = `${d.source.id}-${d.target.id}`;
-          linkMap.set(key, allLinks.nodes()[i]);
-        });
-
-        // Make all elements invisible again for animation
-        allNodes.style('opacity', 0);
-        allLinks.style('opacity', 0);
-
-        // Animate with proper timeouts for cleanup
-        let delayCounter = 0;
-        animationSequence.forEach((step, i) => {
-          const delay = delayCounter * 300; // Use a consistent delay increment
-          
-          if (step.type === "visit") {
-            delayCounter++; // Increment counter only for visit actions
-            
-            const timeout1 = setTimeout(() => {
-              const node = nodeMap.get(step.node.id);
-              if (node) {
-                d3.select(node)
-                  .transition()
-                  .duration(300)
-                  .style('opacity', 1);
-              }
-              
-              // Show the connecting link from parent if it exists
-              if (step.parent) {
-                const linkKey = `${step.parent.id}-${step.node.id}`;
-                const link = linkMap.get(linkKey);
-                if (link) {
-                  d3.select(link)
-                    .transition()
-                    .duration(300)
-                    .style('opacity', 1);
-                }
-              }
-            }, delay);
-            
-            timeouts.push(timeout1);
-          }
-          else if (step.type === "complete") {
-            const timeout2 = setTimeout(() => {
-              const node = nodeMap.get(step.node.id);
-              if (node) {
-                d3.select(node)
-                  .select('circle')
-                  .transition()
-                  .duration(300)
-                  .attr('fill', d => {
-                    if (d.data.name === `F(${currentCell})`) return '#FCD34D'
-                    if (d.data.isBase) return '#10B981'
-                    return '#3B82F6'
-                  });
-              }
-            }, delay + 150); // Slight delay after node appears
-            
-            timeouts.push(timeout2);
-          }
-        });
-
-        // Add final timeout to reset rendering flag
-        const finalTimeout = setTimeout(() => {
-          setIsRendering(false);
-        }, delayCounter * 300 + 1000);
-        timeouts.push(finalTimeout);
       }
-      
-    } catch (error) {
-      console.error("Error creating tree visualization:", error);
-      // Show error message in SVG
-      svg.append("text")
-         .attr("x", width / 2)
-         .attr("y", height / 2)
-         .attr("text-anchor", "middle")
-         .attr("fill", "red")
-         .text("Error rendering tree: " + error.message);
-      
-      setIsRendering(false);
-    }
+    })
+    
+    // Add a title on top
+    svg.append('text')
+      .attr('x', width / 2)
+      .attr('y', 30)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '20px')
+      .attr('fill', 'white')
+      .text(`${type.toUpperCase()} Recursion Tree`)
 
-  }, [data, currentCell, type, width, height, isLargeTree]);
+    // Add color legend
+    const legend = svg.append('g')
+      .attr('transform', `translate(20, ${height - 80})`)
+    
+    // Base case
+    legend.append('circle')
+      .attr('cx', 10)
+      .attr('cy', 10)
+      .attr('r', 10)
+      .attr('fill', '#10B981')
+    
+    legend.append('text')
+      .attr('x', 25)
+      .attr('y', 15)
+      .attr('fill', 'white')
+      .text('Base Case')
+    
+    // Current node
+    legend.append('circle')
+      .attr('cx', 10)
+      .attr('cy', 40)
+      .attr('r', 10)
+      .attr('fill', '#FCD34D')
+    
+    legend.append('text')
+      .attr('x', 25)
+      .attr('y', 45)
+      .attr('fill', 'white')
+      .text('Current Node')
+    
+    // Overlapping subproblem
+    legend.append('circle')
+      .attr('cx', 150)
+      .attr('cy', 10)
+      .attr('r', 10)
+      .attr('fill', '#60A5FA')
+    
+    legend.append('text')
+      .attr('x', 165)
+      .attr('y', 15)
+      .attr('fill', 'white')
+      .text('Overlapping Subproblem')
+    
+    // Regular node
+    legend.append('circle')
+      .attr('cx', 150)
+      .attr('cy', 40)
+      .attr('r', 10)
+      .attr('fill', '#3B82F6')
+    
+    legend.append('text')
+      .attr('x', 165)
+      .attr('y', 45)
+      .attr('fill', 'white')
+      .text('Regular Node')
+
+    // Add controls
+    const controls = svg.append('g')
+      .attr('transform', `translate(${width - 150}, ${height - 60})`)
+    
+    // Play button
+    controls.append('rect')
+      .attr('width', 40)
+      .attr('height', 40)
+      .attr('rx', 5)
+      .attr('fill', '#3B82F6')
+      .attr('cursor', 'pointer')
+      .on('click', () => {
+        if (tl.paused()) tl.play()
+        else tl.pause()
+      })
+    
+    controls.append('text')
+      .attr('x', 20)
+      .attr('y', 25)
+      .attr('text-anchor', 'middle')
+      .attr('fill', 'white')
+      .attr('pointer-events', 'none')
+      .text('▶/❚❚')
+    
+    // Reset button
+    controls.append('rect')
+      .attr('x', 50)
+      .attr('width', 40)
+      .attr('height', 40)
+      .attr('rx', 5)
+      .attr('fill', '#EF4444')
+      .attr('cursor', 'pointer')
+      .on('click', () => {
+        tl.restart()
+      })
+    
+    controls.append('text')
+      .attr('x', 70)
+      .attr('y', 25)
+      .attr('text-anchor', 'middle')
+      .attr('fill', 'white')
+      .attr('pointer-events', 'none')
+      .text('↺')
+    
+    // Add zoom behavior
+    const zoom = d3.zoom()
+      .scaleExtent([0.5, 3])
+      .on('zoom', (event) => {
+        g.attr('transform', event.transform)
+      })
+    
+    svg.call(zoom)
+    
+    // Auto-play the animation
+    tl.play()
+    
+  }, [data, currentCell, type])
 
   return (
-    <div className="relative min-h-full">
-      {/* Fixed Info panel */}
-      <div className="fixed z-50 border rounded-lg shadow-lg left-72 top-48 bg-slate-800 border-slate-700">
-        <div className="flex flex-col p-3 space-y-1 text-xs">
-          <div className="font-medium text-yellow-400">Current: F({currentCell})</div>
-          <div className="text-green-400">Base: F(0)=0, F(1)=1</div>
-          <div className="text-blue-400">F(n) = F(n-1) + F(n-2)</div>
-        </div>
-      </div>
-
-      <div className="flex justify-center px-4 mt-16">
-        <svg
-          ref={svgRef}
-          className="rounded-lg"
-          width={width}
-          height={height}
-          style={{ 
-            width: "100%", 
-            minHeight: "600px",
-            border: "1px solid #475569", // Add border for visibility
-            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" 
-          }}
-          preserveAspectRatio="xMidYMid meet"
-        />
+    <div ref={containerRef} className="flex items-center justify-center w-full h-full">
+      <svg
+        ref={svgRef}
+        className="w-full h-full"
+        style={{ 
+          minHeight: "600px", 
+          borderRadius: "0.5rem", 
+          backgroundColor: "#1F2937" // Dark background
+        }}
+      />
+      <div className="absolute text-sm text-gray-400 bottom-2 left-2">
+        Scroll to zoom, drag to pan
       </div>
     </div>
   )

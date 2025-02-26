@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion } from "motion/react"
 import useDPStore from '../../store/dpStore'
 import DPTreeVisualizer from './DPTreeVisualizer'
-import { algorithmInfo } from '../../store/algorithmData'
+import CodeView from './CodeView'
 
 const DPVisualizer = () => {
   const { algorithm } = useParams()
@@ -20,13 +20,14 @@ const DPVisualizer = () => {
     isPaused,
     pauseAlgorithm,
     resumeAlgorithm,
-    setCurrentAlgorithm, // Add this
-    setTable,           // Add this
-    setCurrentCell,     // Add this
-    runAlgorithm,       // Add this
+    setCurrentAlgorithm,
+    setTable,
+    setCurrentCell,
+    runAlgorithm,
   } = useDPStore()
 
   const [showExplanation, setShowExplanation] = useState(true)
+  const [visualizationType, setVisualizationType] = useState('table') // 'table', 'tree', or 'code'
 
   // Algorithm explanations
   const explanations = {
@@ -68,6 +69,41 @@ const DPVisualizer = () => {
     }
   }, [table]) // Re-run when table updates
 
+  const handleRunAlgorithm = async () => {
+    if (isPlaying) return
+    
+    await runAlgorithm()
+  }
+
+  const renderVisualizationToggle = () => (
+    <div className="flex items-center gap-2 ml-4">
+      <button
+        onClick={() => setVisualizationType('table')}
+        className={`px-3 py-1 text-sm rounded ${
+          visualizationType === 'table' ? 'bg-blue-600' : 'bg-slate-600'
+        }`}
+      >
+        Table View
+      </button>
+      <button
+        onClick={() => setVisualizationType('tree')}
+        className={`px-3 py-1 text-sm rounded ${
+          visualizationType === 'tree' ? 'bg-blue-600' : 'bg-slate-600'
+        }`}
+      >
+        Tree View
+      </button>
+      <button
+        onClick={() => setVisualizationType('code')}
+        className={`px-3 py-1 text-sm rounded ${
+          visualizationType === 'code' ? 'bg-blue-600' : 'bg-slate-600'
+        }`}
+      >
+        Code View
+      </button>
+    </div>
+  )
+
   const renderControls = () => (
     <div className="flex items-center gap-4 p-4 rounded-lg bg-slate-700">
       {/* Input Controls */}
@@ -95,7 +131,7 @@ const DPVisualizer = () => {
       {/* Playback Controls */}
       <div className="flex gap-2">
         <button
-          onClick={() => isPlaying ? pauseAlgorithm() : runAlgorithm()}
+          onClick={() => isPlaying ? pauseAlgorithm() : handleRunAlgorithm()}
           className={`px-4 py-2 rounded ${
             isPlaying ? 'bg-red-500' : 'bg-green-500'
           }`}
@@ -122,6 +158,9 @@ const DPVisualizer = () => {
           className="w-24"
         />
       </div>
+      
+      {/* Visualization Toggle */}
+      {renderVisualizationToggle()}
     </div>
   )
 
@@ -216,19 +255,39 @@ const DPVisualizer = () => {
 
       {/* Main Content with Initial Scroll Position */}
       <div className="p-4 mt-32 flex flex-col h-[calc(100vh-12rem)]">
-        <div 
-          ref={scrollRef}
-          className="flex-1 p-4 overflow-x-auto rounded-lg bg-slate-900"
-          style={{ scrollBehavior: 'smooth' }}
-        >
-          <div className="min-w-max">
-            <DPTreeVisualizer 
-              data={table}
+        {visualizationType === 'table' && (
+          <div className="flex-1 p-4 overflow-auto rounded-lg bg-slate-900">
+            <div className="flex items-center justify-center min-h-full">
+              {renderTable()}
+            </div>
+          </div>
+        )}
+        
+        {visualizationType === 'tree' && (
+          <div 
+            ref={scrollRef}
+            className="flex-1 p-4 overflow-x-auto rounded-lg bg-slate-900"
+            style={{ scrollBehavior: 'smooth' }}
+          >
+            <div className="min-w-max">
+              <DPTreeVisualizer 
+                data={table}
+                currentCell={currentCell}
+                type={algorithm?.toLowerCase().replace(/[^a-z]/g, '')}
+              />
+            </div>
+          </div>
+        )}
+        
+        {visualizationType === 'code' && (
+          <div className="flex-1 p-4 rounded-lg bg-slate-900">
+            <CodeView
+              algorithm={algorithm?.toLowerCase().replace(/[^a-z]/g, '')}
               currentCell={currentCell}
-              type={algorithm?.toLowerCase().replace(/[^a-z]/g, '')}
+              isPlaying={isPlaying}
             />
           </div>
-        </div>
+        )}
       </div>
     </div>
   )

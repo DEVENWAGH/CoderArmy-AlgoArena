@@ -11,6 +11,9 @@ export const fibonacci = async (n, setTable, setCurrent, getSpeed, getIsPlaying)
   dp[1] = 1
   setTable([...dp])
   
+  // Remove BFS steps generation code
+  
+  // Normal fibonacci calculation
   for (let i = 2; i <= n; i++) {
     if (!getIsPlaying()) await waitForResume(getIsPlaying)
     
@@ -20,6 +23,7 @@ export const fibonacci = async (n, setTable, setCurrent, getSpeed, getIsPlaying)
     await new Promise(r => setTimeout(r, getDelay(getSpeed())))
   }
   
+  // Return just the result, no BFS steps
   return dp[n]
 }
 

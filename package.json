@@ -10,12 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@gsap/react": "^2.1.2",
     "@react-three/drei": "^10.0.0",
     "@react-three/fiber": "^9.0.2",
     "@tailwindcss/vite": "^4.0.7",
     "coderarmy-3dsa": "file:",
     "d3": "^7.9.0",
     "framer-motion": "^12.4.5",
+    "gsap": "^3.12.7",
     "motion": "^12.4.5",
     "nanoid": "^5.1.0",
     "prismjs": "^1.29.0",
