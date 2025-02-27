@@ -28,29 +28,51 @@ export const fibonacci = async (n, setTable, setCurrent, getSpeed, getIsPlaying)
 }
 
 export const knapsack = async (weights, values, capacity, setTable, setCurrent, getSpeed, getIsPlaying) => {
+  // Create initialized table with proper dimensions
   const n = weights.length
   const dp = Array(n + 1).fill().map(() => Array(capacity + 1).fill(0))
-  setTable(dp.map(row => [...row]))
   
-  for (let i = 1; i <= n; i++) {
+  // Initialize the table first
+  setTable([...dp.map(row => [...row])])
+  await new Promise(r => setTimeout(r, getDelay(getSpeed()) * 2))
+
+  // Fill the DP table cells one by one
+  for (let i = 0; i <= n; i++) {
     for (let w = 0; w <= capacity; w++) {
       if (!getIsPlaying()) await waitForResume(getIsPlaying)
       
+      // Skip first row and column base cases (already set to 0)
+      if (i === 0 || w === 0) {
+        setCurrent([i, w])
+        await new Promise(r => setTimeout(r, getDelay(getSpeed()) / 2))
+        continue
+      }
+      
       setCurrent([i, w])
+      
+      // If current item fits in the knapsack
       if (weights[i-1] <= w) {
+        // Calculate value with and without taking the item
         dp[i][w] = Math.max(
-          values[i-1] + dp[i-1][w - weights[i-1]],
-          dp[i-1][w]
+          values[i-1] + dp[i-1][w - weights[i-1]], // Take item
+          dp[i-1][w] // Don't take item
         )
       } else {
+        // If item doesn't fit, skip it
         dp[i][w] = dp[i-1][w]
       }
-      setTable(dp.map(row => [...row]))
+      
+      // Update the displayed table
+      setTable([...dp.map(row => [...row])])
       await new Promise(r => setTimeout(r, getDelay(getSpeed())))
     }
   }
   
-  return dp[n][capacity]
+  return {
+    result: dp[n][capacity],
+    weights,
+    values
+  }
 }
 
 export const lcs = async (str1, str2, setTable, setCurrent, getSpeed, getIsPlaying) => {

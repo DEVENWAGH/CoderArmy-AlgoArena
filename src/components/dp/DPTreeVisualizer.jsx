@@ -3,7 +3,7 @@ import * as d3 from 'd3'
 import { gsap } from 'gsap'
 import { useGSAP } from '@gsap/react'
 
-const DPTreeVisualizer = ({ data, currentCell, type }) => {
+const DPTreeVisualizer = ({ data, currentCell, type, algorithmResult = null }) => {
   const svgRef = useRef(null)
   const containerRef = useRef(null)
   const timelineRef = useRef(null)
@@ -101,60 +101,82 @@ const DPTreeVisualizer = ({ data, currentCell, type }) => {
       return root
     }
 
-    // Build a simplified knapsack tree
+    // Fixed knapsack tree builder with actual weights and values from algorithm result
     const buildKnapsackTree = (dp) => {
-      const rows = dp.length
-      const cols = dp[0].length
+      if (!dp || !dp.length || !dp[0] || !dp[0].length) {
+        return { id: 'empty', name: 'No Data', value: 0, children: [] };
+      }
+
+      const rows = dp.length;
+      const cols = dp[0].length;
       
-      // Create a simplified tree
+      // Use actual weights and values if available
+      const weights = algorithmResult?.weights || Array.from({ length: rows - 1 }, (_, i) => i + 1);
+      const values = algorithmResult?.values || Array.from({ length: rows - 1 }, (_, i) => i + 2);
+      
+      // Create the root node for the tree
       const root = {
         id: 'knapsack-root',
         name: `KS(${rows-1},${cols-1})`,
-        value: dp[rows-1][cols-1],
+        value: dp[rows-1]?.[cols-1] || 0,
         isBaseCase: false,
-        isCurrent: currentCell && currentCell[0] === rows-1 && currentCell[1] === cols-1,
+        isCurrent: currentCell && 
+                  currentCell[0] === rows-1 && 
+                  currentCell[1] === cols-1,
         children: []
-      }
+      };
       
-      // Simplify by showing only a few significant sub-problems
-      const addLevels = (node, i, w, depth = 0) => {
+      // Recursively build the tree
+      const buildSubtree = (i, w, depth = 0) => {
+        // Base cases or depth limit
         if (depth > 3 || i <= 0 || w <= 0) {
-          return
+          return {
+            id: `ks-${i}-${w}`,
+            name: `KS(${i},${w})`,
+            value: i >= 0 && w >= 0 && i < dp.length && w < dp[i].length ? dp[i][w] : 0,
+            isBaseCase: i === 0 || w === 0,
+            isCurrent: currentCell && 
+                      currentCell[0] === i && 
+                      currentCell[1] === w,
+            children: []
+          };
         }
         
-        // Not taking the item
-        const notTake = {
-          id: `ks-${i-1}-${w}`,
-          name: `KS(${i-1},${w})`,
-          value: dp[i-1] ? dp[i-1][w] || 0 : 0,
-          isBaseCase: i-1 === 0 || w === 0,
-          isCurrent: currentCell && currentCell[0] === i-1 && currentCell[1] === w,
+        // Current node
+        const node = {
+          id: `ks-${i}-${w}`,
+          name: `KS(${i},${w})`,
+          value: dp[i]?.[w] || 0,
+          isBaseCase: false,
+          isCurrent: currentCell && 
+                    currentCell[0] === i && 
+                    currentCell[1] === w,
           children: []
+        };
+        
+        // Check if we take current item or not
+        const itemIndex = i - 1;
+        const itemWeight = weights[itemIndex];
+        const itemValue = values[itemIndex];
+        
+        // Add "take" child if possible
+        if (w >= itemWeight) {
+          const takeNode = buildSubtree(i-1, w-itemWeight, depth+1);
+          takeNode.decision = `Take (${itemValue})`;
+          node.children.push(takeNode);
         }
         
-        // Taking the item (if possible)
-        const take = {
-          id: `ks-${i-1}-${w-1}`,
-          name: `KS(${i-1},${w-1})`,
-          value: (i-1 >= 0 && w-1 >= 0 && dp[i-1]) ? dp[i-1][w-1] || 0 : 0,
-          isBaseCase: i-1 === 0 || w-1 === 0,
-          isCurrent: currentCell && currentCell[0] === i-1 && currentCell[1] === w-1,
-          children: []
-        }
+        // Add "don't take" child
+        const skipNode = buildSubtree(i-1, w, depth+1);
+        skipNode.decision = "Skip";
+        node.children.push(skipNode);
         
-        node.children.push(notTake)
-        node.children.push(take)
-        
-        // Recursively add more levels
-        if (depth < 2) {
-          addLevels(notTake, i-1, w, depth+1)
-          if (w-1 >= 0) addLevels(take, i-1, w-1, depth+1)
-        }
-      }
+        return node;
+      };
       
-      addLevels(root, rows-1, cols-1)
-      return root
-    }
+      // Build tree starting from the bottom right (final state)
+      return buildSubtree(rows-1, cols-1);
+    };
 
     // Estimate tree size to determine SVG dimensions
     const estimateTreeSize = (root) => {
@@ -247,7 +269,26 @@ const DPTreeVisualizer = ({ data, currentCell, type }) => {
       .attr('text-anchor', 'middle')
       .attr('fill', '#D1D5DB')
       .attr('font-size', '12px')
-      .text(d => d.data.value !== undefined ? d.data.value : '?')
+      .text(d => {
+        if (!d.data) return '';
+        const value = d.data.value !== undefined ? d.data.value : '?';
+        
+        if (type === 'knapsack' && d.data.decision) {
+          return `${value} (${d.data.decision})`;
+        }
+        return value;
+      });
+      
+    // Add an extra line for knapsack decisions if needed
+    if (type === 'knapsack') {
+      nodeGroups.filter(d => d.data.decision)
+        .append('text')
+        .attr('dy', '42px')
+        .attr('text-anchor', 'middle')
+        .attr('fill', '#9CA3AF')
+        .attr('font-size', '10px')
+        .text(d => d.data.decision);
+    }
 
     // Create a GSAP animation timeline
     const tl = timelineRef.current
@@ -406,7 +447,7 @@ const DPTreeVisualizer = ({ data, currentCell, type }) => {
     // Auto-play the animation
     tl.play()
     
-  }, [data, currentCell, type])
+  }, [data, currentCell, type, algorithmResult])
 
   return (
     <div ref={containerRef} className="flex items-center justify-center w-full h-full">
