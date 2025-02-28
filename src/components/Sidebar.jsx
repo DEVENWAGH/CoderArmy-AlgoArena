@@ -23,15 +23,10 @@ const Sidebar = () => {
   }
 
   return (
-    <aside className="w-64 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 
-      h-screen fixed left-0 top-0 p-4 overflow-y-auto pt-28
-      border-r border-sky-500/20 shadow-lg shadow-sky-500/10
-      scrollbar scrollbar-track-gray-900/40 scrollbar-thumb-sky-500/50
-      scrollbar-w-2 hover:scrollbar-thumb-sky-400">
+    <aside className="fixed top-0 left-0 w-64 h-screen p-4 overflow-y-auto border-r shadow-lg bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 pt-28 border-sky-500/20 shadow-sky-500/10 scrollbar scrollbar-track-gray-900/40 scrollbar-thumb-sky-500/50 scrollbar-w-2 hover:scrollbar-thumb-sky-400">
       {Object.entries(algorithmCategories).map(([category, algorithms]) => (
         <div key={category} className="mb-6">
-          <h3 className="text-sm font-semibold text-transparent bg-clip-text 
-            bg-gradient-to-r from-sky-400 to-blue-600 mb-2">
+          <h3 className="mb-2 text-sm font-semibold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-600">
             {category}
           </h3>
           <div className="space-y-1">

@@ -28,13 +28,29 @@ const useAlgorithmStore = create((set, get) => ({
     'Dynamic Programming': [
       'Fibonacci',
       'Knapsack',
-      'LCS',
-      'LIS'
+      'LIS',
+      'LCS'
     ],
-    'Tree': [
+    'Greedy Algorithm': [
+      'Activity Selection',
+      'Huffman Coding'
+    ],
+    'Backtracking': [
+      'N-Queens',
+      'Sudoku Solver',
+    ],
+    'Tree Algorithms': [
       'Tree Traversals',
-      'BST Operations'
+      'BST Operations',
+      'AVL Rotations',
+      'LCA'
+    ],
+    'Mathematical Algorithms': [
+      'GCD (Euclidean)',
+      'Sieve of Eratosthenes',
+      'Prime Factorization',
     ]
+
   },
 
   array: [],
