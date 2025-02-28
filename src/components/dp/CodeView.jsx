@@ -254,9 +254,29 @@ const CodeView = ({ algorithm, currentCell, isPlaying }) => {
   const codeLines = code.split('\n');
 
   return (
-    <div className="flex flex-col w-full h-full gap-4">
-      <div className="flex-grow w-full p-4 overflow-auto bg-gray-900 rounded-lg" ref={codeRef}>
-        <pre className="font-mono text-sm text-gray-300">
+    <div className="flex flex-col w-full h-full gap-4 overflow-hidden">
+      {/* Code container with scrolling */}
+      <div 
+        className="flex-grow w-full overflow-auto bg-gray-900 rounded-lg code-container" 
+        ref={codeRef}
+        style={{ maxHeight: 'calc(100% - 200px)' }}
+      >
+        {/* Add scrollbar styling */}
+        <style jsx>{`
+          .code-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+          }
+          .code-container::-webkit-scrollbar-thumb {
+            background: #4B5563;
+            border-radius: 4px;
+          }
+          .code-container::-webkit-scrollbar-track {
+            background: #1F2937;
+          }
+        `}</style>
+        
+        <pre className="p-4 font-mono text-sm text-gray-300">
           {codeLines.map((line, index) => (
             <motion.div
               key={index}
@@ -281,9 +301,10 @@ const CodeView = ({ algorithm, currentCell, isPlaying }) => {
         </pre>
       </div>
       
-      {/* Explanation panel */}
+      {/* Explanation panel - fixed JSX structure */}
       <motion.div 
         className="w-full p-4 text-white bg-gray-800 rounded-lg"
+        style={{ height: '80px', overflow: 'auto' }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ 
           opacity: explanation ? 1 : 0,
@@ -295,8 +316,11 @@ const CodeView = ({ algorithm, currentCell, isPlaying }) => {
         <p>{explanation || "Run the algorithm to see step-by-step explanations."}</p>
       </motion.div>
       
-      {/* Algorithm key points */}
-      <div className="w-full p-4 bg-blue-900 rounded-lg bg-opacity-30">
+      {/* Key concept panel - fixed JSX structure */}
+      <div 
+        className="w-full p-4 bg-blue-900 rounded-lg bg-opacity-30"
+        style={{ height: '80px', overflow: 'auto' }}
+      >
         <h3 className="mb-2 text-lg font-semibold text-blue-300">Key Concept</h3>
         <p className="text-white">
           {algorithm === 'fibonacci' && 'Fibonacci uses overlapping subproblems, storing previous results to avoid recalculation.'}
@@ -304,6 +328,11 @@ const CodeView = ({ algorithm, currentCell, isPlaying }) => {
           {algorithm === 'lis' && 'LIS tracks the longest increasing subsequence ending at each position.'}
           {algorithm === 'lcs' && 'LCS builds a matrix comparing each character pair between two strings.'}
         </p>
+      </div>
+
+      {/* Scroll indicator */}
+      <div className="absolute px-2 py-1 text-xs text-gray-500 rounded bottom-4 right-4 bg-slate-700 opacity-70">
+        Scroll to view more code
       </div>
     </div>
   );

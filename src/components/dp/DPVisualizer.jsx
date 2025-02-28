@@ -392,66 +392,85 @@ const DPVisualizer = () => {
           </div>
         )}
 
-        {/* Table headers for Knapsack */}
-        {algorithm?.includes('knapsack') && (
-          <div className="flex mt-2 mb-4">
-            <div className="flex items-center justify-center w-12 h-12 font-bold text-white bg-gray-700 border-b border-r border-gray-600">
-              w/i
-            </div>
-            {Array.from({ length: table[0]?.length || 0 }).map((_, w) => (
-              <div 
-                key={`header-${w}`}
-                className="flex items-center justify-center w-12 h-12 font-bold text-white bg-gray-700 border-b border-r border-gray-600"
-              >
-                {w}
-              </div>
-            ))}
-          </div>
-        )}
-
         {/* Table grid with row headers for 2D data */}
-        <div className="flex">
-          {/* Row headers for knapsack */}
+        <div className="flex flex-col">
+          {/* Table headers for Knapsack - Match the gap and style of cells */}
           {algorithm?.includes('knapsack') && (
-            <div className="flex flex-col">
-              {table.map((row, i) => (
+            <div className="flex gap-1">
+              <div className="flex items-center justify-center w-12 h-12 font-bold text-white bg-gray-700 rounded">
+                w/i
+              </div>
+              {Array.from({ length: table[0]?.length || 0 }).map((_, w) => (
                 <div 
-                  key={`row-header-${i}`}
-                  className="flex items-center justify-center w-12 h-12 font-bold text-white bg-gray-700 border-b border-r border-gray-600"
+                  key={`header-${w}`}
+                  className="flex items-center justify-center w-12 h-12 font-bold text-white bg-gray-700 rounded"
                 >
-                  {i}
+                  {w}
                 </div>
               ))}
             </div>
           )}
 
-          {/* Table cells */}
-          <div className="grid gap-1" 
-            style={{ 
-              gridTemplateColumns: `repeat(${table[0]?.length || 1}, minmax(40px, 1fr))`
-            }}
-          >
-            {table.map((row, i) => (
-              row.map((value, j) => (
-                <motion.div
-                  key={`${i}-${j}`}
-                  className={`w-12 h-12 flex items-center justify-center rounded
-                    ${currentCell?.[0] === i && currentCell?.[1] === j 
-                      ? 'bg-yellow-500' 
-                      : value !== 0 
-                        ? 'bg-green-500'
-                        : 'bg-blue-500'
-                    }`}
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <span className="text-lg font-bold text-white">
-                    {value}
-                  </span>
-                </motion.div>
-              ))
-            ))}
+          <div className="flex gap-1 mt-1">
+            {/* Row headers for knapsack */}
+            {algorithm?.includes('knapsack') && (
+              <div className="flex flex-col gap-1">
+                {table.map((row, i) => (
+                  <div 
+                    key={`row-header-${i}`}
+                    className="flex items-center justify-center w-12 h-12 font-bold text-white bg-gray-700 rounded"
+                  >
+                    {i}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* LCS row headers with string characters */}
+            {algorithm?.includes('lcs') && (
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center justify-center w-12 h-12 font-bold text-white bg-gray-700 rounded">
+                  -
+                </div>
+                {input.lcs.str1.split('').map((char, i) => (
+                  <div 
+                    key={`row-header-${i}`}
+                    className="flex items-center justify-center w-12 h-12 font-bold text-white bg-gray-700 rounded"
+                  >
+                    {char}
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Table cells - restore gap-1 for consistent spacing */}
+            <div className="grid gap-1" 
+              style={{ 
+                gridTemplateColumns: `repeat(${table[0]?.length || 1}, minmax(48px, 1fr))`
+              }}
+            >
+              {table.map((row, i) => (
+                row.map((value, j) => (
+                  <motion.div
+                    key={`${i}-${j}`}
+                    className={`w-12 h-12 flex items-center justify-center rounded
+                      ${currentCell?.[0] === i && currentCell?.[1] === j 
+                        ? 'bg-yellow-500' 
+                        : value !== 0 
+                          ? 'bg-green-500'
+                          : 'bg-blue-500'
+                      }`}
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <span className="text-lg font-bold text-white">
+                      {value}
+                    </span>
+                  </motion.div>
+                ))
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -466,7 +485,7 @@ const DPVisualizer = () => {
       </div>
 
       {/* Main Content with Initial Scroll Position */}
-      <div className="p-4 mt-32 flex flex-col h-[calc(100vh-12rem)]">
+      <div className="p-4 mt-50 flex flex-col h-[calc(100vh-12rem)]">
         {visualizationType === 'table' && (
           <div className="flex-1 p-4 overflow-auto rounded-lg bg-slate-900">
             <div className="flex items-center justify-center min-h-full">
@@ -493,7 +512,7 @@ const DPVisualizer = () => {
         )}
         
         {visualizationType === 'code' && (
-          <div className="flex-1 p-4 rounded-lg bg-slate-900">
+          <div className="flex-1 p-4 overflow-hidden rounded-lg bg-slate-900">
             <CodeView
               algorithm={algorithm?.toLowerCase().replace(/[^a-z]/g, '')}
               currentCell={currentCell}

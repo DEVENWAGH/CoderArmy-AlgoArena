@@ -26,6 +26,8 @@ const DPTreeVisualizer = ({ data, currentCell, type, algorithmResult = null }) =
           return buildFibonacciTree(data.length - 1)
         case 'lis':
           return buildLISTree(data)
+        case 'lcs':
+          return buildLCSTree(data)
         case 'knapsack':
           return buildKnapsackTree(data)
         default:
@@ -61,44 +63,121 @@ const DPTreeVisualizer = ({ data, currentCell, type, algorithmResult = null }) =
 
     // Build an LIS tree
     const buildLISTree = (dp) => {
-      // Simplified tree for LIS
+      // Check if dp is a 1D array (handle both formats)
+      const is1DArray = !Array.isArray(dp[0]);
+      
+      // Get max LIS value safely
+      const getMaxValue = () => {
+        if (is1DArray) {
+          return Math.max(...dp); // Safe for 1D array
+        } else {
+          // Find max in 2D array safely
+          return dp.reduce((max, row) => {
+            const rowMax = row.reduce((m, val) => Math.max(m, val), 0);
+            return Math.max(max, rowMax);
+          }, 0);
+        }
+      };
+      
       const root = {
         id: 'lis-root',
         name: 'LIS',
-        value: Math.max(...dp),
+        value: getMaxValue(),
+        isBaseCase: false,
+        children: []
+      };
+      
+      // Create nodes for each position based on array type
+      if (is1DArray) {
+        // Handle 1D array case
+        for (let i = 0; i < dp.length; i++) {
+          const node = {
+            id: `lis-${i}`,
+            name: `LIS(${i})`,
+            value: dp[i],
+            isBaseCase: dp[i] === 1,
+            isCurrent: currentCell === i,
+            children: []
+          };
+          
+          // Find dependencies (nodes that could have contributed to this LIS)
+          for (let j = 0; j < i; j++) {
+            if (dp[j] < dp[i]) {
+              node.children.push({
+                id: `lis-dep-${j}`,
+                name: `LIS(${j})`,
+                value: dp[j],
+                isBaseCase: dp[j] === 1,
+                children: []
+              });
+            }
+          }
+          
+          root.children.push(node);
+        }
+      } else {
+        // Handle 2D array case if that's how your algorithm stores data
+        for (let i = 0; i < dp.length; i++) {
+          const node = {
+            id: `lis-${i}`,
+            name: `LIS(${i})`,
+            value: dp[i][i] || dp[i][0] || 1, // Adapt based on your DP structure
+            isBaseCase: (dp[i][i] === 1) || (dp[i][0] === 1),
+            isCurrent: Array.isArray(currentCell) 
+              ? (currentCell[0] === i && currentCell[1] === i) 
+              : currentCell === i,
+            children: []
+          };
+          
+          root.children.push(node);
+        }
+      }
+      
+      return root;
+    };
+
+    // Build an LCS tree
+    const buildLCSTree = (dp) => {
+      if (!dp || !dp.length || !dp[0]) return null
+
+      const root = {
+        id: 'lcs-root',
+        name: 'LCS',
+        value: dp[dp.length - 1][dp[0].length - 1],
         isBaseCase: false,
         children: []
       }
-      
-      // Create first level nodes for each element
-      for (let i = 0; i < dp.length; i++) {
+
+      const buildSubtree = (i, j, depth = 0) => {
+        if (depth > 3 || i < 0 || j < 0) return null
+
         const node = {
-          id: `lis-${i}`,
-          name: `LIS(${i})`,
-          value: dp[i],
-          isBaseCase: dp[i] === 1,
-          isCurrent: currentCell === i,
+          id: `lcs-${i}-${j}`,
+          name: `LCS(${i},${j})`,
+          value: dp[i][j],
+          isBaseCase: i === 0 || j === 0,
+          isCurrent: Array.isArray(currentCell) && 
+                    currentCell[0] === i && 
+                    currentCell[1] === j,
           children: []
         }
-        
-        // Add dependencies
-        for (let j = 0; j < i; j++) {
-          if (data[j] < data[i]) {
-            node.children.push({
-              id: `lis-${j}`,
-              name: `LIS(${j})`,
-              value: dp[j],
-              isBaseCase: dp[j] === 1,
-              isCurrent: false,
-              children: []
-            })
-          }
+
+        if (i > 0 && j > 0) {
+          const left = buildSubtree(i, j-1, depth + 1)
+          const up = buildSubtree(i-1, j, depth + 1)
+          const diag = buildSubtree(i-1, j-1, depth + 1)
+          
+          if (left) node.children.push(left)
+          if (up) node.children.push(up)
+          if (diag) node.children.push(diag)
         }
-        
-        root.children.push(node)
+
+        return node
       }
-      
-      return root
+
+      const m = dp.length - 1
+      const n = dp[0].length - 1
+      return buildSubtree(m, n)
     }
 
     // Fixed knapsack tree builder with actual weights and values from algorithm result
@@ -205,44 +284,45 @@ const DPTreeVisualizer = ({ data, currentCell, type, algorithmResult = null }) =
       .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`)
     
-    // Create a group element to contain all elements
+    // Set initial transform centered in viewport
     const g = svg.append('g')
-      .attr('transform', `translate(${width/2}, 50)`)
+      .attr('transform', `translate(${width/2}, 80)`) // Increase top margin for better viewing
+      .attr('class', 'main-group')
     
     // Create a hierarchical layout
     const root = d3.hierarchy(treeData)
     
-    // Use tree layout
+    // Use vertical tree layout with better spacing
     const treeLayout = d3.tree()
-      .size([width - 200, height - 150])
-      .nodeSize([70, 100])
-      .separation((a, b) => a.parent === b.parent ? 1.2 : 2)
+      .size([width - 300, height - 200]) // Reduce size to prevent nodes at edges
+      .nodeSize([80, 100]) // Increase spacing between nodes
+      .separation((a, b) => a.parent === b.parent ? 1.5 : 2.5) // More separation
     
     const tree = treeLayout(root)
     
-    // Draw the links
+    // Draw the links with smoother curves
     g.selectAll('path.link')
       .data(tree.links())
       .enter()
       .append('path')
       .attr('class', 'link')
-      .attr('d', d3.linkHorizontal()
-        .x(d => d.y) // Swap x and y for horizontal layout
-        .y(d => d.x))
+      .attr('d', d3.linkVertical()
+        .x(d => d.x)
+        .y(d => d.y))
       .attr('stroke', '#4B5563')
       .attr('stroke-width', 2)
       .attr('fill', 'none')
-      .style('opacity', 0) // Start invisible
+      .style('opacity', 1) // Make links visible immediately for better orientation
     
-    // Create a group for each node
+    // Create a group for each node - make visible immediately
     const nodeGroups = g.selectAll('g.node')
       .data(tree.descendants())
       .enter()
       .append('g')
       .attr('class', 'node')
-      .attr('transform', d => `translate(${d.y},${d.x})`) // Swap x and y for horizontal layout
-      .style('opacity', 0) // Start invisible
-    
+      .attr('transform', d => `translate(${d.x},${d.y})`)
+      .style('opacity', 0.3) // Partially visible at start for better orientation
+
     // Add circles for nodes with different colors based on conditions
     nodeGroups.append('circle')
       .attr('r', d => d.data.isBaseCase ? 18 : 22)
@@ -291,7 +371,7 @@ const DPTreeVisualizer = ({ data, currentCell, type, algorithmResult = null }) =
     }
 
     // Create a GSAP animation timeline
-    const tl = timelineRef.current
+    const tl = timelineRef.current = gsap.timeline()
     
     // Mark visited nodes first to simulate recursion traversal
     const markVisitedSequence = (nodes) => {
@@ -435,17 +515,70 @@ const DPTreeVisualizer = ({ data, currentCell, type, algorithmResult = null }) =
       .attr('pointer-events', 'none')
       .text('↺')
     
-    // Add zoom behavior
+    // Improved zoom behavior with better defaults and constraints
     const zoom = d3.zoom()
-      .scaleExtent([0.5, 3])
+      .scaleExtent([0.2, 3])
+      .translateExtent([[-width, -height], [width * 2, height * 2]])
       .on('zoom', (event) => {
-        g.attr('transform', event.transform)
+        // Apply zoom to the main group
+        g.attr('transform', event.transform);
       })
+      .filter(event => {
+        // Allow zoom on all inputs but prevent double-triggering on some events
+        return !event.ctrlKey && !event.button;
+      });
     
+    // Initialize with a slight zoom out for better initial view
     svg.call(zoom)
+       .call(zoom.translateBy, 0, 0)
+       .call(zoom.scaleBy, 0.8);
     
-    // Auto-play the animation
-    tl.play()
+    // Configure the timeline with delayed start for better control
+    timelineRef.current.pause();
+    timelineRef.current.delay(0.5); // Give time for initial render before animation
+    
+    // Animate nodes appearing - simplified sequence
+    tree.descendants().forEach((node, i) => {
+      // Group nodes by level for better visual flow
+      const delay = node.depth * 0.3 + i * 0.03;
+      
+      // Animate opacity and slight scale increase for better visibility
+      timelineRef.current.to(nodeGroups.nodes()[tree.descendants().indexOf(node)], {
+        opacity: 1,
+        scale: 1,
+        duration: 0.4,
+        ease: 'power2.out'
+      }, delay);
+    });
+    
+    // Add a reset zoom button for convenience
+    const resetButton = svg.append('g')
+      .attr('transform', `translate(${width - 90}, ${height - 60})`)
+      .attr('class', 'control-button')
+      .style('cursor', 'pointer')
+      .on('click', () => {
+        svg.transition()
+           .duration(750)
+           .call(zoom.transform, d3.zoomIdentity.translate(width/2, 80).scale(0.8));
+      });
+    
+    resetButton.append('rect')
+      .attr('width', 40)
+      .attr('height', 40)
+      .attr('rx', 5)
+      .attr('fill', '#4B5563')
+      
+    resetButton.append('text')
+      .attr('x', 20)
+      .attr('y', 25)
+      .attr('text-anchor', 'middle')
+      .attr('fill', 'white')
+      .text('⟲');
+    
+    // Start animation only when component is fully mounted
+    setTimeout(() => {
+      timelineRef.current.play();
+    }, 100);
     
   }, [data, currentCell, type, algorithmResult])
 
@@ -457,11 +590,12 @@ const DPTreeVisualizer = ({ data, currentCell, type, algorithmResult = null }) =
         style={{ 
           minHeight: "600px", 
           borderRadius: "0.5rem", 
-          backgroundColor: "#1F2937" // Dark background
+          backgroundColor: "#1F2937",
+          touchAction: "none" // Important for mobile devices
         }}
       />
-      <div className="absolute text-sm text-gray-400 bottom-2 left-2">
-        Scroll to zoom, drag to pan
+      <div className="absolute px-3 py-1 text-sm text-gray-300 rounded bg-slate-800 bg-opacity-70 bottom-2 left-2">
+        Scroll to zoom, drag to pan, double-click to reset
       </div>
     </div>
   )

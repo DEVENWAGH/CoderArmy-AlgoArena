@@ -27,7 +27,9 @@ const useAlgorithmStore = create((set, get) => ({
     ],
     'Dynamic Programming': [
       'Fibonacci',
-      'Knapsack'
+      'Knapsack',
+      'LCS',
+      'LIS'
     ],
     'Tree': [
       'Tree Traversals',

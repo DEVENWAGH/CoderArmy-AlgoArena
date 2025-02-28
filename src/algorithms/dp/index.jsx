@@ -81,22 +81,39 @@ export const lcs = async (str1, str2, setTable, setCurrent, getSpeed, getIsPlayi
   const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0))
   setTable(dp.map(row => [...row]))
   
+  // Wait function for better control
+  const wait = async (ms) => {
+    const speed = getSpeed()
+    const delay = Math.floor(ms * (100 - speed) / 50)
+    await new Promise(r => setTimeout(r, delay))
+  }
+  
+  await wait(500) // Initial pause to show the starting state
+  
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
       if (!getIsPlaying()) await waitForResume(getIsPlaying)
       
       setCurrent([i, j])
+      
       if (str1[i-1] === str2[j-1]) {
         dp[i][j] = dp[i-1][j-1] + 1
       } else {
         dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1])
       }
+      
       setTable(dp.map(row => [...row]))
-      await new Promise(r => setTimeout(r, getDelay(getSpeed())))
+      await wait(300)
     }
   }
   
-  return dp[m][n]
+  setCurrent(null)
+  
+  return {
+    result: dp[m][n],
+    str1, // Return the original strings for reference
+    str2
+  }
 }
 
 export const lis = async (arr, setTable, setCurrent, getSpeed, getIsPlaying) => {
@@ -104,20 +121,42 @@ export const lis = async (arr, setTable, setCurrent, getSpeed, getIsPlaying) => 
   const dp = Array(n).fill(1)
   setTable([...dp])
   
+  // Wait function for better control
+  const wait = async (ms) => {
+    const speed = getSpeed()
+    const delay = Math.floor(ms * (100 - speed) / 50)
+    await new Promise(r => setTimeout(r, delay))
+  }
+  
+  await wait(500) // Initial pause to show the starting state
+  
   for (let i = 1; i < n; i++) {
     if (!getIsPlaying()) await waitForResume(getIsPlaying)
     
     setCurrent(i)
+    await wait(300)
+    
     for (let j = 0; j < i; j++) {
+      if (!getIsPlaying()) await waitForResume(getIsPlaying)
+      
+      // Compare with each previous element
       if (arr[i] > arr[j]) {
         dp[i] = Math.max(dp[i], dp[j] + 1)
         setTable([...dp])
-        await new Promise(r => setTimeout(r, getDelay(getSpeed()) * 0.5))
+        await wait(200)
       }
     }
+    
+    setTable([...dp])
+    await wait(300)
   }
   
-  return Math.max(...dp)
+  setCurrent(null)
+  
+  return {
+    result: Math.max(...dp),
+    array: arr // Return the original array for reference
+  }
 }
 
 export const getDPAlgorithm = (name) => {

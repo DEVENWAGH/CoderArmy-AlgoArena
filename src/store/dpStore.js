@@ -59,6 +59,21 @@ const useDPStore = create((set, get) => ({
         validatedInput.values = validatedInput.values.slice(0, minLength)
       }
     }
+
+    if (algorithm === 'lcs') {
+      // Validate strings exist and aren't too long
+      validatedInput.str1 = (newInput.str1 || '').slice(0, 20)
+      validatedInput.str2 = (newInput.str2 || '').slice(0, 20)
+    }
+
+    if (algorithm === 'lis') {
+      // Validate array exists and has valid numbers
+      if (validatedInput.array && Array.isArray(validatedInput.array)) {
+        validatedInput.array = validatedInput.array
+          .filter(val => !isNaN(val))
+          .slice(0, 15) // Limit array length
+      }
+    }
     
     // Update the state with validated input
     set(state => ({
@@ -93,7 +108,22 @@ const useDPStore = create((set, get) => ({
         case 'fibonacci':
           set({ table: new Array(input.fibonacci.n + 1).fill(0) })
           break
-        // ...other cases...
+        case 'lcs':
+          set({ 
+            table: Array(input.lcs.str1.length + 1).fill()
+              .map(() => Array(input.lcs.str2.length + 1).fill(0))
+          })
+          break
+        case 'lis':
+          // Initialize with 1D array of 1s since each element is its own LIS of length 1
+          set({ table: Array(input.lis.array.length).fill(1) })
+          break
+        case 'knapsack':
+          set({
+            table: Array(input.knapsack.weights.length + 1).fill()
+              .map(() => Array(input.knapsack.capacity + 1).fill(0))
+          })
+          break
       }
     } catch (error) {
       console.error('DP algorithm initialization error:', error)
@@ -122,6 +152,12 @@ const useDPStore = create((set, get) => ({
             input.knapsack.values,
             input.knapsack.capacity
           ]
+          break
+        case 'lcs':
+          params = [input.lcs.str1, input.lcs.str2]
+          break
+        case 'lis':
+          params = [input.lis.array]
           break
         // ...other cases...
       }
