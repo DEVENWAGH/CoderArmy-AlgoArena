@@ -1,4 +1,3 @@
-import React, { useEffect } from 'react'
 import { motion, AnimatePresence } from "motion/react"
 import useBacktrackingStore from '../../store/backtrackingStore'
 
@@ -12,19 +11,18 @@ const NQueensVisualizer = () => {
   const safeBoard = board && board.length === boardSize ? 
     board : 
     Array(boardSize).fill().map(() => Array(boardSize).fill(0))
-  
   return (
     <div className="flex flex-col gap-6">
       {/* Algorithm explanation */}
-      <div className="p-4 bg-slate-800 rounded-lg">
-        <h3 className="text-lg font-bold text-white mb-2">N-Queens Problem</h3>
-        <p className="text-gray-300 mb-2">
+      <div className="p-4 rounded-lg bg-slate-800">
+        <h3 className="mb-2 text-lg font-bold text-white">N-Queens Problem</h3>
+        <p className="mb-2 text-gray-300">
           The N-Queens problem asks how to place N queens on an N×N chessboard so that no queen 
           threatens any other. A queen can attack horizontally, vertically, or diagonally.
         </p>
         <div className="text-gray-300">
           <h4 className="font-semibold">Backtracking Approach:</h4>
-          <ol className="list-decimal pl-5 mt-1">
+          <ol className="pl-5 mt-1 list-decimal">
             <li>Start with an empty board</li>
             <li>Place queens one by one in each column</li>
             <li>For each column, try placing a queen in each row</li>
@@ -83,7 +81,7 @@ const NQueensVisualizer = () => {
                             damping: 20,
                             duration: 0.3
                           }}
-                          className="flex items-center justify-center absolute"
+                          className="absolute flex items-center justify-center"
                           style={{
                             width: `${cellSize * 0.7}px`,
                             height: `${cellSize * 0.7}px`,
@@ -123,13 +121,13 @@ const NQueensVisualizer = () => {
       </div>
 
       {/* Results */}
-      <div className="p-4 bg-slate-800 rounded-lg">
-        <h3 className="text-lg font-bold text-white mb-2">Solutions</h3>
+      <div className="p-4 rounded-lg bg-slate-800">
+        <h3 className="mb-2 text-lg font-bold text-white">Solutions</h3>
         {solutions && solutions.length > 0 ? (
           <div className="text-green-300">
             Found {solutions.length} solution(s) for {boardSize}×{boardSize} board
             {currentSolution !== undefined && (
-              <p className="text-sm text-white mt-1">
+              <p className="mt-1 text-sm text-white">
                 Currently viewing solution #{currentSolution + 1}
               </p>
             )}
@@ -143,8 +141,8 @@ const NQueensVisualizer = () => {
       
       {/* Visual representation of the solution */}
       {solutions && solutions.length > 0 && (
-        <div className="p-4 bg-slate-800 rounded-lg">
-          <h3 className="text-lg font-bold text-white mb-2">Solution #{currentSolution + 1} Pattern</h3>
+        <div className="p-4 rounded-lg bg-slate-800">
+          <h3 className="mb-2 text-lg font-bold text-white">Solution #{currentSolution + 1} Pattern</h3>
           <div className="font-mono text-green-300 whitespace-pre">
             {solutions[currentSolution]?.map(row => 
               row.map(cell => cell ? 'Q' : '.').join(' ')
