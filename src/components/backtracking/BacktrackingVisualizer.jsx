@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import useBacktrackingStore from '../../store/backtrackingStore'
 import NQueensVisualizer from './NQueensVisualizer'
+import SudokuVisualizer from './SudokuVisualizer'
 
 const BacktrackingVisualizer = () => {
   const { algorithm } = useParams()
@@ -68,6 +69,8 @@ const BacktrackingVisualizer = () => {
     switch (algorithm) {
       case 'n-queens':
         return <NQueensVisualizer />
+      case 'sudoku-solver':
+        return <SudokuVisualizer />
       default:
         return (
           <div className="flex items-center justify-center h-64 text-xl text-white">
