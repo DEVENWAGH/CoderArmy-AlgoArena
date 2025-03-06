@@ -7,6 +7,7 @@ import TreeLink from './TreeLink'
 import TreeControls from './TreeControls'
 import { createTreeLayout } from '../../utils/treeLayout'
 import { createDefaultTree } from '../../utils/defaultTree'
+import BSTOperationsForm from './BSTOperationsForm'
 
 const TreeVisualizer = () => {
   const { algorithm } = useParams()
@@ -26,6 +27,9 @@ const TreeVisualizer = () => {
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 })
   const [activeNodePath, setActiveNodePath] = useState([])
   const [isLoaded, setIsLoaded] = useState(false)
+  const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 })
+  const [isDragging, setIsDragging] = useState(false)
+  const dragRef = useRef({ x: 0, y: 0 })
 
   // Set up resize observer for responsive sizing
   useLayoutEffect(() => {
@@ -71,37 +75,39 @@ const TreeVisualizer = () => {
     if (!tree || !isLoaded) return
     
     try {
-      // Create tree layout with current dimensions
       const layout = createTreeLayout(tree, dimensions.width, dimensions.height)
       setTreeLayout(layout)
       
-      // Animate nodes with stagger effect
       const timeline = gsap.timeline()
       
-      // First clear existing animations
-      gsap.set(".tree-node", { clearProps: "transform, opacity" })
-      
-      // Animate nodes appearing
-      timeline.to(".tree-node", {
-        x: (i) => layout.nodes[i].x,
-        y: (i) => layout.nodes[i].y,
+      // Ensure links are visible during transition
+      gsap.set(".tree-link", { 
         opacity: 1,
-        duration: 0.4,
-        stagger: {
-          from: "center",
-          amount: 0.8
-        },
-        ease: "back.out(1.7)"
+        visibility: "visible",
+        pointerEvents: "none"
       })
       
-      // Fade in links after nodes appear
-      timeline.from(".tree-link", {
-        opacity: 0,
-        duration: 0.3,
-        stagger: 0.03,
-        ease: "power1.inOut"
-      }, "-=0.5")
-      
+      // Animate all nodes to their new positions
+      timeline
+        .to(".tree-node", {
+          x: (i) => layout.nodes[i].x,
+          y: (i) => layout.nodes[i].y,
+          opacity: 1,
+          duration: 0.6,
+          stagger: {
+            from: "start",
+            amount: 0.3
+          },
+          ease: "back.out(1.4)"
+        })
+        .to(".tree-link", {
+          opacity: 1,
+          duration: 0.3,
+          stagger: 0.02,
+          ease: "power2.inOut",
+          overwrite: "auto"
+        }, "<")
+        
     } catch (error) {
       console.error("Error creating tree layout:", error)
     }
@@ -204,33 +210,87 @@ const TreeVisualizer = () => {
   
   const info = getTraversalInfo()
 
+  // Add zoom handler
+  const handleWheel = (e) => {
+    e.preventDefault()
+    const delta = -e.deltaY
+    const scaleFactor = 0.05
+    const newScale = Math.max(0.5, Math.min(2, transform.scale + (delta > 0 ? scaleFactor : -scaleFactor)))
+    
+    setTransform(prev => ({
+      ...prev,
+      scale: newScale
+    }))
+  }
+
+  // Add drag handlers
+  const handleMouseDown = (e) => {
+    setIsDragging(true)
+    dragRef.current = {
+      x: e.clientX - transform.x,
+      y: e.clientY - transform.y
+    }
+  }
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return
+    
+    setTransform(prev => ({
+      ...prev,
+      x: e.clientX - dragRef.current.x,
+      y: e.clientY - dragRef.current.y
+    }))
+  }
+
+  const handleMouseUp = () => {
+    setIsDragging(false)
+  }
+
+  // Add double click to reset
+  const handleDoubleClick = () => {
+    setTransform({ x: 0, y: 0, scale: 1 })
+  }
+
   return (
     <div className="flex flex-col w-full h-full p-4">
-      <h2 className="text-xl font-bold text-sky-400 mb-2">
+      <h2 className="text-xl font-bold text-sky-400 mb-8">
         {algorithm.split('-').map(word => 
           word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' ')}
       </h2>
-      
-      <div className="mb-4 p-4 bg-slate-800 rounded-lg">
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <h3 className="text-lg text-white font-medium">{info.title}</h3>
-            <p className="text-gray-300 mt-1 text-sm">{info.description}</p>
-          </div>
-          <div className="ml-4 p-3 bg-slate-900 rounded-md max-w-xs overflow-auto">
-            <pre className="text-xs text-sky-300 font-mono whitespace-pre">
-              {info.code}
-            </pre>
+
+      {/* Show either BST operations or traversal info based on algorithm */}
+      {algorithm === 'binary-search-tree' ? (
+        <BSTOperationsForm />
+      ) : (
+        <div className="mb-4 p-4 bg-slate-800 rounded-lg">
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <h3 className="text-lg text-white font-medium">{info.title}</h3>
+              <p className="text-gray-300 mt-1 text-sm">{info.description}</p>
+            </div>
+            <div className="ml-4 p-3 bg-slate-900 rounded-md max-w-xs overflow-auto">
+              <pre className="text-xs text-sky-300 font-mono whitespace-pre">
+                {info.code}
+              </pre>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      <TreeControls />
+      {/* Show TreeControls only for traversal algorithms */}
+      {algorithm !== 'binary-search-tree' && <TreeControls />}
 
       <div 
         ref={containerRef}
         className="flex-1 bg-slate-900 rounded-lg overflow-hidden mt-4 min-h-[400px]"
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onDoubleClick={handleDoubleClick}
+        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
       >
         {treeLayout.nodes?.length > 0 && (
           <svg
@@ -240,7 +300,7 @@ const TreeVisualizer = () => {
             viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
             preserveAspectRatio="xMidYMid meet"
           >
-            <g>
+            <g transform={`translate(${transform.x}, ${transform.y}) scale(${transform.scale})`}>
               {treeLayout.links?.map((link, i) => (
                 <TreeLink
                   key={`link-${i}`}
@@ -264,6 +324,9 @@ const TreeVisualizer = () => {
             </g>
           </svg>
         )}
+        <div className="absolute px-2 py-1 text-sm text-gray-300 rounded bg-slate-800 bg-opacity-70 bottom-2 left-70">
+          Scroll to zoom, drag to Tree
+        </div>
       </div>
     </div>
   )

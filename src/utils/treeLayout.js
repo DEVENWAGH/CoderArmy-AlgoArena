@@ -15,19 +15,25 @@ export const createTreeLayout = (data, width, height) => {
 
   // Calculate the width needed based on tree depth and breadth
   const maxDepth = hierarchy.height;
-  const maxWidth = Math.pow(2, maxDepth) * nodeSize;
-  const maxHeight = maxDepth * levelHeight;
+  const nodeCount = hierarchy.descendants().length;
+  const maxWidth = Math.max(
+    Math.pow(2, maxDepth) * nodeSize,
+    nodeCount * (nodeSize * 1.2)
+  );
+  const maxHeight = maxDepth * levelHeight * 1.2;
 
-  // Determine scaling factor to fit the tree within the viewport
+  // Adjust scale to ensure nodes don't overlap
   const scaleX = Math.min(1, width / maxWidth);
   const scaleY = Math.min(1, height / maxHeight);
   const scale = Math.min(scaleX, scaleY);
 
-  // Create the tree layout with proper sizing
+  // Create the tree layout with dynamic sizing
   const treeLayout = d3
     .tree()
-    .nodeSize([nodeSize * 1.5, levelHeight]) // Adjusted node size and level height
-    .size([width * 0.8, height * 0.7]); // Leave space at top and bottom
+    .nodeSize([nodeSize * 2, levelHeight]) // Increased horizontal spacing
+    .separation((a, b) => {
+      return a.parent === b.parent ? 1.5 : 2; // Increase separation between different subtrees
+    });
 
   // Apply the layout
   const root = treeLayout(hierarchy);
@@ -51,19 +57,26 @@ export const createTreeLayout = (data, width, height) => {
     hasChildren: node.children && node.children.length > 0,
   }));
 
-  // Create links with matching positions
+  // Create links with matching positions and add buffers
   const links = root.links().map((link) => ({
     source: {
       id: link.source.data.value,
       x: link.source.x + xOffset + width / 2,
-      y: link.source.y + yOffset + height / 2, // Match node position
+      y: link.source.y + yOffset + height / 2,
     },
     target: {
       id: link.target.data.value,
       x: link.target.x + xOffset + width / 2,
-      y: link.target.y + yOffset + height / 2, // Match node position
+      y: link.target.y + yOffset + height / 2,
     },
+    // Add unique identifier for better GSAP targeting
+    id: `${link.source.data.value}-${link.target.data.value}`,
   }));
 
-  return { nodes, links };
+  return {
+    nodes,
+    links,
+    width: maxWidth * scale,
+    height: maxHeight * scale,
+  };
 };

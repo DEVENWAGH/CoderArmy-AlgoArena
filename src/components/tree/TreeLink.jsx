@@ -21,37 +21,37 @@ const TreeLink = ({ link, isActive, isPath }) => {
   useEffect(() => {
     if (!pathRef.current) return
     
-    const tl = gsap.timeline()
+    const tl = gsap.timeline({
+      defaults: {
+        duration: 0.3,
+        ease: "power2.inOut"
+      }
+    })
     
     if (isPath) {
       tl.to(pathRef.current, {
-        stroke: "#f59e0b", // Amber (yellow-orange)
+        stroke: "#f59e0b",
         strokeWidth: 3,
         opacity: 1,
-        duration: 0.3,
-        ease: "power2.inOut"
+        overwrite: "auto"
       })
     } else if (isActive) {
       tl.to(pathRef.current, {
-        stroke: "#38bdf8", // Sky blue
+        stroke: "#38bdf8",
         strokeWidth: 2.5,
         opacity: 0.8,
-        duration: 0.3,
-        ease: "power2.inOut"
+        overwrite: "auto"
       })
     } else {
       tl.to(pathRef.current, {
-        stroke: "#1e40af", // Dark blue
+        stroke: "#1e40af",
         strokeWidth: 2,
-        opacity: 0.5,
-        duration: 0.3,
-        ease: "power2.inOut"
+        opacity: 0.6, // Increased base opacity
+        overwrite: "auto"
       })
     }
     
-    return () => {
-      tl.kill()
-    }
+    return () => tl.kill()
   }, [isActive, isPath])
 
   return (
@@ -62,8 +62,10 @@ const TreeLink = ({ link, isActive, isPath }) => {
       stroke="#1e40af"
       strokeWidth={2}
       fill="none"
-      opacity={0.5}
+      opacity={0.6} // Increased initial opacity
       strokeLinecap="round"
+      style={{ pointerEvents: 'none' }} // Prevent interference with interactions
+      vectorEffect="non-scaling-stroke" // Maintain consistent line width
     />
   )
 }

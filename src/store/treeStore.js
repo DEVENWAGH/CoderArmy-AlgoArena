@@ -6,7 +6,10 @@ const useTreeStore = create((set, get) => ({
   visitedNodes: [],
   currentNode: null,
   traversalSpeed: 1000,
-  timeline: null, // Add timeline state
+  timeline: null,
+  searchPath: [], // Add this to track BST search path
+  searchFound: null, // Add this to track if value was found
+  bstTargetValue: null, // Add this to track search/insert value
 
   // Create a proper binary tree node
   createNode: (value) => {
@@ -329,6 +332,89 @@ const useTreeStore = create((set, get) => ({
   // Debug function to check tree structure
   debugTree: () => {
     console.log("Current tree structure:", JSON.stringify(get().tree, null, 2));
+  },
+
+  searchBST: async (value) => {
+    const { tree, traversalSpeed } = get();
+    set({
+      searchPath: [],
+      searchFound: null,
+      bstTargetValue: value,
+      currentNode: null,
+      visitedNodes: [], // Clear visited nodes
+    });
+
+    const search = async (node) => {
+      if (!node) return null;
+
+      // Update visited nodes and current node
+      set((state) => ({
+        visitedNodes: [...state.visitedNodes, node.value],
+        currentNode: node.value,
+        searchPath: [...state.searchPath, node.value],
+      }));
+
+      await new Promise((r) => setTimeout(r, traversalSpeed));
+
+      if (value === node.value) {
+        set({ searchFound: true });
+        return node;
+      }
+
+      if (value < node.value) {
+        const result = await search(node.left);
+        if (result) return result;
+      } else {
+        const result = await search(node.right);
+        if (result) return result;
+      }
+
+      return null;
+    };
+
+    const result = await search(tree);
+    set({ searchFound: result !== null });
+  },
+
+  insertBST: async (value) => {
+    const { tree, traversalSpeed } = get();
+    set({
+      searchPath: [],
+      searchFound: null,
+      bstTargetValue: value,
+      currentNode: null,
+      visitedNodes: [],
+    });
+
+    const insert = async (node) => {
+      if (!node) {
+        const newNode = get().createNode(value);
+        set({ searchFound: true });
+        return newNode;
+      }
+
+      set((state) => ({
+        visitedNodes: [...state.visitedNodes, node.value],
+        currentNode: node.value,
+        searchPath: [...state.searchPath, node.value],
+      }));
+      await new Promise((r) => setTimeout(r, traversalSpeed));
+
+      if (value < node.value) {
+        node.left = await insert(node.left);
+      } else if (value > node.value) {
+        node.right = await insert(node.right);
+      } else {
+        set({ searchFound: false }); // Value already exists
+        return node;
+      }
+      return node;
+    };
+
+    const updatedTree = await insert(tree);
+    // Recalculate layout after insertion
+    const layoutTree = get().calculateTreeLayout(updatedTree);
+    set({ tree: layoutTree });
   },
 }));
 
