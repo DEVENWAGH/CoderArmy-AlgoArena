@@ -6,6 +6,7 @@ const useTreeStore = create((set, get) => ({
   visitedNodes: [],
   currentNode: null,
   traversalSpeed: 1000,
+  timeline: null, // Add timeline state
 
   // Create a proper binary tree node
   createNode: (value) => {
@@ -30,8 +31,7 @@ const useTreeStore = create((set, get) => ({
     root.right.left = get().createNode(25);
     root.right.right = get().createNode(35);
 
-    // Apply layout calculations and set as current tree
-    get().setTreeWithLayout(root);
+    set({ tree: root });
 
     return root;
   },
@@ -45,7 +45,7 @@ const useTreeStore = create((set, get) => ({
 
     // If tree is empty, set new node as root
     if (!tree) {
-      get().setTreeWithLayout(newNode);
+      set({ tree: newNode });
       return;
     }
 
@@ -70,8 +70,7 @@ const useTreeStore = create((set, get) => ({
     const updatedTree = JSON.parse(JSON.stringify(tree));
     insert(updatedTree, newNode);
 
-    // Update tree with new layout
-    get().setTreeWithLayout(updatedTree);
+    set({ tree: updatedTree });
   },
 
   setTree: (tree) => set({ tree }),
@@ -80,7 +79,7 @@ const useTreeStore = create((set, get) => ({
   setTraversalSpeed: (speed) => set({ traversalSpeed: speed }),
 
   resetVisualization: () => {
-    const { tree } = get();
+    const { tree, timeline } = get();
     set({
       visitedNodes: [],
       currentNode: null,
@@ -88,9 +87,10 @@ const useTreeStore = create((set, get) => ({
       isPaused: false,
     });
 
-    // Re-calculate layout if tree exists
-    if (tree) {
-      get().prepareTreeVisualization();
+    // Kill the timeline if it exists
+    if (timeline) {
+      timeline.kill();
+      set({ timeline: null });
     }
   },
 
@@ -216,8 +216,11 @@ const useTreeStore = create((set, get) => ({
     };
 
     try {
+      const timeline = gsap.timeline();
+      set({ timeline: timeline }); // Store timeline in state
+
       await traversalFunctions[traversalType](tree);
-      gsap.to(".tree-node circle", {
+      timeline.to(".tree-node circle", {
         keyframes: [
           { scale: 1.1, duration: 0.2 },
           { scale: 1, duration: 0.2 },
@@ -232,11 +235,20 @@ const useTreeStore = create((set, get) => ({
     }
   },
 
-  pauseTraversal: () => set({ isPaused: true, isPlaying: false }),
+  pauseTraversal: () => {
+    const { timeline } = get();
+    if (timeline) {
+      timeline.pause();
+    }
+    set({ isPlaying: false, isPaused: true });
+  },
+
   resumeTraversal: () => {
-    const { tree } = get();
-    set({ isPaused: false });
-    get().startTraversal(tree);
+    const { timeline } = get();
+    if (timeline) {
+      timeline.resume();
+    }
+    set({ isPlaying: true, isPaused: false });
   },
 
   // Calculate positions for tree visualization
@@ -288,13 +300,20 @@ const useTreeStore = create((set, get) => ({
     set({ tree: layoutTree });
   },
 
-  resetTraversal: () =>
+  resetTraversal: () => {
+    const { timeline } = get();
+    // Kill the timeline if it exists
+    if (timeline) {
+      timeline.kill();
+      set({ timeline: null });
+    }
     set({
       visitedNodes: [],
       currentNode: null,
       isPlaying: false,
       isPaused: false,
-    }),
+    });
+  },
 
   // Initialize or update tree with layout information
   setTreeWithLayout: (newTree) => {

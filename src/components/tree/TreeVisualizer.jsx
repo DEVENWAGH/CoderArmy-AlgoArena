@@ -79,17 +79,12 @@ const TreeVisualizer = () => {
       const timeline = gsap.timeline()
       
       // First clear existing animations
-      gsap.set(".tree-node", { clearProps: "all" })
-      
-      // Setup initial state for nodes
-      timeline.set(".tree-node", {
-        scale: 0,
-        opacity: 0
-      })
+      gsap.set(".tree-node", { clearProps: "transform, opacity" })
       
       // Animate nodes appearing
       timeline.to(".tree-node", {
-        scale: 1,
+        x: (i) => layout.nodes[i].x,
+        y: (i) => layout.nodes[i].y,
         opacity: 1,
         duration: 0.4,
         stagger: {

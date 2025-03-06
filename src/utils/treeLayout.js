@@ -26,7 +26,7 @@ export const createTreeLayout = (data, width, height) => {
   // Create the tree layout with proper sizing
   const treeLayout = d3
     .tree()
-    .nodeSize([nodeSize * 1.5, levelHeight]) // Remove scale from nodeSize calculation
+    .nodeSize([nodeSize * 1.5, levelHeight]) // Adjusted node size and level height
     .size([width * 0.8, height * 0.7]); // Leave space at top and bottom
 
   // Apply the layout
