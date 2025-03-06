@@ -1,56 +1,41 @@
-import { create } from 'zustand'
-import { getSortingAlgorithm } from '../algorithms/sorting/index.jsx'
-import { getSearchAlgorithm } from '../algorithms/searching/index.jsx'
+import { create } from "zustand";
+import { getSortingAlgorithm } from "../algorithms/sorting/index.jsx";
+import { getSearchAlgorithm } from "../algorithms/searching/index.jsx";
 
 const useAlgorithmStore = create((set, get) => ({
   currentAlgorithm: null,
   currentCategory: null,
-  searchQuery: '',
+  searchQuery: "",
   algorithmCategories: {
-    'Sorting': [
-      'Bubble Sort',
-      'Selection Sort',
-      'Insertion Sort',
-      'Merge Sort',
-      'Quick Sort'
+    Sorting: [
+      "Bubble Sort",
+      "Selection Sort",
+      "Insertion Sort",
+      "Merge Sort",
+      "Quick Sort",
     ],
-    'Searching': [
-      'Linear Search',
-      'Binary Search'
-    ],
-    'Graph': [
-      'BFS',
-      'DFS',
+    Searching: ["Linear Search", "Binary Search"],
+    Graph: [
+      "BFS",
+      "DFS",
       "Dijkstra's Algorithm",
       "Prim's Algorithm",
-      "Kruskal's Algorithm"
+      "Kruskal's Algorithm",
     ],
-    'Dynamic Programming': [
-      'Fibonacci',
-      'Knapsack',
-      'LIS',
-      'LCS'
+    "Dynamic Programming": ["Fibonacci", "Knapsack", "LIS", "LCS"],
+    "Greedy Algorithm": ["Activity Selection", "Huffman Coding"],
+    Backtracking: ["N-Queens", "Sudoku Solver"],
+    "Tree Algorithms": [
+      "Tree Traversals",
+      "Binary Search Tree",
+      "AVL Tree",
+      "Red-Black Tree",
     ],
-    'Greedy Algorithm': [
-      'Activity Selection',
-      'Huffman Coding'
+    "Mathematical Algorithms": [
+      "GCD (Euclidean)",
+      "Sieve of Eratosthenes",
+      "Prime Factorization",
     ],
-    'Backtracking': [
-      'N-Queens',
-      'Sudoku Solver',
-    ],
-    'Tree Algorithms': [
-      'Tree Traversals',
-      'BST Operations',
-      'AVL Rotations',
-      'LCA'
-    ],
-    'Mathematical Algorithms': [
-      'GCD (Euclidean)',
-      'Sieve of Eratosthenes',
-      'Prime Factorization',
-    ]
-
   },
 
   array: [],
@@ -58,11 +43,11 @@ const useAlgorithmStore = create((set, get) => ({
   isSorting: false,
   isPlaying: false,
   speed: 50, // Set initial speed to middle value
-  currentSpeed: 50,  // Add current speed state
+  currentSpeed: 50, // Add current speed state
   currentIndex: -1,
   compareIndex: -1,
   isSorted: false,
-  isPaused: false,  // Add this state
+  isPaused: false, // Add this state
   isAscending: true, // Add this line
 
   // Add new search-specific state
@@ -76,8 +61,8 @@ const useAlgorithmStore = create((set, get) => ({
   isSearchPaused: false,
 
   setArraySize: (size) => {
-    const { currentAlgorithm } = get()
-    set({ 
+    const { currentAlgorithm } = get();
+    set({
       arraySize: size,
       isSorting: false,
       isPlaying: false,
@@ -85,18 +70,19 @@ const useAlgorithmStore = create((set, get) => ({
       currentIndex: -1,
       compareIndex: -1,
       // Maintain current algorithm
-      currentAlgorithm: currentAlgorithm
-    })
-    get().generateNewArray()
+      currentAlgorithm: currentAlgorithm,
+    });
+    get().generateNewArray();
   },
-  
+
   generateNewArray: () => {
-    const { arraySize, currentAlgorithm } = get()
-    const newArray = Array.from({ length: arraySize }, () => 
-      Math.floor(Math.random() * 300) + 10
-    )
-    
-    set({ 
+    const { arraySize, currentAlgorithm } = get();
+    const newArray = Array.from(
+      { length: arraySize },
+      () => Math.floor(Math.random() * 300) + 10
+    );
+
+    set({
       array: newArray,
       currentIndex: -1,
       compareIndex: -1,
@@ -104,39 +90,40 @@ const useAlgorithmStore = create((set, get) => ({
       isSorting: false,
       isSorted: false,
       isPaused: false,
-      currentAlgorithm // Maintain current algorithm
-    })
+      currentAlgorithm, // Maintain current algorithm
+    });
   },
 
   generateSearchArray: () => {
-    const { searchArraySize, currentAlgorithm } = get()
-    const newArray = Array.from({ length: searchArraySize }, () => 
-      Math.floor(Math.random() * 999) + 1 // Increased range for larger numbers
-    )
+    const { searchArraySize, currentAlgorithm } = get();
+    const newArray = Array.from(
+      { length: searchArraySize },
+      () => Math.floor(Math.random() * 999) + 1 // Increased range for larger numbers
+    );
     // Only sort for binary search
-    const shouldSort = currentAlgorithm?.toLowerCase().includes('binary')
+    const shouldSort = currentAlgorithm?.toLowerCase().includes("binary");
     if (shouldSort) {
-      newArray.sort((a, b) => a - b)
+      newArray.sort((a, b) => a - b);
     }
-    
-    set({ 
+
+    set({
       searchArray: newArray,
       currentSearchIndex: -1,
       searchResult: null,
       searchTarget: null,
       isSearching: false,
       isSearchPlaying: false,
-      isSearchPaused: false
-    })
+      isSearchPaused: false,
+    });
   },
 
   setCurrentAlgorithm: (algorithm) => {
-    set({ 
+    set({
       currentAlgorithm: algorithm,
       isSorting: false,
       isPlaying: false,
-      isSorted: false
-    })
+      isSorted: false,
+    });
   },
 
   // Search functionality
@@ -144,7 +131,7 @@ const useAlgorithmStore = create((set, get) => ({
     const { algorithmCategories } = get();
     const results = [];
     Object.entries(algorithmCategories).forEach(([category, algorithms]) => {
-      algorithms.forEach(algo => {
+      algorithms.forEach((algo) => {
         if (algo.toLowerCase().includes(query.toLowerCase())) {
           results.push({ category, name: algo });
         }
@@ -154,7 +141,7 @@ const useAlgorithmStore = create((set, get) => ({
   },
 
   setSpeed: (speed) => {
-    set({ speed, currentSpeed: speed })
+    set({ speed, currentSpeed: speed });
   },
   setIsPlaying: (isPlaying) => set({ isPlaying }),
   setCurrentIndex: (index) => set({ currentIndex: index }),
@@ -164,29 +151,29 @@ const useAlgorithmStore = create((set, get) => ({
     set({
       isPlaying: false,
       currentIndex: -1,
-      compareIndex: -1
-    })
+      compareIndex: -1,
+    });
   },
 
   startSorting: async () => {
-    const { array, currentAlgorithm, isAscending } = get()
+    const { array, currentAlgorithm, isAscending } = get();
 
-    if (!array.length || !currentAlgorithm) return
+    if (!array.length || !currentAlgorithm) return;
 
     // Reset states before starting new sort
-    set({ 
-      isSorting: true, 
+    set({
+      isSorting: true,
       isPlaying: true,
       isPaused: false,
       isSorted: false,
       currentIndex: -1,
-      compareIndex: -1
-    })
-    
+      compareIndex: -1,
+    });
+
     try {
       const algorithm = getSortingAlgorithm(
-        currentAlgorithm?.toLowerCase().replace(/\s+/g, '-')
-      )
+        currentAlgorithm?.toLowerCase().replace(/\s+/g, "-")
+      );
 
       if (algorithm) {
         await algorithm(
@@ -197,44 +184,44 @@ const useAlgorithmStore = create((set, get) => ({
           () => get().speed,
           () => get().isPlaying,
           isAscending // Pass sort order to algorithm
-        )
-        set({ 
-          isSorting: false, 
+        );
+        set({
+          isSorting: false,
           isPlaying: false,
           currentIndex: -1,
           compareIndex: -1,
-          isSorted: true
-        })
+          isSorted: true,
+        });
       }
     } catch (error) {
-      console.error('Sorting error:', error)
-      set({ 
-        isSorting: false, 
+      console.error("Sorting error:", error);
+      set({
+        isSorting: false,
         isPlaying: false,
         isPaused: false,
-        isSorted: false
-      })
+        isSorted: false,
+      });
     }
   },
 
   startSearch: async (target) => {
-    const { searchArray, currentAlgorithm } = get()
-    if (!currentAlgorithm) return
+    const { searchArray, currentAlgorithm } = get();
+    if (!currentAlgorithm) return;
 
     const algorithm = getSearchAlgorithm(
-      currentAlgorithm.toLowerCase().replace(/\s+/g, '-')
-    )
+      currentAlgorithm.toLowerCase().replace(/\s+/g, "-")
+    );
 
-    if (!algorithm) return
+    if (!algorithm) return;
 
-    set({ 
+    set({
       isSearching: true,
       isSearchPlaying: true,
       isSearchPaused: false,
       searchTarget: target,
       searchResult: null,
-      currentSearchIndex: -1
-    })
+      currentSearchIndex: -1,
+    });
 
     try {
       const result = await algorithm(
@@ -243,47 +230,47 @@ const useAlgorithmStore = create((set, get) => ({
         (index) => set({ currentSearchIndex: index }),
         () => get().isSearchPlaying,
         () => get().speed // Pass speed getter
-      )
-      
-      set({ 
+      );
+
+      set({
         searchResult: result !== -1,
         currentSearchIndex: result,
         isSearching: false,
-        isSearchPlaying: false
-      })
+        isSearchPlaying: false,
+      });
     } catch (error) {
-      console.error('Search error:', error)
-      set({ 
+      console.error("Search error:", error);
+      set({
         isSearching: false,
-        isSearchPlaying: false 
-      })
+        isSearchPlaying: false,
+      });
     }
   },
 
   pauseSorting: () => {
-    set({ 
+    set({
       isPlaying: false,
-      isPaused: true  // Add this state
-    })
+      isPaused: true, // Add this state
+    });
   },
-  
+
   resumeSorting: () => {
-    const { isSorting } = get()
+    const { isSorting } = get();
     if (isSorting) {
-      set({ 
+      set({
         isPlaying: true,
-        isPaused: false
-      })
+        isPaused: false,
+      });
     }
   },
 
   setCustomArray: (values) => {
     // Ensure we're working with simple numbers
-    const processedValues = values.map(value => 
-      typeof value === 'object' ? value.value : Number(value)
-    )
-    
-    set({ 
+    const processedValues = values.map((value) =>
+      typeof value === "object" ? value.value : Number(value)
+    );
+
+    set({
       array: processedValues,
       arraySize: processedValues.length,
       currentIndex: -1,
@@ -291,21 +278,21 @@ const useAlgorithmStore = create((set, get) => ({
       isPlaying: false,
       isSorting: false,
       isSorted: false,
-      isPaused: false
-    })
+      isPaused: false,
+    });
   },
 
   toggleSortOrder: () => {
-    set(state => ({ isAscending: !state.isAscending }))
+    set((state) => ({ isAscending: !state.isAscending }));
   },
 
   setSearchArraySize: (size) => {
-    set({ searchArraySize: size })
-    get().generateSearchArray()
+    set({ searchArraySize: size });
+    get().generateSearchArray();
   },
 
   pauseSearch: () => set({ isSearchPlaying: false, isSearchPaused: true }),
-  resumeSearch: () => set({ isSearchPlaying: true, isSearchPaused: false })
-}))
+  resumeSearch: () => set({ isSearchPlaying: true, isSearchPaused: false }),
+}));
 
-export default useAlgorithmStore
+export default useAlgorithmStore;

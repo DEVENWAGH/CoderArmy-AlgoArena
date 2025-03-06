@@ -8,6 +8,7 @@ import GraphVisualizer from './components/graph/GraphVisualizer'
 import DPVisualizer from './components/dp/DPVisualizer'
 import GreedyVisualizer from './components/greedy/GreedyVisualizer'
 import BacktrackingVisualizer from './components/backtracking/BacktrackingVisualizer'
+import TreeVisualizer from './components/tree/TreeVisualizer'
 import ErrorBoundary from './components/ErrorBoundary'
 
 const App = () => {
@@ -23,6 +24,7 @@ const App = () => {
             <Route path="dynamic-programming/:algorithm" element={<DPVisualizer />} />
             <Route path="greedy-algorithm/:algorithm" element={<GreedyVisualizer />} />
             <Route path="backtracking/:algorithm" element={<BacktrackingVisualizer />} />
+            <Route path="tree-algorithms/:algorithm" element={<TreeVisualizer />} />
           </Route>
         </Routes>
       </ErrorBoundary>
