@@ -1,7 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useState, useRef } from 'react';
+import { motion } from "motion/react"
 import { gsap } from 'gsap';
-import './SieveOfEratosthenesVisualizer.css'; // Import the CSS file
 
 const SieveOfEratosthenesVisualizer = ({ maxNumber, isAnimating, speed, onComplete }) => {
   const [grid, setGrid] = useState([]);
@@ -304,7 +303,7 @@ const SieveOfEratosthenesVisualizer = ({ maxNumber, isAnimating, speed, onComple
           >
             <h3 className="text-xl font-bold text-white mb-2">Algorithm Complete!</h3>
             <p className="text-white">Found {primes.length} prime numbers:</p>
-            <div className="mt-2 flex flex-wrap justify-center gap-2 primes-list">
+            <div className="mt-2 flex flex-col md:flex-row md:flex-wrap md:justify-center gap-2 primes-list">
               {primes.map(prime => (
                 <span key={prime} className="px-2 py-1 bg-green-900 rounded-md text-green-100">
                   {prime}

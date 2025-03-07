@@ -18,7 +18,6 @@ const DPTreeVisualizer = ({ data, currentCell, type, algorithmResult = null }) =
   }, { scope: containerRef })
 
   useEffect(() => {
-    if (!data || !data.length) return
     
     const buildTree = () => {
       switch (type) {
@@ -37,6 +36,7 @@ const DPTreeVisualizer = ({ data, currentCell, type, algorithmResult = null }) =
 
     // Build a fibonacci tree recursively
     const buildFibonacciTree = (n) => {
+      n = Math.min(n, 8); // Ensure n does not exceed 8
       if (n <= 1) {
         return {
           id: `fib-${n}`,
@@ -274,19 +274,28 @@ const DPTreeVisualizer = ({ data, currentCell, type, algorithmResult = null }) =
     // Build the tree data
     const treeData = buildTree()
     const { width, height } = estimateTreeSize(treeData)
+    const containerWidth = containerRef.current.clientWidth;
+    const containerHeight = containerRef.current.clientHeight;
+    const initialScale = 0.602;
+    const initialTranslateX = 726.5;
+    const initialTranslateY = 180;
+
+    // Log the initial position and scale
+    console.log('Initial Translate X:', initialTranslateX);
+    console.log('Initial Translate Y:', initialTranslateY);
+    console.log('Initial Scale:', initialScale);
     
     // Clear previous content
     const svgEl = svgRef.current
     d3.select(svgEl).selectAll("*").remove()
     
     const svg = d3.select(svgEl)
-      .attr('width', width)
-      .attr('height', height)
-      .attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('viewBox', `0 0 ${width} ${height}`) // Use viewBox for responsive SVG
+      .attr('preserveAspectRatio', 'xMidYMid meet') // Preserve aspect ratio and center
     
     // Set initial transform centered in viewport
     const g = svg.append('g')
-      .attr('transform', `translate(${width/2}, 80)`) // Increase top margin for better viewing
+      .attr('transform', `translate(${initialTranslateX}, ${initialTranslateY}) scale(${initialScale})`) // Center the tree and scale to fit
       .attr('class', 'main-group')
     
     // Create a hierarchical layout
@@ -530,8 +539,7 @@ const DPTreeVisualizer = ({ data, currentCell, type, algorithmResult = null }) =
     
     // Initialize with a slight zoom out for better initial view
     svg.call(zoom)
-       .call(zoom.translateBy, 0, 0)
-       .call(zoom.scaleBy, 0.8);
+      .call(zoom.transform, d3.zoomIdentity.translate(initialTranslateX, initialTranslateY).scale(initialScale)); // Apply initial zoom and translation
     
     // Configure the timeline with delayed start for better control
     timelineRef.current.pause();

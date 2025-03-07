@@ -1,7 +1,0 @@
-@media (max-width: 768px) {
-  .primes-list {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-}
