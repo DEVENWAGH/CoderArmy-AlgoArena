@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import useTreeStore from '../../store/treeStore';
 
-const BSTOperationsForm = () => {
+const AVLOperationsForm = () => {
   const [value, setValue] = useState('');
   const [currentOperation, setCurrentOperation] = useState(null);
-  const { searchBST, insertBST, deleteBST, searchFound, bstTargetValue } = useTreeStore();
+  const { insertAVL, deleteAVL, searchBST, searchFound, bstTargetValue } = useTreeStore();
 
   const handleSubmit = async (e, operation) => {
     e.preventDefault();
@@ -16,9 +16,9 @@ const BSTOperationsForm = () => {
     if (operation === 'search') {
       await searchBST(numValue);
     } else if (operation === 'insert') {
-      await insertBST(numValue);
+      await insertAVL(numValue);
     } else if (operation === 'delete') {
-      await deleteBST(numValue);
+      await deleteAVL(numValue);
     }
     setValue('');
   };
@@ -32,20 +32,20 @@ const BSTOperationsForm = () => {
       } else if (currentOperation === 'insert') {
         return `Value ${bstTargetValue} inserted into the tree`;
       }
-      return `Found value ${bstTargetValue} in the BST`;
+      return `Found value ${bstTargetValue} in the tree`;
     } else {
       if (currentOperation === 'delete') {
         return `Cannot delete: Value ${bstTargetValue} does not exist in the tree`;
       } else if (currentOperation === 'insert') {
         return `Value ${bstTargetValue} already exists in the tree`;
       }
-      return `Value ${bstTargetValue} does not exist in the BST`;
+      return `Value ${bstTargetValue} does not exist in the tree`;
     }
   };
 
   return (
     <div className="mb-4 p-4 bg-slate-800 rounded-lg">
-      <h3 className="text-lg font-medium text-white mb-4">Binary Search Tree Operations</h3>
+      <h3 className="text-lg font-medium text-white mb-4">AVL Tree Operations</h3>
       
       <form className="flex flex-col gap-4">
         <div className="flex items-center gap-4">
@@ -102,4 +102,4 @@ const BSTOperationsForm = () => {
   );
 };
 
-export default BSTOperationsForm;
+export default AVLOperationsForm;

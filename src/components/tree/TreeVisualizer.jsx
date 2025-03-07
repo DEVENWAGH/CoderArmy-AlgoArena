@@ -8,6 +8,7 @@ import TreeControls from './TreeControls'
 import { createTreeLayout } from '../../utils/treeLayout'
 import { createDefaultTree } from '../../utils/defaultTree'
 import BSTOperationsForm from './BSTOperationsForm'
+import AVLOperationsForm from './AVLOperationsForm'
 
 const TreeVisualizer = () => {
   const { algorithm } = useParams()
@@ -20,7 +21,9 @@ const TreeVisualizer = () => {
     setTree, 
     resetVisualization,
     resetTraversal,
-    traversalType
+    traversalType,
+    createSampleTree,  // Add these functions at component top level
+    createSampleAVL 
   } = useTreeStore()
   
   const [treeLayout, setTreeLayout] = useState({ nodes: [], links: [] })
@@ -57,18 +60,25 @@ const TreeVisualizer = () => {
     return () => observer.disconnect()
   }, [])
 
-  // Initialize tree with a balanced tree on component mount
+  // Initialize tree with the appropriate default based on algorithm type
   useEffect(() => {
-    const defaultTree = createDefaultTree()
-    setTree(defaultTree)
+    // Now we can safely use the functions from the store
+    if (algorithm === 'avl-tree') {
+      // Use the proper AVL tree creation function
+      const avlTree = createSampleAVL();
+      setTree(avlTree);
+    } else {
+      const defaultTree = createSampleTree();
+      setTree(defaultTree);
+    }
     
     // Short delay to ensure the container is sized
     setTimeout(() => {
-      setIsLoaded(true)
-    }, 10)
+      setIsLoaded(true);
+    }, 10);
     
-    return () => resetVisualization()
-  }, [])
+    return () => resetVisualization();
+  }, [algorithm, createSampleAVL, createSampleTree, setTree, resetVisualization]);
 
   // Generate layout when tree or dimensions change
   useEffect(() => {
@@ -78,38 +88,61 @@ const TreeVisualizer = () => {
       const layout = createTreeLayout(tree, dimensions.width, dimensions.height)
       setTreeLayout(layout)
       
-      const timeline = gsap.timeline()
+      // Center the tree initially
+      if (layout.nodes.length > 0) {
+        const rootNode = layout.nodes.find(n => n.parentId === null);
+        if (rootNode) {
+          // Center horizontally by default
+          setTransform(prev => ({
+            ...prev,
+            x: dimensions.width / 2 - rootNode.x,
+          }));
+        }
+      }
+      
+      const timeline = gsap.timeline({ defaults: { ease: "power3.out" } });
       
       // Ensure links are visible during transition
       gsap.set(".tree-link", { 
         opacity: 1,
         visibility: "visible",
         pointerEvents: "none"
-      })
+      });
       
-      // Animate all nodes to their new positions
+      // First position the nodes instantly
+      gsap.set(".tree-node", {
+        opacity: 0.5,
+        scale: 0.8
+      });
+      
+      // Then animate them to their final positions
       timeline
         .to(".tree-node", {
-          x: (i) => layout.nodes[i].x,
-          y: (i) => layout.nodes[i].y,
+          x: (i) => {
+            if (i >= layout.nodes.length) return 0;
+            return layout.nodes[i].x;
+          },
+          y: (i) => {
+            if (i >= layout.nodes.length) return 0;
+            return layout.nodes[i].y;
+          },
           opacity: 1,
-          duration: 0.6,
+          scale: 1,
+          duration: 0.8,
           stagger: {
             from: "start",
             amount: 0.3
           },
-          ease: "back.out(1.4)"
         })
         .to(".tree-link", {
           opacity: 1,
-          duration: 0.3,
-          stagger: 0.02,
-          ease: "power2.inOut",
+          duration: 0.5,
+          stagger: 0.05,
           overwrite: "auto"
-        }, "<")
+        }, "<0.1");
         
     } catch (error) {
-      console.error("Error creating tree layout:", error)
+      console.error("Error creating tree layout:", error);
     }
   }, [tree, dimensions, isLoaded])
 
@@ -158,6 +191,48 @@ const TreeVisualizer = () => {
 
   // Get traversal info based on current type
   const getTraversalInfo = () => {
+    if (algorithm === 'avl-tree') {
+      return {
+        title: 'AVL Tree',
+        code: `insert(node, key)
+  // 1. BST insert
+  if (node == null)
+    return new Node(key)
+  if (key < node.key)
+    node.left = insert(node.left, key)
+  else if (key > node.key)
+    node.right = insert(node.right, key)
+  
+  // 2. Update height
+  node.height = max(height(node.left), 
+                 height(node.right)) + 1
+  
+  // 3. Get balance factor
+  int balance = getBalance(node)
+  
+  // 4. Rotate if unbalanced
+  // Left Left Case
+  if (balance > 1 && key < node.left.key)
+    return rightRotate(node)
+  // Right Right Case
+  if (balance < -1 && key > node.right.key)
+    return leftRotate(node)
+  // Left Right Case
+  if (balance > 1 && key > node.left.key) {
+    node.left = leftRotate(node.left)
+    return rightRotate(node)
+  }
+  // Right Left Case
+  if (balance < -1 && key < node.right.key) {
+    node.right = rightRotate(node.right)
+    return leftRotate(node)
+  }
+  
+  return node`,
+        description: 'AVL Tree is a self-balancing binary search tree where the difference between heights of left and right subtrees cannot be more than one for all nodes.'
+      };
+    }
+    
     switch (traversalType) {
       case 'inorder':
         return {
@@ -259,9 +334,11 @@ const TreeVisualizer = () => {
         ).join(' ')}
       </h2>
 
-      {/* Show either BST operations or traversal info based on algorithm */}
+      {/* Show appropriate operations form based on algorithm */}
       {algorithm === 'binary-search-tree' ? (
         <BSTOperationsForm />
+      ) : algorithm === 'avl-tree' ? (
+        <AVLOperationsForm />
       ) : (
         <div className="mb-4 p-4 bg-slate-800 rounded-lg">
           <div className="flex justify-between items-start">
@@ -279,7 +356,7 @@ const TreeVisualizer = () => {
       )}
 
       {/* Show TreeControls only for traversal algorithms */}
-      {algorithm !== 'binary-search-tree' && <TreeControls />}
+      {algorithm !== 'binary-search-tree' && algorithm !== 'avl-tree' && <TreeControls />}
 
       <div 
         ref={containerRef}

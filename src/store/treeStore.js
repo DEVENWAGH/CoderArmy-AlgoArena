@@ -266,9 +266,9 @@ const useTreeStore = create((set, get) => ({
 
     const treeDepth = getDepth(tree);
 
-    // Second pass: assign x and y coordinates
-    const nodeWidth = 80; // Increased width between nodes for better visibility
-    const levelHeight = 100; // Increased height between levels
+    // Second pass: assign x and y coordinates with better spacing
+    const nodeWidth = 85; // Slightly increased for better visibility
+    const levelHeight = 100; // Height between levels
 
     const assignCoordinates = (
       node,
@@ -291,7 +291,10 @@ const useTreeStore = create((set, get) => ({
       return node;
     };
 
-    return assignCoordinates(JSON.parse(JSON.stringify(tree))); // Deep copy to avoid mutating original tree
+    // Create a fresh copy to avoid modifying the original tree
+    const layoutTree = assignCoordinates(JSON.parse(JSON.stringify(tree)));
+
+    return layoutTree;
   },
 
   // Prepare tree for visualization
@@ -415,6 +418,445 @@ const useTreeStore = create((set, get) => ({
     // Recalculate layout after insertion
     const layoutTree = get().calculateTreeLayout(updatedTree);
     set({ tree: layoutTree });
+  },
+
+  // AVL Tree specific functions
+  createAVLNode: (value) => {
+    return {
+      value,
+      left: null,
+      right: null,
+      height: 1, // Height of a new node is 1
+      x: 0,
+      y: 0,
+      level: 0,
+    };
+  },
+
+  // Get height of AVL node
+  getHeight: (node) => {
+    if (node === null) return 0;
+    return node.height;
+  },
+
+  // Get balance factor of AVL node
+  getBalanceFactor: (node) => {
+    if (node === null) return 0;
+    return get().getHeight(node.left) - get().getHeight(node.right);
+  },
+
+  // Right rotation for AVL rebalancing
+  rightRotate: (y) => {
+    const x = y.left;
+    const T2 = x.right;
+
+    // Perform rotation
+    x.right = y;
+    y.left = T2;
+
+    // Update heights
+    y.height = Math.max(get().getHeight(y.left), get().getHeight(y.right)) + 1;
+    x.height = Math.max(get().getHeight(x.left), get().getHeight(x.right)) + 1;
+
+    // Return new root
+    return x;
+  },
+
+  // Left rotation for AVL rebalancing
+  leftRotate: (x) => {
+    const y = x.right;
+    const T2 = y.left;
+
+    // Perform rotation
+    y.left = x;
+    x.right = T2;
+
+    // Update heights
+    x.height = Math.max(get().getHeight(x.left), get().getHeight(x.right)) + 1;
+    y.height = Math.max(get().getHeight(y.left), get().getHeight(y.right)) + 1;
+
+    // Return new root
+    return y;
+  },
+
+  // Convert any tree node to AVL node (ensure height property)
+  convertToAVLNode: (node) => {
+    if (!node) return null;
+
+    // If it's not already an AVL node (with height), convert it
+    if (node.height === undefined) {
+      node.height = 1;
+
+      // Recursively convert child nodes
+      if (node.left) {
+        node.left = get().convertToAVLNode(node.left);
+      }
+      if (node.right) {
+        node.right = get().convertToAVLNode(node.right);
+      }
+
+      // Update height based on children
+      node.height =
+        1 + Math.max(get().getHeight(node.left), get().getHeight(node.right));
+    }
+
+    return node;
+  },
+
+  // Create a sample AVL tree
+  createSampleAVL: () => {
+    // Create a basic AVL tree for testing (already balanced)
+    const root = get().createAVLNode(15);
+    root.left = get().createAVLNode(10);
+    root.right = get().createAVLNode(20);
+    root.left.left = get().createAVLNode(5);
+    root.left.right = get().createAVLNode(12);
+    root.right.left = get().createAVLNode(17);
+    root.right.right = get().createAVLNode(25);
+
+    // Update heights
+    root.left.height = 2;
+    root.right.height = 2;
+    root.height = 3;
+
+    // Calculate proper layout
+    const layoutTree = get().calculateTreeLayout(root);
+    set({ tree: layoutTree });
+    return layoutTree;
+  },
+
+  // Insert a node into AVL tree with balancing
+  insertAVL: async (value) => {
+    const { traversalSpeed } = get();
+    // Make sure we're working with an AVL tree by converting if needed
+    let tree = get().tree;
+    if (tree && tree.height === undefined) {
+      tree = get().convertToAVLNode(JSON.parse(JSON.stringify(tree)));
+    }
+
+    // Store the old tree for animation comparison
+    const oldTree = JSON.parse(JSON.stringify(tree));
+
+    set({
+      tree, // Set the converted tree
+      searchPath: [],
+      searchFound: null,
+      bstTargetValue: value,
+      currentNode: null,
+      visitedNodes: [],
+    });
+
+    const insert = async (node) => {
+      // Regular BST insert
+      if (node === null) {
+        const newNode = get().createAVLNode(value);
+        set({ searchFound: true });
+        return newNode;
+      }
+
+      set((state) => ({
+        visitedNodes: [...state.visitedNodes, node.value],
+        currentNode: node.value,
+        searchPath: [...state.searchPath, node.value],
+      }));
+      await new Promise((r) => setTimeout(r, traversalSpeed));
+
+      if (value < node.value) {
+        node.left = await insert(node.left);
+      } else if (value > node.value) {
+        node.right = await insert(node.right);
+      } else {
+        set({ searchFound: false }); // Value already exists
+        return node;
+      }
+
+      // Ensure node has height property (defensive)
+      if (node.height === undefined) {
+        node.height = 1;
+      }
+
+      // Update height of current node
+      node.height =
+        Math.max(get().getHeight(node.left), get().getHeight(node.right)) + 1;
+
+      // Get balance factor to check if rebalancing is needed
+      const balance = get().getBalanceFactor(node);
+
+      // Left Left Case
+      if (balance > 1 && value < node.left.value) {
+        return get().rightRotate(node);
+      }
+
+      // Right Right Case
+      if (balance < -1 && value > node.right.value) {
+        return get().leftRotate(node);
+      }
+
+      // Left Right Case
+      if (balance > 1 && value > node.left.value) {
+        node.left = get().leftRotate(node.left);
+        return get().rightRotate(node);
+      }
+
+      // Right Left Case
+      if (balance < -1 && value < node.right.value) {
+        node.right = get().rightRotate(node.right);
+        return get().leftRotate(node);
+      }
+
+      // Return the unchanged node if no rotation was needed
+      return node;
+    };
+
+    const updatedTree = await insert(tree);
+
+    // Create a smooth transition by setting up animation
+    gsap.to(".tree-node", {
+      opacity: 0.7,
+      scale: 0.9,
+      duration: 0.3,
+      ease: "power2.out",
+    });
+
+    // Short pause to show the change
+    await new Promise((r) => setTimeout(r, 100));
+
+    // Recalculate layout after insertion
+    const layoutTree = get().calculateTreeLayout(updatedTree);
+    set({ tree: layoutTree });
+  },
+
+  // Delete a node from AVL tree with rebalancing
+  deleteAVL: async (value) => {
+    const { traversalSpeed } = get();
+
+    // Make sure we're working with an AVL tree by converting if needed
+    let tree = get().tree;
+    if (tree && tree.height === undefined) {
+      tree = get().convertToAVLNode(JSON.parse(JSON.stringify(tree)));
+    }
+
+    set({
+      tree, // Set the converted tree
+      searchPath: [],
+      searchFound: null,
+      bstTargetValue: value,
+      currentNode: null,
+      visitedNodes: [],
+    });
+
+    // Node found flag
+    let nodeFound = false;
+
+    const minValueNode = (node) => {
+      let current = node;
+      while (current && current.left !== null) {
+        current = current.left;
+      }
+      return current;
+    };
+
+    const deleteNode = async (node, valueToDelete) => {
+      if (node === null) {
+        return null;
+      }
+
+      // Update visited nodes for visualization
+      set((state) => ({
+        visitedNodes: [...state.visitedNodes, node.value],
+        currentNode: node.value,
+        searchPath: [...state.searchPath, node.value],
+      }));
+      await new Promise((r) => setTimeout(r, traversalSpeed));
+
+      // Regular BST delete
+      if (valueToDelete < node.value) {
+        node.left = await deleteNode(node.left, valueToDelete);
+      } else if (valueToDelete > node.value) {
+        node.right = await deleteNode(node.right, valueToDelete);
+      } else {
+        // Node with the target value found
+        nodeFound = true;
+
+        // Node with only one child or no child
+        if (node.left === null) {
+          return node.right;
+        } else if (node.right === null) {
+          return node.left;
+        }
+
+        // Node with two children: Get the inorder successor (smallest in right subtree)
+        const successor = minValueNode(node.right);
+
+        // Copy the successor's value to this node
+        node.value = successor.value;
+
+        // Delete the successor (which has at most one child)
+        node.right = await deleteNode(node.right, successor.value);
+      }
+
+      // If tree had only one node that was deleted, return null
+      if (node === null) return null;
+
+      // Update height of current node
+      node.height =
+        1 + Math.max(get().getHeight(node.left), get().getHeight(node.right));
+
+      // Get balance factor to check if rebalancing is needed
+      const balance = get().getBalanceFactor(node);
+
+      // Left Left Case
+      if (balance > 1 && get().getBalanceFactor(node.left) >= 0) {
+        return get().rightRotate(node);
+      }
+
+      // Left Right Case
+      if (balance > 1 && get().getBalanceFactor(node.left) < 0) {
+        node.left = get().leftRotate(node.left);
+        return get().rightRotate(node);
+      }
+
+      // Right Right Case
+      if (balance < -1 && get().getBalanceFactor(node.right) <= 0) {
+        return get().leftRotate(node);
+      }
+
+      // Right Left Case
+      if (balance < -1 && get().getBalanceFactor(node.right) > 0) {
+        node.right = get().rightRotate(node.right);
+        return get().leftRotate(node);
+      }
+
+      return node;
+    };
+
+    try {
+      // Call the delete function with our tree and the value to delete
+      const updatedTree = await deleteNode(tree, value);
+
+      // Set searchFound based on whether the node was found
+      set({ searchFound: nodeFound });
+
+      if (nodeFound) {
+        // Create a smooth transition animation
+        gsap.to(".tree-node", {
+          opacity: 0.7,
+          scale: 0.9,
+          duration: 0.3,
+          ease: "power2.out",
+        });
+
+        // Short pause to show the change
+        await new Promise((r) => setTimeout(r, 100));
+
+        // Recalculate layout after deletion and update the tree
+        const layoutTree = get().calculateTreeLayout(updatedTree);
+        set({ tree: layoutTree });
+      }
+    } catch (error) {
+      console.error("Error deleting node:", error);
+      set({ searchFound: false });
+    }
+  },
+
+  // Function to update tree state (used to refresh visualization)
+  updateTreeState: () => {
+    const { tree } = get();
+    if (!tree) return;
+    const layoutTree = get().calculateTreeLayout(
+      JSON.parse(JSON.stringify(tree))
+    );
+    set({ tree: layoutTree });
+  },
+
+  // Add BST delete function if it doesn't exist
+  deleteBST: async (value) => {
+    const { tree, traversalSpeed } = get();
+
+    set({
+      searchPath: [],
+      searchFound: null,
+      bstTargetValue: value,
+      currentNode: null,
+      visitedNodes: [],
+    });
+
+    // Node found flag
+    let nodeFound = false;
+
+    const minValueNode = (node) => {
+      let current = node;
+      while (current && current.left !== null) {
+        current = current.left;
+      }
+      return current;
+    };
+
+    const deleteNode = async (node, valueToDelete) => {
+      if (node === null) return null;
+
+      // Update visited nodes for visualization
+      set((state) => ({
+        visitedNodes: [...state.visitedNodes, node.value],
+        currentNode: node.value,
+        searchPath: [...state.searchPath, node.value],
+      }));
+      await new Promise((r) => setTimeout(r, traversalSpeed));
+
+      // Standard BST delete
+      if (valueToDelete < node.value) {
+        node.left = await deleteNode(node.left, valueToDelete);
+      } else if (valueToDelete > node.value) {
+        node.right = await deleteNode(node.right, valueToDelete);
+      } else {
+        // Node with the value found
+        nodeFound = true;
+
+        // Node with only one child or no child
+        if (node.left === null) {
+          return node.right;
+        } else if (node.right === null) {
+          return node.left;
+        }
+
+        // Node with two children: Get the inorder successor
+        const successor = minValueNode(node.right);
+
+        // Copy the successor's value to this node
+        node.value = successor.value;
+
+        // Delete the inorder successor
+        node.right = await deleteNode(node.right, successor.value);
+      }
+      return node;
+    };
+
+    try {
+      const updatedTree = await deleteNode(tree, value);
+
+      // Set searchFound based on whether the node was found
+      set({ searchFound: nodeFound });
+
+      if (nodeFound) {
+        // Create a smooth transition animation
+        gsap.to(".tree-node", {
+          opacity: 0.7,
+          scale: 0.9,
+          duration: 0.3,
+          ease: "power2.out",
+        });
+
+        // Short pause to show the change
+        await new Promise((r) => setTimeout(r, 100));
+
+        // Recalculate layout after deletion
+        const layoutTree = get().calculateTreeLayout(updatedTree);
+        set({ tree: layoutTree });
+      }
+    } catch (error) {
+      console.error("Error deleting node:", error);
+      set({ searchFound: false });
+    }
   },
 }));
 
