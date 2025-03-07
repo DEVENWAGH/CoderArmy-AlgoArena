@@ -6,6 +6,7 @@ const useAlgorithmStore = create((set, get) => ({
   currentAlgorithm: null,
   currentCategory: null,
   searchQuery: "",
+  searchResults: [], // Add this line
   algorithmCategories: {
     Sorting: [
       "Bubble Sort",
@@ -137,8 +138,10 @@ const useAlgorithmStore = create((set, get) => ({
         }
       });
     });
-    return results;
+    set({ searchResults: results }); // Update search results state
   },
+
+  setSearchQuery: (query) => set({ searchQuery: query }),
 
   setSpeed: (speed) => {
     set({ speed, currentSpeed: speed });

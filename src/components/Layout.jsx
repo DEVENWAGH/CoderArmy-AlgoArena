@@ -8,7 +8,7 @@ const Layout = () => {
     <>
       <Navbar />
       <div className="flex flex-1 w-full">
-        <aside className="w-64 flex-shrink-0">
+        <aside className="hidden md:block md:w-64 flex-shrink-0">
           <Sidebar />
         </aside>
         <main className="flex-1 w-full">

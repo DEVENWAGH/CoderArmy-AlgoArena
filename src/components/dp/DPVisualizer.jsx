@@ -163,9 +163,9 @@ const DPVisualizer = () => {
 
   const renderControls = () => (
     <div className="flex flex-col gap-2 p-4 rounded-lg bg-slate-700">
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2 gap-2">
         {/* Algorithm title and input toggle */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <h2 className="text-xl font-bold text-white capitalize">
             {algorithm?.replace('-', ' ')}
           </h2>
@@ -205,135 +205,137 @@ const DPVisualizer = () => {
         </div>
       </div>
 
-      {/* Custom Input UI, shown when useCustomInput is true */}
-      {useCustomInput && (
-        <div className="p-3 mb-3 border rounded border-slate-600 bg-slate-800">
-          {algorithm?.includes('fibonacci') && (
-            <div className="flex items-center gap-2">
-              <label className="text-gray-300">N:</label>
-              <input
-                type="number"
-                min="1"
-                max="20"
-                value={customInputs.fibonacci.n}
-                onChange={(e) => handleCustomInputChange('fibonacci', 'n', 
-                  Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
-                className="w-20 px-2 py-1 text-white rounded bg-slate-600"
-              />
-            </div>
-          )}
-
-          {algorithm?.includes('knapsack') && (
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-              <div className="flex flex-col gap-1">
-                <label className="text-gray-300">Values (comma-separated):</label>
-                <input
-                  type="text"
-                  value={customInputs.knapsack.values.join(', ')}
-                  onChange={(e) => handleArrayInputChange('knapsack', 'values', e.target.value)}
-                  className="px-2 py-1 text-white rounded bg-slate-600"
-                  placeholder="e.g. 4, 2, 10, 1, 2"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-gray-300">Weights (comma-separated):</label>
-                <input
-                  type="text"
-                  value={customInputs.knapsack.weights.join(', ')}
-                  onChange={(e) => handleArrayInputChange('knapsack', 'weights', e.target.value)}
-                  className="px-2 py-1 text-white rounded bg-slate-600"
-                  placeholder="e.g. 12, 1, 4, 1, 2"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-gray-300">Capacity:</label>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 justify-between">
+        {/* Custom Input UI, shown when useCustomInput is true */}
+        {useCustomInput && (
+          <div className="p-3 mb-3 border rounded border-slate-600 bg-slate-800">
+            {algorithm?.includes('fibonacci') && (
+              <div className="flex items-center gap-2">
+                <label className="text-gray-300">N:</label>
                 <input
                   type="number"
                   min="1"
-                  value={customInputs.knapsack.capacity}
-                  onChange={(e) => handleCustomInputChange('knapsack', 'capacity', 
-                    Math.max(1, parseInt(e.target.value) || 1))}
-                  className="px-2 py-1 text-white rounded bg-slate-600"
+                  max="20"
+                  value={customInputs.fibonacci.n}
+                  onChange={(e) => handleCustomInputChange('fibonacci', 'n', 
+                    Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
+                  className="w-20 px-2 py-1 text-white rounded bg-slate-600"
                 />
               </div>
-            </div>
-          )}
+            )}
 
-          {algorithm?.includes('lcs') && (
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {algorithm?.includes('knapsack') && (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-gray-300">Values (comma-separated):</label>
+                  <input
+                    type="text"
+                    value={customInputs.knapsack.values.join(', ')}
+                    onChange={(e) => handleArrayInputChange('knapsack', 'values', e.target.value)}
+                    className="px-2 py-1 text-white rounded bg-slate-600"
+                    placeholder="e.g. 4, 2, 10, 1, 2"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-gray-300">Weights (comma-separated):</label>
+                  <input
+                    type="text"
+                    value={customInputs.knapsack.weights.join(', ')}
+                    onChange={(e) => handleArrayInputChange('knapsack', 'weights', e.target.value)}
+                    className="px-2 py-1 text-white rounded bg-slate-600"
+                    placeholder="e.g. 12, 1, 4, 1, 2"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-gray-300">Capacity:</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={customInputs.knapsack.capacity}
+                    onChange={(e) => handleCustomInputChange('knapsack', 'capacity', 
+                      Math.max(1, parseInt(e.target.value) || 1))}
+                    className="px-2 py-1 text-white rounded bg-slate-600"
+                  />
+                </div>
+              </div>
+            )}
+
+            {algorithm?.includes('lcs') && (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div className="flex flex-col gap-1">
+                  <label className="text-gray-300">String 1:</label>
+                  <input
+                    type="text"
+                    value={customInputs.lcs.str1}
+                    onChange={(e) => handleCustomInputChange('lcs', 'str1', e.target.value)}
+                    className="px-2 py-1 text-white rounded bg-slate-600"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-gray-300">String 2:</label>
+                  <input
+                    type="text"
+                    value={customInputs.lcs.str2}
+                    onChange={(e) => handleCustomInputChange('lcs', 'str2', e.target.value)}
+                    className="px-2 py-1 text-white rounded bg-slate-600"
+                  />
+                </div>
+              </div>
+            )}
+
+            {algorithm?.includes('lis') && (
               <div className="flex flex-col gap-1">
-                <label className="text-gray-300">String 1:</label>
+                <label className="text-gray-300">Array (comma-separated):</label>
                 <input
                   type="text"
-                  value={customInputs.lcs.str1}
-                  onChange={(e) => handleCustomInputChange('lcs', 'str1', e.target.value)}
+                  value={customInputs.lis.array.join(', ')}
+                  onChange={(e) => handleArrayInputChange('lis', 'array', e.target.value)}
                   className="px-2 py-1 text-white rounded bg-slate-600"
+                  placeholder="e.g. 10, 22, 9, 33, 21"
                 />
+                <small className="text-gray-400">Enter numbers separated by commas</small>
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-gray-300">String 2:</label>
-                <input
-                  type="text"
-                  value={customInputs.lcs.str2}
-                  onChange={(e) => handleCustomInputChange('lcs', 'str2', e.target.value)}
-                  className="px-2 py-1 text-white rounded bg-slate-600"
-                />
-              </div>
-            </div>
-          )}
+            )}
+          </div>
+        )}
 
-          {algorithm?.includes('lis') && (
-            <div className="flex flex-col gap-1">
-              <label className="text-gray-300">Array (comma-separated):</label>
-              <input
-                type="text"
-                value={customInputs.lis.array.join(', ')}
-                onChange={(e) => handleArrayInputChange('lis', 'array', e.target.value)}
-                className="px-2 py-1 text-white rounded bg-slate-600"
-                placeholder="e.g. 10, 22, 9, 33, 21"
-              />
-              <small className="text-gray-400">Enter numbers separated by commas</small>
-            </div>
-          )}
-        </div>
-      )}
+        {/* Standard controls - unchanged */}
+        <div className="flex items-center justify-between">
+          {/* Speed Control */}
+          <div className="flex items-center gap-2">
+            <label className="text-gray-300">Speed:</label>
+            <input
+              type="range"
+              min="1"
+              max="100"
+              value={speed}
+              onChange={(e) => setSpeed(Number(e.target.value))}
+              className="w-32"
+            />
+            <span className="text-gray-300">{speed}%</span>
+          </div>
 
-      {/* Standard controls - unchanged */}
-      <div className="flex items-center justify-between">
-        {/* Speed Control */}
-        <div className="flex items-center gap-2">
-          <label className="text-gray-300">Speed:</label>
-          <input
-            type="range"
-            min="1"
-            max="100"
-            value={speed}
-            onChange={(e) => setSpeed(Number(e.target.value))}
-            className="w-32"
-          />
-          <span className="text-gray-300">{speed}%</span>
+          {/* Playback Controls */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => isPlaying ? pauseAlgorithm() : handleRunAlgorithm()}
+              className={`px-4 py-2 rounded ${
+                isPlaying ? 'bg-red-500' : 'bg-green-500'
+              }`}
+            >
+              {isPlaying ? 'Pause' : 'Start'}
+            </button>
+            <button
+              onClick={() => startAlgorithm(algorithm)}
+              className="px-4 py-2 bg-blue-500 rounded"
+            >
+              Reset
+            </button>
+          </div>
+          
+          {/* Visualization Toggle */}
+          {renderVisualizationToggle()}
         </div>
-
-        {/* Playback Controls */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => isPlaying ? pauseAlgorithm() : handleRunAlgorithm()}
-            className={`px-4 py-2 rounded ${
-              isPlaying ? 'bg-red-500' : 'bg-green-500'
-            }`}
-          >
-            {isPlaying ? 'Pause' : 'Start'}
-          </button>
-          <button
-            onClick={() => startAlgorithm(algorithm)}
-            className="px-4 py-2 bg-blue-500 rounded"
-          >
-            Reset
-          </button>
-        </div>
-        
-        {/* Visualization Toggle */}
-        {renderVisualizationToggle()}
       </div>
     </div>
   )
@@ -479,15 +481,15 @@ const DPVisualizer = () => {
 
   return (
     <div className="flex flex-col w-full h-full bg-slate-800">
-      {/* Fixed Header */}
-      <div className="fixed right-0 z-40 p-4 border-b shadow-lg top-16 left-64 bg-slate-800 border-slate-700">
+      {/* Fixed Header - now with proper left positioning for mobile */}
+      <div className="fixed right-0 z-40 p-2 sm:p-4 border-b shadow-lg top-16 left-0 bg-slate-800 border-slate-700 overflow-x-auto">
         {renderControls()}
       </div>
 
-      {/* Main Content with Initial Scroll Position */}
-      <div className="p-4 mt-50 flex flex-col h-[calc(100vh-12rem)]">
+      {/* Main Content - properly positioned for mobile */}
+      <div className="p-2 sm:p-4 mt-40 sm:mt-48 flex flex-col h-[calc(100vh-16rem)] sm:h-[calc(100vh-12rem)]">
         {visualizationType === 'table' && (
-          <div className="flex-1 p-4 overflow-auto rounded-lg bg-slate-900">
+          <div className="flex-1 p-2 sm:p-4 overflow-auto rounded-lg bg-slate-900">
             <div className="flex items-center justify-center min-h-full">
               {renderTable()}
             </div>
@@ -497,8 +499,7 @@ const DPVisualizer = () => {
         {visualizationType === 'tree' && (
           <div 
             ref={scrollRef}
-            className="flex-1 p-4 overflow-x-auto rounded-lg bg-slate-900"
-            style={{ scrollBehavior: 'smooth' }}
+            className="flex-1 p-2 sm:p-4 overflow-auto rounded-lg bg-slate-900"
           >
             <div className="min-w-max">
               <DPTreeVisualizer 

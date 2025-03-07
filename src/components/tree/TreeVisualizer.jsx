@@ -448,85 +448,178 @@ const TreeVisualizer = () => {
     setTransform({ x: 0, y: 0, scale: 1 })
   }
 
-  return (
-    <div className="flex flex-col w-full h-full p-4">
-      <h2 className="text-xl font-bold text-sky-400 mb-8">
-        {algorithm.split('-').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1)
-        ).join(' ')}
-      </h2>
+  // Enhanced touch support for mobile devices
+  useEffect(() => {
+    const element = containerRef.current
+    if (!element) return
+    
+    let touchStartX, touchStartY
+    let initialTransform = { ...transform }
+    
+    const handleTouchStart = (e) => {
+      if (e.touches.length === 1) {
+        // Single touch for dragging
+        touchStartX = e.touches[0].clientX
+        touchStartY = e.touches[0].clientY
+        initialTransform = { ...transform }
+      } else if (e.touches.length === 2) {
+        // Pinch to zoom
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        )
+        element.dataset.pinchDistance = dist
+      }
+    }
+    
+    const handleTouchMove = (e) => {
+      e.preventDefault()
+      
+      if (e.touches.length === 1) {
+        // Handle dragging
+        const deltaX = e.touches[0].clientX - touchStartX
+        const deltaY = e.touches[0].clientY - touchStartY
+        
+        setTransform(prev => ({
+          ...prev,
+          x: initialTransform.x + deltaX,
+          y: initialTransform.y + deltaY
+        }))
+      } else if (e.touches.length === 2 && element.dataset.pinchDistance) {
+        // Handle pinch zooming
+        const newDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        )
+        
+        const oldDist = parseFloat(element.dataset.pinchDistance)
+        const scaleFactor = 0.01
+        const deltaScale = ((newDist - oldDist) * scaleFactor)
+        
+        const newScale = Math.max(0.5, Math.min(2, initialTransform.scale + deltaScale))
+        
+        setTransform(prev => ({
+          ...prev,
+          scale: newScale
+        }))
+        
+        element.dataset.pinchDistance = newDist
+      }
+    }
+    
+    const handleTouchEnd = () => {
+      delete element.dataset.pinchDistance
+    }
+    
+    element.addEventListener('touchstart', handleTouchStart)
+    element.addEventListener('touchmove', handleTouchMove, { passive: false })
+    element.addEventListener('touchend', handleTouchEnd)
+    
+    return () => {
+      element.removeEventListener('touchstart', handleTouchStart)
+      element.removeEventListener('touchmove', handleTouchMove)
+      element.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [transform])
 
-      {/* Show appropriate operations form based on algorithm */}
-      {algorithm === 'binary-search-tree' ? (
-        <BSTOperationsForm />
-      ) : algorithm === 'avl-tree' ? (
-        <AVLOperationsForm />
-      ) : algorithm === 'red-black-tree' ? (
-        <RBOperationsForm />
-      ) : (
-        <div className="mb-4 p-4 bg-slate-800 rounded-lg">
-          <div className="flex justify-between items-start">
-            <div className="flex-1">
-              <h3 className="text-lg text-white font-medium">{info.title}</h3>
-              <p className="text-gray-300 mt-1 text-sm">{info.description}</p>
-            </div>
-            <div className="ml-4 p-3 bg-slate-900 rounded-md max-w-xs overflow-auto">
-              <pre className="text-xs text-sky-300 font-mono whitespace-pre">
-                {info.code}
-              </pre>
-            </div>
+  return (
+    <div className="flex flex-col w-full h-full bg-slate-800">
+      {/* Controls Section - now responsive */}
+      <div className="fixed right-0 z-40 p-2 sm:p-4 shadow-lg top-16 left-0 md:left-64 bg-slate-800 border-b border-slate-700">
+        <div className="flex flex-col sm:flex-row justify-between mb-2 gap-2">
+          <div>
+            <h2 className="text-xl font-bold text-white capitalize">
+              {algorithm?.replace('-', ' ')}
+            </h2>
+          </div>
+          
+          <div className="flex flex-wrap gap-2 items-center justify-end">
+            {showControls && (
+              <>
+                <button
+                  onClick={handleAdd}
+                  className="px-3 py-1 bg-green-600 rounded hover:bg-green-700"
+                  disabled={isAnimating}
+                >
+                  Add Node
+                </button>
+                
+                <button
+                  onClick={handleRemove}
+                  className="px-3 py-1 bg-red-600 rounded hover:bg-red-700"
+                  disabled={isAnimating}
+                >
+                  Remove Node
+                </button>
+                
+                <button
+                  onClick={handleSearch}
+                  className="px-3 py-1 bg-yellow-600 rounded hover:bg-yellow-700" 
+                  disabled={isAnimating}
+                >
+                  Search
+                </button>
+                
+                <button
+                  onClick={randomizeTree}
+                  className="px-3 py-1 bg-blue-600 rounded hover:bg-blue-700"
+                  disabled={isAnimating}
+                >
+                  Randomize
+                </button>
+              </>
+            )}
+            
+            <button
+              onClick={handleResetView}
+              className="px-3 py-1 bg-slate-600 rounded hover:bg-slate-700"
+            >
+              Reset View
+            </button>
           </div>
         </div>
-      )}
+        
+        {/* Input Controls - stack on mobile */}
+        {showControls && (
+          <div className="flex flex-col sm:flex-row gap-2 mt-2">
+            <div className="flex gap-2 items-center">
+              <input
+                type="number"
+                value={nodeValue}
+                onChange={e => setNodeValue(e.target.value)}
+                placeholder="Node value"
+                className="px-3 py-1 text-white rounded bg-slate-700 border border-slate-600 w-full sm:w-auto"
+              />
+            </div>
+          </div>
+        )}
+      </div>
 
-      {/* Show TreeControls only for traversal algorithms */}
-      {algorithm !== 'binary-search-tree' && algorithm !== 'avl-tree' && <TreeControls />}
-
-      <div 
-        ref={containerRef}
-        className="flex-1 bg-slate-900 rounded-lg overflow-hidden mt-4 min-h-[400px]"
-        onWheel={handleWheel}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onDoubleClick={handleDoubleClick}
-        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
-      >
-        {treeLayout.nodes?.length > 0 && (
-          <svg
-            ref={svgRef}
-            width="100%"
-            height="100%"
-            viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
-            preserveAspectRatio="xMidYMid meet"
-          >
+      {/* Main content - adjust padding for mobile */}
+      <div className="flex flex-col h-full pt-28 sm:pt-32 md:pt-24 pb-4 px-2 sm:px-4 overflow-hidden">
+        {/* Tree container with mobile touch support */}
+        <div 
+          ref={containerRef}
+          className="flex-1 w-full overflow-hidden rounded-lg bg-slate-900 touch-none"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onWheel={handleWheel}
+          onDoubleClick={handleDoubleClick}
+        >
+          {/* Render nodes and links */}
+          <svg width="100%" height="100%">
             <g transform={`translate(${transform.x}, ${transform.y}) scale(${transform.scale})`}>
-              {treeLayout.links?.map((link, i) => (
-                <TreeLink
-                  key={`link-${i}`}
-                  link={link}
-                  isActive={visitedNodes.includes(link.target.id)}
-                  isPath={
-                    activeNodePath.includes(link.source.id) && 
-                    activeNodePath.includes(link.target.id)
-                  }
-                />
-              ))}
-              {treeLayout.nodes?.map((node) => (
-                <TreeNode
-                  key={`node-${node.id}`}
-                  node={node}
-                  visited={visitedNodes.includes(node.id)}
-                  isCurrent={currentNode === node.id}
-                  isInPath={activeNodePath.includes(node.id)}
-                />
-              ))}
+              {/* ... existing code ... */}
             </g>
           </svg>
-        )}
-        <div className="absolute px-2 py-1 text-sm text-gray-300 rounded bg-slate-800 bg-opacity-70 bottom-2 left-70">
-          Scroll to zoom, drag to Tree
+          
+          {/* Mobile instructions overlay */}
+          <div className="absolute bottom-4 left-4 bg-slate-800 bg-opacity-80 p-2 rounded text-xs sm:text-sm text-white max-w-[200px] sm:max-w-none">
+            <p className="hidden sm:block">Mouse: drag to move, wheel to zoom, double-click to reset</p>
+            <p className="sm:hidden">Touch: drag to move, pinch to zoom, double-tap to reset</p>
+          </div>
         </div>
       </div>
     </div>

@@ -98,3 +98,55 @@ main {
 .sorting-container::-webkit-scrollbar-thumb:hover {
   background: rgba(59, 130, 246, 0.7);
 }
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding-left: 0 !important;
+  }
+
+  .app-header {
+    padding-left: 1rem;
+    height: 64px; /* Revert navbar height */
+  }
+
+  /* Ensure content takes full width */
+  .content-container {
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Hide sidebar completely on mobile */
+  aside {
+    display: none !important;
+  }
+}
+
+/* Tablet responsive adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .main-content {
+    margin-left: 16rem;
+  }
+}
+
+/* Touch-friendly adjustments */
+@media (pointer: coarse) {
+  .btn,
+  button,
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  input[type="range"] {
+    height: 24px;
+  }
+
+  /* Increase spacing for touch targets */
+  .touch-spacing > * {
+    margin: 0.25rem 0;
+  }
+}
