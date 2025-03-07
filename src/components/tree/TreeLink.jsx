@@ -4,29 +4,24 @@ import { gsap } from 'gsap'
 const TreeLink = ({ link, isActive, isPath }) => {
   const pathRef = useRef(null)
   
-  // Generate curved path between nodes
-  const generatePath = () => {
-    const sx = link.source.x
-    const sy = link.source.y
-    const tx = link.target.x
-    const ty = link.target.y
+  useEffect(() => {
+    if (!pathRef.current) return;
     
-    // Control point for the curve (between source and target)
-    const midY = (sy + ty) / 2
+    // Add data attributes for more reliable targeting
+    pathRef.current.setAttribute('data-link-id', `${link.source.id}-${link.target.id}`);
     
-    return `M ${sx} ${sy} C ${sx} ${midY}, ${tx} ${midY}, ${tx} ${ty}`
-  }
+    // Ensure initial path is correctly rendered
+    const path = generatePath();
+    if (pathRef.current.getAttribute('d') !== path) {
+      pathRef.current.setAttribute('d', path);
+    }
+  }, [link.source.id, link.target.id, link.source.x, link.source.y, link.target.x, link.target.y]);
   
-  // Animate the link when active or in path
+  // Handle animations for link state changes
   useEffect(() => {
     if (!pathRef.current) return
     
-    const tl = gsap.timeline({
-      defaults: {
-        duration: 0.3,
-        ease: "power2.inOut"
-      }
-    })
+    const tl = gsap.timeline()
     
     if (isPath) {
       tl.to(pathRef.current, {
@@ -46,13 +41,31 @@ const TreeLink = ({ link, isActive, isPath }) => {
       tl.to(pathRef.current, {
         stroke: "#1e40af",
         strokeWidth: 2,
-        opacity: 0.6, // Increased base opacity
+        opacity: 0.6,
         overwrite: "auto"
       })
     }
     
     return () => tl.kill()
   }, [isActive, isPath])
+
+  // Generate a smooth curved path between nodes
+  const generatePath = () => {
+    const { source, target } = link
+    
+    // Ensure coordinates exist to prevent NaN errors that break paths
+    if (!source || !source.x === undefined || !target || target.x === undefined) {
+      return '';
+    }
+    
+    // Calculate control points for smoother curve
+    const midY = (source.y + target.y) / 2;
+    
+    return `M ${source.x},${source.y} 
+            C ${source.x},${midY} 
+              ${target.x},${midY} 
+              ${target.x},${target.y}`;
+  }
 
   return (
     <path
@@ -62,9 +75,9 @@ const TreeLink = ({ link, isActive, isPath }) => {
       stroke="#1e40af"
       strokeWidth={2}
       fill="none"
-      opacity={0.6} // Increased initial opacity
+      opacity={0.6}
       strokeLinecap="round"
-      style={{ pointerEvents: 'none' }} // Prevent interference with interactions
+      style={{ pointerEvents: 'none' }}
       vectorEffect="non-scaling-stroke" // Maintain consistent line width
     />
   )

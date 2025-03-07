@@ -91,66 +91,182 @@ const TreeVisualizer = () => {
     if (!tree || !isLoaded) return
     
     try {
-      const layout = createTreeLayout(tree, dimensions.width, dimensions.height)
+      // Special handling for Red-Black trees to ensure proper alignment
+      const isRedBlackTree = algorithm === 'red-black-tree';
+      
+      // Force a complete tree layout recalculation using a deep copy
+      // This ensures proper layout even with minimal changes like single node insertions
+      const treeForLayout = JSON.parse(JSON.stringify(tree));
+      const layout = createTreeLayout(treeForLayout, dimensions.width, dimensions.height)
+      
+      // Store the updated layout
       setTreeLayout(layout)
       
-      // Center the tree initially
+      // Center the tree initially with improved positioning logic
       if (layout.nodes.length > 0) {
         const rootNode = layout.nodes.find(n => n.parentId === null);
         if (rootNode) {
-          // Center horizontally by default
+          // More precise centering with adjustments for tree depth
+          const centerX = dimensions.width / 2 - rootNode.x;
+          // Adjust vertical position based on tree size
+          const centerY = isRedBlackTree ? 
+                         Math.min(100, dimensions.height / 6) : 
+                         Math.min(80, dimensions.height / 8);
+                         
           setTransform(prev => ({
             ...prev,
-            x: dimensions.width / 2 - rootNode.x,
+            x: centerX,
+            y: centerY,
           }));
         }
       }
       
-      const timeline = gsap.timeline({ defaults: { ease: "power3.out" } });
+      // Clear any existing animations to prevent conflicts
+      gsap.killTweensOf(".tree-node");
+      gsap.killTweensOf(".tree-link");
       
-      // Ensure links are visible during transition
-      gsap.set(".tree-link", { 
-        opacity: 1,
-        visibility: "visible",
-        pointerEvents: "none"
-      });
-      
-      // First position the nodes instantly
-      gsap.set(".tree-node", {
-        opacity: 0.5,
-        scale: 0.8
-      });
-      
-      // Then animate them to their final positions
-      timeline
-        .to(".tree-node", {
-          x: (i) => {
-            if (i >= layout.nodes.length) return 0;
-            return layout.nodes[i].x;
-          },
-          y: (i) => {
-            if (i >= layout.nodes.length) return 0;
-            return layout.nodes[i].y;
-          },
-          opacity: 1,
-          scale: 1,
-          duration: 0.8,
-          stagger: {
-            from: "start",
-            amount: 0.3
-          },
-        })
-        .to(".tree-link", {
-          opacity: 1,
-          duration: 0.5,
-          stagger: 0.05,
-          overwrite: "auto"
-        }, "<0.1");
+      // Wait for next frame to ensure DOM elements are ready
+      requestAnimationFrame(() => {
+        // Enhanced element verification with retry mechanism
+        const checkAndAnimateElements = () => {
+          const nodeElements = document.querySelectorAll(".tree-node");
+          const linkElements = document.querySelectorAll(".tree-link");
+          
+          // Check if all elements are rendered
+          if (nodeElements.length !== layout.nodes.length || linkElements.length !== layout.links?.length) {
+            console.log("Element count mismatch, retrying...", {
+              expected: { nodes: layout.nodes.length, links: layout.links?.length },
+              actual: { nodes: nodeElements.length, links: linkElements.length }
+            });
+            // Try again after a delay with increased timeout for complex operations
+            setTimeout(() => {
+              // Force a re-render with the same layout data
+              setTreeLayout({...layout});
+              // Recursive retry with backoff
+              setTimeout(checkAndAnimateElements, 150);
+            }, 100);
+            return;
+          }
+          
+          // All elements are present, proceed with animation sequence
+          const timeline = gsap.timeline({ defaults: { ease: "power3.out" } });
+          
+          // Force exact positioning first - critical for single node operations
+          layout.nodes.forEach((node, i) => {
+            const element = document.querySelector(`.tree-node[data-id="${node.id}"]`);
+            if (element) {
+              gsap.set(element, {
+                x: node.x,
+                y: node.y,
+                opacity: 0.5,
+                scale: 0.8,
+                transformOrigin: "50% 50%"
+              });
+            }
+          });
+          
+          // Position links by direct selection rather than class
+          layout.links?.forEach((link, i) => {
+            const element = document.querySelector(`path[data-link-id="${link.source.id}-${link.target.id}"]`);
+            if (element) {
+              gsap.set(element, {
+                opacity: 0.3,
+                visibility: "visible"
+              });
+            }
+          });
+          
+          // Enhanced animation sequence for better reliability
+          // First animate links for better structure visualization
+          timeline
+            .to(".tree-link", {
+              opacity: 0.7, 
+              duration: 0.4,
+              stagger: 0.02,
+              ease: "power1.inOut"
+            })
+            // Then animate nodes with proper staggered appearance
+            .to(".tree-node", {
+              opacity: 1,
+              scale: 1,
+              duration: isRedBlackTree ? 0.7 : 0.8, // Slightly faster for RB trees
+              stagger: {
+                from: "start",
+                amount: 0.4,
+                grid: "auto"
+              },
+              ease: "back.out(1.2)"
+            }, "-=0.2") // Slight overlap for smoother animation
+            // Finally, bring links to full opacity
+            .to(".tree-link", {
+              opacity: 1, 
+              duration: 0.3
+            }, "-=0.3");
+            
+          // Force a final position check after animations complete for extra insurance
+          timeline.add(() => {
+            layout.nodes.forEach((node, i) => {
+              const element = document.querySelector(`.tree-node[data-id="${node.id}"]`);
+              if (element) {
+                gsap.set(element, {
+                  x: node.x,
+                  y: node.y
+                });
+              }
+            });
+          });
+        };
         
+        // Start the check and animation process
+        checkAndAnimateElements();
+      });
     } catch (error) {
       console.error("Error creating tree layout:", error);
+      
+      // Recovery mechanism: reset the tree after a short delay
+      setTimeout(() => {
+        resetVisualization();
+        if (algorithm === 'avl-tree') {
+          setTree(createSampleAVL());
+        } else if (algorithm === 'red-black-tree') {
+          setTree(createSampleRB());
+        } else {
+          setTree(createSampleTree());
+        }
+      }, 500);
     }
-  }, [tree, dimensions, isLoaded])
+  }, [tree, dimensions, isLoaded, algorithm, createSampleAVL, createSampleRB, createSampleTree, setTree, resetVisualization])
+
+  // Add specific handling for Red-Black tree operations
+  useEffect(() => {
+    // Only run for Red-Black trees
+    if (algorithm !== 'red-black-tree' || !treeLayout.nodes?.length) return;
+    
+    // Ensure proper color transitions when nodes change
+    const redNodes = document.querySelectorAll('.tree-node[data-color="RED"]');
+    const blackNodes = document.querySelectorAll('.tree-node[data-color="BLACK"]');
+    
+    gsap.to(redNodes, {
+      duration: 0.5,
+      onStart: function() {
+        this.targets().forEach(node => {
+          const circle = node.querySelector('circle');
+          if (circle) gsap.to(circle, { fill: "#ef4444", duration: 0.3 });
+        });
+      }
+    });
+    
+    gsap.to(blackNodes, {
+      duration: 0.5,
+      onStart: function() {
+        this.targets().forEach(node => {
+          const circle = node.querySelector('circle');
+          if (circle) gsap.to(circle, { fill: "#1e293b", duration: 0.3 });
+        });
+      }
+    });
+    
+  }, [algorithm, treeLayout.nodes]);
 
   // Calculate path from current node to root
   const findPathToRoot = (nodeId) => {
@@ -230,7 +346,7 @@ const TreeVisualizer = () => {
   }
   // Right Left Case
   if (balance < -1 && key < node.right.key) {
-    node.right = rightRotate(node.right)
+    node.right = leftRotate(node.right)
     return leftRotate(node)
   }
   
