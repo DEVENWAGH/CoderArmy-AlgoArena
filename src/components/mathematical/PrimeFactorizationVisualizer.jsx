@@ -1,6 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { gsap } from 'gsap';
+import { useEffect, useState, useRef } from 'react';
+import { motion } from "motion/react"
 
 const PrimeFactorizationVisualizer = ({ number, isAnimating, speed, onComplete }) => {
   const [steps, setSteps] = useState([]);
@@ -257,7 +256,7 @@ const PrimeFactorizationVisualizer = ({ number, isAnimating, speed, onComplete }
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
         {/* Left side - Steps */}
-        <div className="p-4 bg-slate-900 rounded-lg overflow-auto" ref={stepsContainerRef}>
+        <div className="p-4 bg-slate-900 rounded-lg overflow-auto h-[45%]" ref={stepsContainerRef}>
           <h3 className="text-lg font-bold text-white mb-4">Factorization Steps</h3>
           
           {steps.length > 0 ? (
