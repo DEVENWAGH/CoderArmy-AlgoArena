@@ -68,9 +68,13 @@ const TreeNode = ({ node, visited, isCurrent, isInPath }) => {
         fontWeight: "normal"
       }, "<")
     } else {
+      // Use node color if it exists (for RB tree), otherwise default color
+      const nodeFill = node.data.color === 'RED' ? "#ef4444" : 
+                       node.data.color === 'BLACK' ? "#1e293b" : "#1e293b";
+      
       tl.to(circleRef.current, {
         r: 20,
-        fill: "#1e293b",
+        fill: nodeFill,
         stroke: "#38bdf8",
         strokeWidth: 2,
         ease: "power1.inOut"
@@ -88,7 +92,7 @@ const TreeNode = ({ node, visited, isCurrent, isInPath }) => {
     return () => {
       tl.kill()
     }
-  }, [isCurrent, isInPath, visited])
+  }, [isCurrent, isInPath, visited, node.data.color])
 
   return (
     <g
@@ -99,7 +103,7 @@ const TreeNode = ({ node, visited, isCurrent, isInPath }) => {
       <circle
         ref={circleRef}
         r={20}
-        fill="#1e293b"
+        fill={node.data.color === 'RED' ? "#ef4444" : "#1e293b"}
         stroke="#38bdf8"
         strokeWidth={2}
       />

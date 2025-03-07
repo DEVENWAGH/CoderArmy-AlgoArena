@@ -9,6 +9,7 @@ import { createTreeLayout } from '../../utils/treeLayout'
 import { createDefaultTree } from '../../utils/defaultTree'
 import BSTOperationsForm from './BSTOperationsForm'
 import AVLOperationsForm from './AVLOperationsForm'
+import RBOperationsForm from './RBOperationsForm'
 
 const TreeVisualizer = () => {
   const { algorithm } = useParams()
@@ -23,7 +24,8 @@ const TreeVisualizer = () => {
     resetTraversal,
     traversalType,
     createSampleTree,  // Add these functions at component top level
-    createSampleAVL 
+    createSampleAVL,
+    createSampleRB 
   } = useTreeStore()
   
   const [treeLayout, setTreeLayout] = useState({ nodes: [], links: [] })
@@ -67,6 +69,10 @@ const TreeVisualizer = () => {
       // Use the proper AVL tree creation function
       const avlTree = createSampleAVL();
       setTree(avlTree);
+    } else if (algorithm === 'red-black-tree') {
+      // Use the Red-Black tree creation function
+      const rbTree = createSampleRB();
+      setTree(rbTree);
     } else {
       const defaultTree = createSampleTree();
       setTree(defaultTree);
@@ -78,7 +84,7 @@ const TreeVisualizer = () => {
     }, 10);
     
     return () => resetVisualization();
-  }, [algorithm, createSampleAVL, createSampleTree, setTree, resetVisualization]);
+  }, [algorithm, createSampleAVL, createSampleRB, createSampleTree, setTree, resetVisualization]);
 
   // Generate layout when tree or dimensions change
   useEffect(() => {
@@ -339,6 +345,8 @@ const TreeVisualizer = () => {
         <BSTOperationsForm />
       ) : algorithm === 'avl-tree' ? (
         <AVLOperationsForm />
+      ) : algorithm === 'red-black-tree' ? (
+        <RBOperationsForm />
       ) : (
         <div className="mb-4 p-4 bg-slate-800 rounded-lg">
           <div className="flex justify-between items-start">
