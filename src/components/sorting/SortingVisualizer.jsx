@@ -258,48 +258,51 @@ const SortingVisualizer = () => {
         {/* Controls Layout - Different for mobile/tablet and desktop */}
         <div className="flex w-full flex-col lg:flex-row lg:items-center lg:justify-between lg:gap-4">
           {/* Top Controls for mobile and tablet - improved alignment */}
-          <div className="grid grid-cols-1 sm:grid-cols-1 gap-4 lg:flex lg:flex-row w-full lg:gap-6">
-            {/* Array Size Input - better aligned */}
-            <div className="flex items-center justify-between sm:justify-start gap-2">
-              <label className="text-gray-300 text-sm sm:text-base w-12 flex-shrink-0">
-                Size:
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min="5"
-                  max="200"
-                  value={customSize}
-                  onChange={handleSizeChange}
-                  onKeyPress={handleInputKeyPress}
-                  className="w-16 px-2 py-1 text-white border rounded bg-slate-700 border-slate-600"
-                  disabled={isSorting}
-                />
+          <div className="grid grid-cols-1 sm:grid-cols-1 lg:flex lg:flex-row w-full lg:gap-6">
+            {/* Controls in the same row with justify-between */}
+            <div className="flex flex-wrap items-center justify-between gap-4 w-full">
+              {/* Array Size Input */}
+              <div className="flex items-center gap-2 sm:py-4">
+                <label className="text-gray-300 text-sm sm:text-base w-12 flex-shrink-0">
+                  Size:
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="5"
+                    max="200"
+                    value={customSize}
+                    onChange={handleSizeChange}
+                    onKeyPress={handleInputKeyPress}
+                    className="w-16 px-2 py-1 text-white border rounded bg-slate-700 border-slate-600"
+                    disabled={isSorting}
+                  />
+                  <button
+                    onClick={handleSizeSubmit}
+                    className="px-3 py-1 text-xs sm:text-sm bg-blue-500 rounded hover:bg-blue-600 disabled:opacity-50 whitespace-nowrap"
+                    disabled={isSorting}
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+
+              {/* Sort Direction */}
+              <div className="flex items-center gap-3">
+                <label className="text-gray-300 text-sm sm:text-base w-12 flex-shrink-0">
+                  Order:
+                </label>
                 <button
-                  onClick={handleSizeSubmit}
-                  className="px-3 py-1 text-xs sm:text-sm bg-blue-500 rounded hover:bg-blue-600 disabled:opacity-50 whitespace-nowrap"
-                  disabled={isSorting}
+                  onClick={toggleSortOrder}
+                  className="px-4 py-1 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700"
                 >
-                  Apply
+                  {isAscending ? "Ascending ↑" : "Descending ↓"}
                 </button>
               </div>
             </div>
 
-            {/* Sort Direction - improved alignment */}
-            <div className="flex items-center justify-between sm:justify-start gap-3">
-              <label className="text-gray-300 text-sm sm:text-base w-12 flex-shrink-0">
-                Order:
-              </label>
-              <button
-                onClick={toggleSortOrder}
-                className="px-4 py-1 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700"
-              >
-                {isAscending ? "Ascending ↑" : "Descending ↓"}
-              </button>
-            </div>
-
-            {/* Speed Control - Now full width on mobile/tablet */}
-            <div className="flex flex-col sm:flex-row w-full items-center gap-2 sm:gap-3 mt-4 pt-4 border-t border-slate-700 lg:mt-0 lg:pt-0 lg:border-0 lg:w-auto">
+            {/* Speed Control */}
+            <div className="flex flex-col sm:flex-row w-full items-center sm:gap-3 pt-4 border-t border-slate-700 lg:mt-0 lg:pt-0 lg:border-0 lg:w-auto">
               <label className="text-gray-300 text-sm sm:text-base w-full sm:w-auto sm:flex-shrink-0">
                 Speed:
               </label>
