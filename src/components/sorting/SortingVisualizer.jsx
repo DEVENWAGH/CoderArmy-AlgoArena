@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "motion/react";
 import useAlgorithmStore from "../../store/algorithmStore";
-import { nanoid } from "nanoid";
 
 const SortingVisualizer = () => {
   const { algorithm } = useParams();
@@ -149,16 +148,16 @@ const SortingVisualizer = () => {
 
   // Calculate dynamic bar height scaling with increased max height
   const getBarHeight = (value) => {
-    const maxHeight = 450; // Reduced from 500 to ensure bars fit better on mobile
+    const maxHeight = 430; // Reduced from 450 to ensure bars fit better with indices
     const scale = maxHeight / Math.max(...array);
-    return `${value * scale}px`;
+    return `h-[${value * scale}px]`;
   };
 
   // Calculate container width based on array size
   const getContainerWidth = () => {
-    if (arraySize <= 30) return "80%";
-    if (arraySize <= 50) return "90%";
-    return `${Math.max(100, array.length * 12)}%`;
+    if (arraySize <= 30) return "w-4/5";
+    if (arraySize <= 50) return "w-9/10";
+    return `w-[${Math.max(100, array.length * 12)}%]`;
   };
 
   const handleGenerateNewArray = () => {
@@ -187,7 +186,7 @@ const SortingVisualizer = () => {
 
   const getBarDimensions = () => {
     if (!array || array.length === 0) {
-      return { barWidth: 0, gap: 0, containerWidth: "100%" };
+      return { barWidth: 0, gap: 0, containerWidth: "w-full" };
     }
 
     const isMobile = window.innerWidth < 768;
@@ -195,11 +194,11 @@ const SortingVisualizer = () => {
     // Adjust container width calculation for different screen sizes
     const containerWidth = window.innerWidth - (isMobile ? 20 : 300);
     const rightPadding = isMobile ? 40 : 200;
-    const minGap = isMobile ? 2 : 3; // Reduced gap on mobile for more bars
+    const minGap = isMobile ? 1 : 3; // Reduced gap on mobile for more bars
 
-    // Slightly smaller bars for mobile to fit 26 bars
-    const maxBarWidth = isMobile ? 40 : 50; // Reduced from 60 to 40 on mobile
-    const minBarWidth = isMobile ? 20 : 20; // Reduced from 30 to 20 on mobile
+    // Increased bar widths for mobile to make them more visible
+    const maxBarWidth = isMobile ? 50 : 50;
+    const minBarWidth = isMobile ? 25 : 20;
 
     // Calculate bar width based on container size and array length
     let barWidth =
@@ -214,7 +213,7 @@ const SortingVisualizer = () => {
     return {
       barWidth,
       gap: minGap,
-      containerWidth: `${totalWidth}px`,
+      containerWidth: totalWidth,
     };
   };
 
@@ -243,9 +242,9 @@ const SortingVisualizer = () => {
   return (
     <div className="flex flex-col w-full overflow-y-auto bg-slate-800">
       {/* Fixed Header Section - completely redesigned for better mobile visibility */}
-      <div className="fixed right-0 z-40 p-2 pb-3 border-b shadow-lg top-16 left-0 md:left-64 bg-slate-800 border-slate-700 mt-4 sm:mt-6 md:mt-8 pt-4 sm:pt-6 md:pt-8 lg:pt-auto lg:mt-2">
+      <div className="fixed w-full right-0 z-40 p-2 pb-3 border-b shadow-lg top-16 left-0 md:left-64 bg-slate-800 border-slate-700 mt-4 sm:mt-6 md:mt-8 pt-4 sm:pt-6 md:pt-8">
         {/* Algorithm Title - Separate section for cleaner mobile layout */}
-        <div className="mb-2 pt-2">
+        <div className="pt-2">
           <h2 className="text-xl sm:text-2xl font-bold text-blue-400 capitalize">
             {algorithm?.replace("-", " ")}
           </h2>
@@ -256,90 +255,85 @@ const SortingVisualizer = () => {
           )}
         </div>
 
-        {/* Controls - Stacked vertically on mobile for better spacing */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {/* Array Size Input */}
-          <div className="flex items-center gap-2">
-            <label className="text-gray-300 text-sm sm:text-base w-12">
-              Size:
-            </label>
-            <input
-              type="number"
-              min="5"
-              max="200"
-              value={customSize}
-              onChange={handleSizeChange}
-              onKeyPress={handleInputKeyPress}
-              className="w-16 px-2 py-1 text-white border rounded bg-slate-700 border-slate-600"
-              disabled={isSorting}
-            />
-            <button
-              onClick={handleSizeSubmit}
-              className="px-3 py-1 text-xs sm:text-sm bg-blue-500 rounded hover:bg-blue-600 disabled:opacity-50"
-              disabled={isSorting}
-            >
-              Apply
-            </button>
-          </div>
+        {/* Controls Layout - Different for mobile/tablet and desktop */}
+        <div className="flex w-full flex-col lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+          {/* Top Controls for mobile and tablet - improved alignment */}
+          <div className="grid grid-cols-1 sm:grid-cols-1 gap-4 lg:flex lg:flex-row w-full lg:gap-6">
+            {/* Array Size Input - better aligned */}
+            <div className="flex items-center justify-between sm:justify-start gap-2">
+              <label className="text-gray-300 text-sm sm:text-base w-12 flex-shrink-0">
+                Size:
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="5"
+                  max="200"
+                  value={customSize}
+                  onChange={handleSizeChange}
+                  onKeyPress={handleInputKeyPress}
+                  className="w-16 px-2 py-1 text-white border rounded bg-slate-700 border-slate-600"
+                  disabled={isSorting}
+                />
+                <button
+                  onClick={handleSizeSubmit}
+                  className="px-3 py-1 text-xs sm:text-sm bg-blue-500 rounded hover:bg-blue-600 disabled:opacity-50 whitespace-nowrap"
+                  disabled={isSorting}
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
 
-          {/* Speed Control */}
-          <div className="flex items-center gap-2">
-            <label className="text-gray-300 text-sm sm:text-base w-12">
-              Speed:
-            </label>
-            <input
-              type="range"
-              min="1"
-              max="100"
-              value={speed}
-              onChange={handleSpeedChange}
-              className="flex-grow min-w-[100px]"
-            />
-            <span className="w-10 text-center text-gray-300 text-sm sm:text-base">
-              {speed}%
-            </span>
-          </div>
+            {/* Sort Direction - improved alignment */}
+            <div className="flex items-center justify-between sm:justify-start gap-3">
+              <label className="text-gray-300 text-sm sm:text-base w-12 flex-shrink-0">
+                Order:
+              </label>
+              <button
+                onClick={toggleSortOrder}
+                className="px-4 py-1 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700"
+              >
+                {isAscending ? "Ascending ↑" : "Descending ↓"}
+              </button>
+            </div>
 
-          {/* Sort Direction */}
-          <div className="flex items-center">
-            <label className="text-gray-300 text-sm sm:text-base w-12">
-              Order:
-            </label>
-            <button
-              onClick={toggleSortOrder}
-              className="px-4 py-1 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700"
-            >
-              {isAscending ? "Ascending ↑" : "Descending ↓"}
-            </button>
+            {/* Speed Control - Now full width on mobile/tablet */}
+            <div className="flex flex-col sm:flex-row w-full items-center gap-2 sm:gap-3 mt-4 pt-4 border-t border-slate-700 lg:mt-0 lg:pt-0 lg:border-0 lg:w-auto">
+              <label className="text-gray-300 text-sm sm:text-base w-full sm:w-auto sm:flex-shrink-0">
+                Speed:
+              </label>
+              <div className="flex items-center w-full gap-2">
+                <input
+                  type="range"
+                  min="1"
+                  max="100"
+                  value={speed}
+                  onChange={handleSpeedChange}
+                  className="w-full lg:w-32"
+                />
+                <span className="w-10 flex-shrink-0 text-center text-gray-300 text-sm sm:text-base">
+                  {speed}%
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Scrollable Content Section - using percentage-based margins for better mobile and tablet responsiveness */}
-      <div className="pb-20 mt-[40%] sm:mt-[5%] md:mt-[0%] lg:mt-16">
+      <div className="pb-20 mt-[40%] sm:mt-[20%] md:mt-[15%] lg:mt-10">
         <div className="flex-1 p-2 sm:p-6 mx-2 sm:mx-4 rounded-lg bg-slate-900">
           <div
             ref={scrollContainerRef}
             onWheel={handleWheel}
             onMouseDown={handleMouseDown}
-            className="h-[calc(100vh-170px)] sm:h-[calc(100vh-180px)] overflow-x-scroll overflow-y-hidden cursor-grab active:cursor-grabbing touch-pan-x scrollbar-thin scrollbar-track-slate-700 scrollbar-thumb-blue-500 hover:scrollbar-thumb-blue-400"
+            className="h-[calc(100vh-170px)] sm:h-[calc(100vh-180px)] overflow-x-scroll overflow-y-hidden cursor-grab active:cursor-grabbing touch-pan-x scrollbar-thin scrollbar-track-slate-700 scrollbar-thumb-blue-500 hover:scrollbar-thumb-blue-400 pb-4"
           >
-            <div
-              className="relative flex items-end min-h-full"
-              style={{
-                minWidth: getBarDimensions().containerWidth,
-                height: "100%",
-                paddingTop: "2rem",
-                paddingBottom: "2.5rem", // Increased padding for better visibility
-                paddingRight: "200px",
-              }}
-            >
+            <div className="relative flex items-end min-h-full pt-8 pr-[200px]">
               <div
-                className="relative h-full"
-                style={{
-                  width: getBarDimensions().containerWidth,
-                  minWidth: "100%",
-                }}
+                className="relative h-full w-full min-w-full"
+                style={{ width: `${getBarDimensions().containerWidth}` }}
               >
                 {array.map((value, idx) => {
                   const { barWidth, gap } = getBarDimensions();
@@ -351,12 +345,16 @@ const SortingVisualizer = () => {
                   const numericValue =
                     typeof value === "object" ? value.value : value;
 
+                  const maxHeight = 430;
+                  const scale = maxHeight / Math.max(...array);
+                  const barHeight = numericValue * scale;
+
                   return (
                     <motion.div
                       key={`bar-${idx}`}
                       className={`absolute ${getBarColor(
                         idx
-                      )} transition-colors duration-200`}
+                      )} transition-colors duration-200 bottom-[50px]`}
                       initial={!isSorting ? { y: 1000, opacity: 0 } : false}
                       animate={{
                         x: position,
@@ -382,9 +380,8 @@ const SortingVisualizer = () => {
                         },
                       }}
                       style={{
-                        height: getBarHeight(numericValue),
+                        height: `${barHeight}px`,
                         width: barWidth,
-                        bottom: "36px", // Increased bottom margin for index numbers
                       }}
                     >
                       {/* Value label with improved positioning */}
@@ -400,7 +397,7 @@ const SortingVisualizer = () => {
 
                       {/* Index label with improved positioning */}
                       <motion.div
-                        className={`absolute w-full text-center -bottom-8
+                        className={`absolute w-full text-center -bottom-6
                           text-[14px] sm:text-[15px] font-medium ${
                             isSwapping ? "text-orange-300" : "text-green-400"
                           }`}
@@ -419,8 +416,7 @@ const SortingVisualizer = () => {
 
       {/* Fixed Footer Section */}
       <div className="fixed bottom-0 right-0 z-40 flex flex-row justify-center md:justify-start w-full gap-4 p-3 sm:p-4 border-t shadow-lg left-0 md:left-64 bg-slate-800 border-slate-700">
-        {" "}
-        {/* Changed to flex-row and centered on mobile */}
+        {/* Action Buttons */}
         <button
           onClick={handleGenerateNewArray}
           className="px-3 sm:px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 text-sm sm:text-base"
