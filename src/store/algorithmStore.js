@@ -40,7 +40,7 @@ const useAlgorithmStore = create((set, get) => ({
   },
 
   array: [],
-  arraySize: 36, // Changed from 50 to 36
+  arraySize: window.innerWidth < 768 ? 26 : 36, // Changed from 10 to 26 for mobile, keeping 36 for desktop
   isSorting: false,
   isPlaying: false,
   speed: 50, // Set initial speed to middle value
@@ -63,8 +63,12 @@ const useAlgorithmStore = create((set, get) => ({
 
   setArraySize: (size) => {
     const { currentAlgorithm } = get();
+    // Limit maximum array size on mobile
+    const isMobile = window.innerWidth < 768;
+    const adjustedSize = isMobile ? Math.min(size, 26) : size; // Changed from 15 to 26 for mobile
+
     set({
-      arraySize: size,
+      arraySize: adjustedSize,
       isSorting: false,
       isPlaying: false,
       isSorted: false,
@@ -78,9 +82,16 @@ const useAlgorithmStore = create((set, get) => ({
 
   generateNewArray: () => {
     const { arraySize, currentAlgorithm } = get();
+    // Create array with larger height differences for mobile to make visualization clearer
+    const isMobile = window.innerWidth < 768;
+    const heightMultiplier = isMobile ? 20 : 10; // Adjusted from 30 to 20 for mobile
+    const baseHeight = isMobile ? 40 : 10; // Adjusted from 50 to 40 for mobile
+
     const newArray = Array.from(
       { length: arraySize },
-      () => Math.floor(Math.random() * 300) + 10
+      () =>
+        Math.floor(((Math.random() * 300) / arraySize) * heightMultiplier) +
+        baseHeight
     );
 
     set({
