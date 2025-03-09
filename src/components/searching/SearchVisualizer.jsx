@@ -191,7 +191,7 @@ const SearchVisualizer = () => {
       </div>
 
       {/* Fixed Footer Section */}
-      <div className="fixed bottom-0 right-0 z-40 flex items-center gap-4 p-4 border-t shadow-lg left-0 xl:left-64 bg-slate-800 border-slate-700">
+      <div className="fixed bottom-0 right-0 z-40 flex items-center gap-4 p-4 border-t shadow-lg left-0 sm:mb-6 lg:mb-auto 2xl:mb-6 bg-slate-800 border-slate-700">
         <button
           onClick={generateSearchArray}
           className="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700"
