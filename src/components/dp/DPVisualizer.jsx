@@ -702,8 +702,6 @@ const DPVisualizer = () => {
               Explanation
             </h4>
             <div className="space-y-2 text-sm">
-              <p className="text-blue-300">{getAlgorithmStatus()}</p>
-
               {algorithm && (
                 <>
                   <h5 className="text-white font-semibold mt-2">Key Concept</h5>

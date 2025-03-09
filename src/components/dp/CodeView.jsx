@@ -254,12 +254,12 @@ const CodeView = ({ algorithm, currentCell, isPlaying }) => {
   const codeLines = code.split('\n');
 
   return (
-    <div className="flex flex-col w-full h-full gap-4 overflow-hidden">
+    <div className="flex flex-col w-full h-full gap-4 overflow-hidden mt-5 lg:mt-0">
       {/* Code container with scrolling */}
-      <div 
-        className="flex-grow w-full overflow-auto bg-gray-900 rounded-lg code-container" 
+      <div
+        className="flex-grow w-full overflow-auto bg-gray-900 rounded-lg code-container"
         ref={codeRef}
-        style={{ maxHeight: 'calc(100% - 200px)' }}
+        style={{ maxHeight: "calc(100% - 200px)" }}
       >
         {/* Add scrollbar styling */}
         <style jsx>{`
@@ -268,66 +268,41 @@ const CodeView = ({ algorithm, currentCell, isPlaying }) => {
             height: 8px;
           }
           .code-container::-webkit-scrollbar-thumb {
-            background: #4B5563;
+            background: #4b5563;
             border-radius: 4px;
           }
           .code-container::-webkit-scrollbar-track {
-            background: #1F2937;
+            background: #1f2937;
           }
         `}</style>
-        
+
         <pre className="p-4 font-mono text-sm text-gray-300">
           {codeLines.map((line, index) => (
             <motion.div
               key={index}
               className={`code-line py-1 px-2 ${
                 highlightedLines.includes(index + 1)
-                  ? 'bg-yellow-500 bg-opacity-20 text-white'
-                  : ''
-              } ${line.trim() === '' ? 'h-4' : ''}`}
-              initial={{ backgroundColor: 'transparent' }}
-              animate={{ 
-                backgroundColor: highlightedLines.includes(index + 1) 
-                  ? 'rgba(253, 224, 71, 0.2)' 
-                  : 'transparent',
-                color: highlightedLines.includes(index + 1) ? 'white' : '#D1D5DB'
+                  ? "bg-yellow-500 bg-opacity-20 text-white"
+                  : ""
+              } ${line.trim() === "" ? "h-4" : ""}`}
+              initial={{ backgroundColor: "transparent" }}
+              animate={{
+                backgroundColor: highlightedLines.includes(index + 1)
+                  ? "rgba(253, 224, 71, 0.2)"
+                  : "transparent",
+                color: highlightedLines.includes(index + 1)
+                  ? "white"
+                  : "#D1D5DB",
               }}
               transition={{ duration: 0.3 }}
             >
-              <span className="mr-4 text-gray-500 select-none">{index + 1}</span>
+              <span className="mr-4 text-gray-500 select-none">
+                {index + 1}
+              </span>
               {line}
             </motion.div>
           ))}
         </pre>
-      </div>
-      
-      {/* Explanation panel - fixed JSX structure */}
-      <motion.div 
-        className="w-full p-4 text-white bg-gray-800 rounded-lg"
-        style={{ height: '80px', overflow: 'auto' }}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ 
-          opacity: explanation ? 1 : 0,
-          y: explanation ? 0 : 20
-        }}
-        transition={{ duration: 0.5 }}
-      >
-        <h3 className="mb-2 text-lg font-semibold">Explanation</h3>
-        <p>{explanation || "Run the algorithm to see step-by-step explanations."}</p>
-      </motion.div>
-      
-      {/* Key concept panel - fixed JSX structure */}
-      <div 
-        className="w-full p-4 bg-blue-900 rounded-lg bg-opacity-30"
-        style={{ height: '80px', overflow: 'auto' }}
-      >
-        <h3 className="mb-2 text-lg font-semibold text-blue-300">Key Concept</h3>
-        <p className="text-white">
-          {algorithm === 'fibonacci' && 'Fibonacci uses overlapping subproblems, storing previous results to avoid recalculation.'}
-          {algorithm === 'knapsack' && 'Knapsack problem uses a 2D table to track optimal value for each weight capacity.'}
-          {algorithm === 'lis' && 'LIS tracks the longest increasing subsequence ending at each position.'}
-          {algorithm === 'lcs' && 'LCS builds a matrix comparing each character pair between two strings.'}
-        </p>
       </div>
 
       {/* Scroll indicator */}
