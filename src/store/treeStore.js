@@ -10,7 +10,7 @@ const useTreeStore = create((set, get) => ({
   tree: null,
   visitedNodes: [],
   currentNode: null,
-  traversalSpeed: 1000,
+  traversalSpeed: 300, // Set default traversal speed to 300ms for smoother animations
   timeline: null,
   searchPath: [], // Add this to track BST search path
   searchFound: null, // Add this to track if value was found
@@ -113,6 +113,7 @@ const useTreeStore = create((set, get) => ({
   traversalProgress: 0,
   traversalTotal: 0,
 
+  // Improved traversal functions for smoother animations and better visualization
   startTraversal: async () => {
     const { tree, traversalType, traversalSpeed } = get();
 
@@ -137,16 +138,22 @@ const useTreeStore = create((set, get) => ({
     countNodes(tree);
     set({ traversalTotal: totalNodes });
 
-    // Define traversal functions with better animations
+    // Enhanced traversal functions with improved animations
     const traversalFunctions = {
       inorder: async (node) => {
         if (!node || get().isPaused) return;
 
-        // Animate traversal down left
+        // Highlight current node as being processed
+        set({ currentNode: node.value });
+        await new Promise((r) => setTimeout(r, traversalSpeed / 3));
+
+        // Process left subtree
         if (node.left) {
-          set({ currentNode: node.value });
-          await new Promise((r) => setTimeout(r, traversalSpeed / 3));
           await traversalFunctions.inorder(node.left);
+
+          // Return focus to current node when coming back up
+          set({ currentNode: node.value });
+          await new Promise((r) => setTimeout(r, traversalSpeed / 5));
         }
 
         // Process current node with animation
@@ -157,48 +164,61 @@ const useTreeStore = create((set, get) => ({
           traversalProgress: state.traversalProgress + 1,
         }));
 
-        // Animate traversal down right
+        // Process right subtree
         if (node.right) {
-          set({ currentNode: node.value });
-          await new Promise((r) => setTimeout(r, traversalSpeed / 3));
+          await new Promise((r) => setTimeout(r, traversalSpeed / 5));
           await traversalFunctions.inorder(node.right);
         }
       },
 
-      // Enhanced animations for other traversal types
       preorder: async (node) => {
         if (!node || get().isPaused) return;
 
-        // Visit root first
+        // Visit root first - this is the key characteristic of preorder
+        set({ currentNode: node.value });
         await new Promise((r) => setTimeout(r, traversalSpeed));
         set((state) => ({
           visitedNodes: [...state.visitedNodes, node.value],
           currentNode: node.value,
           traversalProgress: state.traversalProgress + 1,
         }));
+
+        // Process left subtree
         if (node.left) {
-          set({ currentNode: node.value });
-          await new Promise((r) => setTimeout(r, traversalSpeed / 3));
+          await new Promise((r) => setTimeout(r, traversalSpeed / 4));
           await traversalFunctions.preorder(node.left);
         }
+
+        // Process right subtree after left is complete
         if (node.right) {
+          // Return focus to current node briefly to show traversal path
           set({ currentNode: node.value });
-          await new Promise((r) => setTimeout(r, traversalSpeed / 3));
+          await new Promise((r) => setTimeout(r, traversalSpeed / 5));
           await traversalFunctions.preorder(node.right);
         }
       },
+
       postorder: async (node) => {
         if (!node || get().isPaused) return;
+
+        // Highlight node to show we're processing it
+        set({ currentNode: node.value });
+        await new Promise((r) => setTimeout(r, traversalSpeed / 3));
+
+        // Process left subtree first
         if (node.left) {
-          set({ currentNode: node.value });
-          await new Promise((r) => setTimeout(r, traversalSpeed / 3));
           await traversalFunctions.postorder(node.left);
         }
+
+        // Process right subtree second
         if (node.right) {
+          // Show we're at current node before going right
           set({ currentNode: node.value });
-          await new Promise((r) => setTimeout(r, traversalSpeed / 3));
+          await new Promise((r) => setTimeout(r, traversalSpeed / 5));
           await traversalFunctions.postorder(node.right);
         }
+
+        // Visit current node last - key characteristic of postorder
         await new Promise((r) => setTimeout(r, traversalSpeed));
         set((state) => ({
           visitedNodes: [...state.visitedNodes, node.value],
@@ -206,28 +226,72 @@ const useTreeStore = create((set, get) => ({
           traversalProgress: state.traversalProgress + 1,
         }));
       },
+
       levelorder: async (root) => {
         if (!root) return;
         const queue = [root];
-        while (queue.length > 0 && !get().isPaused) {
-          const node = queue.shift();
-          await new Promise((r) => setTimeout(r, traversalSpeed));
-          set((state) => ({
-            visitedNodes: [...state.visitedNodes, node.value],
-            currentNode: node.value,
-            traversalProgress: state.traversalProgress + 1,
-          }));
-          if (node.left) queue.push(node.left);
-          if (node.right) queue.push(node.right);
+        const levels = [[root]]; // Track nodes by level for better visualization
+        const nodeToLevel = { [root.value]: 0 }; // Map node values to their levels
+
+        // First identify all levels for better visualization
+        let currentLevel = 0;
+        while (queue.length > 0) {
+          const levelSize = queue.length;
+          const nextLevel = currentLevel + 1;
+
+          for (let i = 0; i < levelSize; i++) {
+            const node = queue.shift();
+
+            if (node.left) {
+              queue.push(node.left);
+              nodeToLevel[node.left.value] = nextLevel;
+              if (!levels[nextLevel]) levels[nextLevel] = [];
+              levels[nextLevel].push(node.left);
+            }
+
+            if (node.right) {
+              queue.push(node.right);
+              nodeToLevel[node.right.value] = nextLevel;
+              if (!levels[nextLevel]) levels[nextLevel] = [];
+              levels[nextLevel].push(node.right);
+            }
+          }
+
+          currentLevel = nextLevel;
+        }
+
+        // Now process level by level with animations
+        for (let i = 0; i < levels.length; i++) {
+          const levelNodes = levels[i];
+
+          // Highlight entire level first
+          for (const node of levelNodes) {
+            set({ currentNode: node.value });
+            await new Promise((r) => setTimeout(r, 100));
+          }
+
+          // Then process each node in the level
+          for (const node of levelNodes) {
+            if (get().isPaused) return;
+            set({ currentNode: node.value });
+            await new Promise((r) => setTimeout(r, traversalSpeed));
+
+            set((state) => ({
+              visitedNodes: [...state.visitedNodes, node.value],
+              traversalProgress: state.traversalProgress + 1,
+            }));
+          }
         }
       },
     };
 
     try {
       const timeline = gsap.timeline();
-      set({ timeline: timeline }); // Store timeline in state
+      set({ timeline: timeline });
 
       await traversalFunctions[traversalType](tree);
+
+      // Completion animation
       timeline.to(".tree-node circle", {
         keyframes: [
           { scale: 1.1, duration: 0.2 },
@@ -236,6 +300,7 @@ const useTreeStore = create((set, get) => ({
         stagger: 0.05,
         ease: "power2.inOut",
       });
+
       set({ isPlaying: false, currentNode: null });
     } catch (error) {
       console.error("Traversal error:", error);
