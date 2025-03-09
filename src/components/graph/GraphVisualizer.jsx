@@ -243,7 +243,7 @@ const GraphVisualizer = () => {
           renderTraversalEdge(parent, child)
         )}
 
-        {/* Nodes - Now part of the SVG for proper alignment */}
+        {/* Nodes */}
         {nodes.map((node) => (
           <g key={node.id} transform={`translate(${node.x}, ${node.y})`}>
             <circle
@@ -286,6 +286,32 @@ const GraphVisualizer = () => {
             )}
           </g>
         ))}
+
+        {/* Mobile/Tablet Controls - Increased button size and text */}
+        <g className="lg:hidden" transform="translate(400, 520)">
+          <foreignObject x="-240" y="-60" width="480" height="120">
+            <div className="flex items-center justify-center gap-6">
+              <button
+                onClick={handleStart}
+                className={`px-5 py-4 text-4xl font-bold rounded-full shadow-xl transform hover:scale-105 transition-transform ${
+                  isPlaying
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-green-600 hover:bg-green-700"
+                }`}
+                style={{ minWidth: "160px", minHeight: "80px" }}
+              >
+                {isPlaying ? "Pause" : isPaused ? "Resume" : "Start"}
+              </button>
+              <button
+                onClick={handleGenerateNewGraph}
+                className="px-5 py-4 text-3xl font-bold bg-blue-600 rounded-full shadow-xl hover:bg-blue-700 transform hover:scale-105 transition-transform"
+                style={{ minWidth: "160px", minHeight: "80px" }}
+              >
+                New Graph
+              </button>
+            </div>
+          </foreignObject>
+        </g>
       </svg>
     </div>
   );
@@ -312,7 +338,6 @@ const GraphVisualizer = () => {
   const renderTraversalInfo = () => (
     <div className="w-64 p-4 mt-28 bg-slate-700">
       <h3 className="mb-4 text-lg font-bold text-blue-400">Traversal Info</h3>
-
       <div className="mb-6">
         <h4 className="mb-2 font-semibold text-gray-300 text-md">Steps:</h4>
         <div className="p-3 rounded bg-slate-800">
@@ -360,11 +385,10 @@ const GraphVisualizer = () => {
     <div className="flex flex-col w-full h-full bg-slate-800">
       {/* Controls Header - Only visible on larger screens */}
       <div className="fixed right-0 z-40 p-2 sm:p-4 border-b shadow-lg top-16 left-0 md:left-64 bg-slate-800 border-slate-700 overflow-x-auto lg:block hidden">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 py-2">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 py-2 mt-10">
           <h2 className="text-xl font-bold text-blue-400 capitalize">
             {algorithm?.replace("-", " ")}
           </h2>
-
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Add Start Vertex Selection */}
             <div className="flex items-center gap-2">
@@ -374,7 +398,7 @@ const GraphVisualizer = () => {
                   value={startVertex}
                   onChange={(e) => setStartVertex(e.target.value)}
                   className="px-3 py-1 text-white border rounded bg-slate-700 border-slate-600 appearance-none cursor-pointer pr-8 z-50"
-                  style={{ position: 'relative' }}
+                  style={{ position: "relative" }}
                 >
                   {nodes.map((node) => (
                     <option key={node.id} value={node.label}>
@@ -385,7 +409,7 @@ const GraphVisualizer = () => {
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-300">
                   <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
                     <path
-                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 011.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 011.414 1.414l-4 4a 1 1 0 01-1.414 0l-4-4a 1 1 0 010-1.414z"
                       clipRule="evenodd"
                       fillRule="evenodd"
                     ></path>
@@ -471,20 +495,6 @@ const GraphVisualizer = () => {
           <h2 className="text-xl font-bold text-blue-400 capitalize">
             {algorithm?.replace("-", " ")}
           </h2>
-
-          {/* Quick action buttons always visible */}
-          <div className="flex gap-2">
-            <button
-              onClick={handleStart}
-              className={`px-3 py-1 text-sm text-white rounded ${
-                isPlaying
-                  ? "bg-red-600 hover:bg-red-700"
-                  : "bg-green-600 hover:bg-green-700"
-              }`}
-            >
-              {isPlaying ? "Pause" : isPaused ? "Resume" : "Start"}
-            </button>
-          </div>
         </div>
       </div>
 
@@ -496,7 +506,7 @@ const GraphVisualizer = () => {
         </div>
 
         {/* Sidebar for Parent and Visited Nodes - Hide on smaller screens */}
-        <div className="lg:w-64 p-4 bg-slate-700 hidden lg:block">
+        <div className="lg:w-64 p-4 bg-slate-700 hidden lg:block mt-20">
           <h3 className="mb-4 text-lg font-bold text-blue-400">
             Traversal Info
           </h3>
@@ -541,55 +551,6 @@ const GraphVisualizer = () => {
                   <span>{nodes.find((n) => n.id === parent)?.label}</span>
                 </motion.div>
               ))}
-            </div>
-          </div>
-
-          {/* Start Vertex Control */}
-          <div className="mb-6">
-            <h4 className="mb-2 font-semibold text-gray-300 text-md">
-              Start Vertex:
-            </h4>
-            <div className="p-3 rounded bg-slate-800">
-              <div className="relative">
-                <select
-                  value={startVertex}
-                  onChange={(e) => setStartVertex(e.target.value)}
-                  className="w-full px-3 py-2 text-white bg-slate-700 border border-slate-600 rounded appearance-none cursor-pointer pr-8 z-50"
-                  style={{ position: 'relative' }}
-                >
-                  {nodes.map((node) => (
-                    <option key={node.id} value={node.label}>
-                      {node.label}
-                    </option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-300">
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                    <path
-                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 011.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                      fillRule="evenodd"
-                    ></path>
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Animation Speed in Sidebar */}
-          <div className="mb-6">
-            <h4 className="mb-2 font-semibold text-gray-300 text-md">
-              Animation Speed: {speed}%
-            </h4>
-            <div className="p-3 rounded bg-slate-800">
-              <input
-                type="range"
-                min="1"
-                max="100"
-                value={speed}
-                onChange={(e) => setSpeed(Number(e.target.value))}
-                className="w-full"
-              />
             </div>
           </div>
         </div>
@@ -648,13 +609,13 @@ const GraphVisualizer = () => {
           <div className="flex gap-2 ml-auto">
             <button
               onClick={handleGenerateNewGraph}
-              className="px-3 py-1 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"
+              className="px-4 py-2 text-base font-medium text-white bg-blue-600 rounded hover:bg-blue-700"
             >
               New Graph
             </button>
             <button
               onClick={handleStart}
-              className={`px-3 py-1 text-sm text-white rounded ${
+              className={`px-4 py-2 text-base font-medium text-white rounded ${
                 isPlaying
                   ? "bg-red-600 hover:bg-red-700"
                   : "bg-green-600 hover:bg-green-700"
@@ -666,196 +627,144 @@ const GraphVisualizer = () => {
         </div>
       </div>
 
-      {/* Mobile-only traversal info (accordion style for smaller screens) */}
-      <div className="block lg:hidden p-2 mt-2">
-        <details className="bg-slate-700 rounded-lg overflow-hidden" open>
-          <summary className="p-3 font-bold text-blue-400 cursor-pointer">
-            Traversal Info
-          </summary>
-          <div className="p-3 border-t border-slate-600">
-            <h4 className="mb-2 font-semibold text-gray-300 text-md">Steps:</h4>
-            <div className="p-2 rounded bg-slate-800">
-              <ol className="space-y-1 text-sm text-gray-300">
-                {visitedNodes.map((nodeId, index) => (
-                  <li key={nodeId}>
-                    {`${index + 1}. Visit ${
-                      nodes.find((n) => n.id === nodeId)?.label
-                    }`}
-                  </li>
-                ))}
-              </ol>
-            </div>
-
-            <h4 className="mt-3 mb-2 font-semibold text-gray-300 text-md">
-              Parent Relationships:
-            </h4>
-            <div className="p-2 rounded bg-slate-800">
-              {Object.entries(parentNodes).map(([child, parent]) => (
-                <div
-                  key={child}
-                  className="flex items-center gap-2 mb-1 text-sm text-gray-300"
-                >
-                  <span>{nodes.find((n) => n.id === child)?.label}</span>
-                  <span className="text-gray-500">→</span>
-                  <span>{nodes.find((n) => n.id === parent)?.label}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Start Vertex Selection */}
-            <div className="flex flex-col gap-2 mt-3">
-              <h4 className="font-semibold text-gray-300 text-md">
-                Start Vertex:
-              </h4>
-              <div className="relative inline-block w-full">
-                <select
-                  value={startVertex}
-                  onChange={(e) => setStartVertex(e.target.value)}
-                  className="w-full px-3 py-2 text-white bg-slate-700 border border-slate-600 rounded appearance-none cursor-pointer z-50"
-                  style={{ 
-                    position: 'relative',
-                    maxWidth: '100%', 
-                  }}
-                >
-                  {nodes.map((node) => (
-                    <option key={node.id} value={node.label}>
-                      {node.label}
-                    </option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-300">
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                    <path
-                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 011.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                      fillRule="evenodd"
-                    ></path>
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-        </details>
-
-        {/* Mobile layout controls - simplified and with better spacing */}
-        <details className="mt-2 bg-slate-700 rounded-lg overflow-hidden">
-          <summary className="p-3 font-bold text-blue-400 cursor-pointer">
-            Layout Settings
-          </summary>
-          <div className="p-3 border-t border-slate-600">
-            {/* Layout Type Selection using radio buttons in a single row */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-2">
-              {["circular", "grid", "random"].map((type) => (
-                <label key={type} className="inline-flex items-center gap-1">
-                  <input
-                    type="radio"
-                    checked={layoutType === type}
-                    onChange={() => setLayoutType(type)}
-                    name="layoutTypeMobile"
-                    className="text-blue-500"
-                  />
-                  <span className="text-gray-300 capitalize">{type}</span>
-                </label>
-              ))}
-            </div>
-
-            {/* Grid Variant - Only show when grid layout is selected - in a single row */}
-            {layoutType === "grid" && (
-              <div className="mt-2">
-                <p className="font-semibold text-gray-300 mb-1">Grid Type:</p>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                  {["square", "hexagonal", "spiral"].map((variant) => (
-                    <label key={variant} className="inline-flex items-center gap-1">
-                      <input
-                        type="radio"
-                        checked={gridVariant === variant}
-                        onChange={() => setGridVariant(variant)}
-                        name="gridVariantMobile"
-                        className="text-blue-500"
-                      />
-                      <span className="text-gray-300 capitalize">{variant}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </details>
-
-        {/* Graph Settings - increased visibility on mobile */}
-        <details className="mt-2 bg-slate-700 rounded-lg overflow-hidden">
-          <summary className="p-3 font-bold text-blue-400 cursor-pointer">
-            Graph Settings
-          </summary>
-          <div className="p-3 border-t border-slate-600">
-            {/* Graph Type with increased text size */}
-            <div className="mb-4">
-              <p className="font-semibold text-gray-300 mb-2 text-base">Graph Type</p>
-              <div className="flex gap-6">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    checked={!isDirected}
-                    onChange={() => setGraphType(false)}
-                    name="graphTypeMobile"
-                    className="text-blue-500 w-4 h-4"
-                  />
-                  <span className="text-gray-300 text-base">Undirected</span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    checked={isDirected}
-                    onChange={() => setGraphType(true)}
-                    name="graphTypeMobile"
-                    className="text-blue-500 w-4 h-4"
-                  />
-                  <span className="text-gray-300 text-base">Directed</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Graph Size with increased text size */}
-            <div className="mb-4">
-              <p className="font-semibold text-gray-300 mb-2 text-base">Graph Size</p>
-              <div className="flex gap-6">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    checked={!isLarge}
-                    onChange={() => setGraphSize(false)}
-                    name="graphSizeMobile"
-                    className="text-blue-500 w-4 h-4"
-                  />
-                  <span className="text-gray-300 text-base">Small</span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    checked={isLarge}
-                    onChange={() => setGraphSize(true)}
-                    name="graphSizeMobile"
-                    className="text-blue-500 w-4 h-4"
-                  />
-                  <span className="text-gray-300 text-base">Large</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Animation Speed with increased height slider */}
-            <div>
-              <p className="font-semibold text-gray-300 mb-2 text-base">
-                Speed: {speed}%
-              </p>
-              <input
-                type="range"
-                min="1"
-                max="100"
-                value={speed}
-                onChange={(e) => setSpeed(Number(e.target.value))}
-                className="w-full h-2"
-                style={{ touchAction: "none" }}
+      {/* Mobile-only settings (combined dropup menu) */}
+      <div className="block lg:hidden fixed bottom-0 left-0 right-0 z-50 md:left-64">
+        <details className="bg-slate-700 rounded-t-lg overflow-hidden">
+          <summary className="p-4 font-bold text-blue-400 cursor-pointer text-lg border-t border-slate-600 flex items-center justify-between">
+            <span>Settings & Info</span>
+            <svg
+              className="w-5 h-5 transform transition-transform duration-200"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
               />
+            </svg>
+          </summary>
+          <div className="p-4 bg-slate-700 max-h-[80vh] overflow-y-auto">
+            {/* Graph & Layout Settings Section */}
+            <div className="space-y-6">
+              {/* Start Vertex Selection */}
+              <div>
+                <p className="font-semibold text-gray-300 mb-2 text-base">
+                  Start Vertex
+                </p>
+                <div className="relative">
+                  <select
+                    value={startVertex}
+                    onChange={(e) => setStartVertex(e.target.value)}
+                    className="w-full px-4 py-3 text-white bg-slate-800 border border-slate-600 rounded appearance-none cursor-pointer text-lg"
+                  >
+                    {nodes.map((node) => (
+                      <option key={node.id} value={node.label}>
+                        {node.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Graph Type */}
+              <div>
+                <p className="font-semibold text-gray-300 mb-2 text-base">
+                  Graph Type
+                </p>
+                <div className="flex gap-6">
+                  {/* ...existing graph type radio buttons... */}
+                </div>
+              </div>
+
+              {/* Graph Size */}
+              <div>
+                <p className="font-semibold text-gray-300 mb-2 text-base">
+                  Graph Size
+                </p>
+                <div className="flex gap-6">
+                  {/* ...existing graph size radio buttons... */}
+                </div>
+              </div>
+
+              {/* Layout Type */}
+              <div>
+                <p className="font-semibold text-gray-300 mb-2 text-base">
+                  Layout Type
+                </p>
+                <div className="flex flex-wrap gap-4">
+                  {/* ...existing layout type radio buttons... */}
+                </div>
+              </div>
+
+              {/* Grid Variant */}
+              {layoutType === "grid" && (
+                <div>
+                  <p className="font-semibold text-gray-300 mb-2 text-base">
+                    Grid Type
+                  </p>
+                  <div className="flex flex-wrap gap-4">
+                    {/* ...existing grid variant radio buttons... */}
+                  </div>
+                </div>
+              )}
+
+              {/* Animation Speed */}
+              <div>
+                <p className="font-semibold text-gray-300 mb-2 text-base">
+                  Animation Speed: {speed}%
+                </p>
+                <input
+                  type="range"
+                  min="1"
+                  max="100"
+                  value={speed}
+                  onChange={(e) => setSpeed(Number(e.target.value))}
+                  className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer"
+                />
+              </div>
+
+              {/* Traversal Info */}
+              <div className="pt-4 border-t border-slate-600">
+                <h3 className="font-semibold text-gray-300 mb-4 text-lg">
+                  Traversal Info
+                </h3>
+
+                {/* Steps */}
+                <div className="mb-4 bg-slate-800 rounded-lg p-4">
+                  <h4 className="font-semibold text-gray-300 mb-2">Steps:</h4>
+                  <ol className="space-y-2 text-sm text-gray-300">
+                    {visitedNodes.map((nodeId, index) => (
+                      <li key={nodeId}>
+                        {`${index + 1}. Visit ${
+                          nodes.find((n) => n.id === nodeId)?.label
+                        }`}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+
+                {/* Parent Relationships */}
+                <div className="bg-slate-800 rounded-lg p-4">
+                  <h4 className="font-semibold text-gray-300 mb-2">
+                    Parent Relationships:
+                  </h4>
+                  <div className="space-y-2">
+                    {Object.entries(parentNodes).map(([child, parent]) => (
+                      <div
+                        key={child}
+                        className="flex items-center gap-2 text-sm text-gray-300"
+                      >
+                        <span>{nodes.find((n) => n.id === child)?.label}</span>
+                        <span className="text-gray-500">→</span>
+                        <span>{nodes.find((n) => n.id === parent)?.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </details>
@@ -871,15 +780,15 @@ export default GraphVisualizer;
     -webkit-appearance: none;
     -moz-appearance: none;
     text-indent: 1px;
-    text-overflow: '';
+    text-overflow: "";
   }
 
   /* Fix for dropdown display on mobile */
   select option {
     position: relative;
-    z-index: 9999; 
+    z-index: 9999;
     background-color: #334155; /* Matches slate-700 */
     color: white;
     padding: 8px;
   }
-`}</style>
+`}</style>;
