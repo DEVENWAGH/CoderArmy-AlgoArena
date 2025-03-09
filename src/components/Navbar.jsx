@@ -94,7 +94,7 @@ const Navbar = () => {
 
             <button
               onClick={() => setShowMobileSidebar(true)}
-              className="mt-2 md:mt-0 px-4 py-2 font-medium border rounded-lg text-sky-400 bg-sky-500/10 border-sky-500/20 xl:hidden"
+              className="mt-0.5 md:mt-0 px-4 py-2 font-medium border rounded-lg text-sky-400 bg-sky-500/10 border-sky-500/20 xl:hidden"
             >
               {currentAlgorithm || "Select Algorithm"}
             </button>
