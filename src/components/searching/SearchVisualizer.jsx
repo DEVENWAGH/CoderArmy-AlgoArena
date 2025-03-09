@@ -84,7 +84,7 @@ const SearchVisualizer = () => {
   return (
     <div className="flex flex-col w-full h-full bg-slate-800">
       {/* Header Controls - Simplified with Settings button */}
-      <div className="fixed right-0 z-40 p-4 border-b shadow-lg top-40 left-2 lg:top-24 md:left-0 bg-slate-800 border-slate-700">
+      <div className="fixed right-0 z-40 p-4 border-b shadow-lg top-40 left-2 lg:top-24 md:left-[16rem] bg-slate-800 border-slate-700">
         <div className="flex flex-row items-center justify-between h-auto mx-auto">
           <div className="flex items-center">
             <h2 className="text-2xl font-bold text-blue-400 capitalize">
@@ -95,7 +95,7 @@ const SearchVisualizer = () => {
           {/* Settings button to toggle sidebar */}
           <button
             onClick={toggleSettingsSidebar}
-            className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            className="px-3 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 lg:mt-4"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -310,7 +310,7 @@ const SearchVisualizer = () => {
       </div>
 
       {/* Fixed Footer Section */}
-      <div className="fixed bottom-0 right-0 z-40 flex items-center justify-between w-full p-4 border-t shadow-lg left-0 sm:mb-6 lg:mb-auto 2xl:mb-6 bg-slate-800 border-slate-700">
+      <div className="fixed bottom-0 lg:left-[16rem]  z-40 flex items-center justify-evenly lg:justify-between w-full p-4 shadow-lg bg-slate-800 border-slate-700">
         <div className="flex items-center gap-4">
           <button
             onClick={generateSearchArray}
