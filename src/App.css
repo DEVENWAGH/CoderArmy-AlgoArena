@@ -125,10 +125,29 @@ main {
   }
 }
 
-/* Tablet responsive adjustments */
-@media (min-width: 769px) and (max-width: 1024px) {
+/* Mobile and tablet responsive adjustments */
+@media (max-width: 1280px) {
   .main-content {
-    margin-left: 16rem;
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding-left: 0 !important;
+  }
+
+  .app-header {
+    padding-left: 1rem;
+    height: 64px; /* Revert navbar height */
+  }
+
+  /* Ensure content takes full width */
+  .content-container {
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Hide sidebar completely on mobile and tablet */
+  aside {
+    display: none !important;
   }
 }
 

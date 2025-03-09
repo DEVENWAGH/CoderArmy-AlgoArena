@@ -42,9 +42,11 @@ const Navbar = () => {
       <nav className="fixed h-40 md:h-auto top-0 left-0 right-0 bg-slate-900 border-b border-sky-500/20 shadow-lg z-50">
         <div className="container flex flex-col md:flex-row items-center justify-between mx-auto p-4">
           <div>
-            <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-600">
-              Algorithm Arena
-            </h1>
+            <a href="/">
+              <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-600">
+                Algorithm Arena
+              </h1>
+            </a>
             <p className="text-sm italic text-sky-400/80 animate-pulse">
               Feel the heartbeat of dynamic DSA
             </p>
@@ -92,14 +94,14 @@ const Navbar = () => {
 
             <button
               onClick={() => setShowMobileSidebar(true)}
-              className="mt-2 md:mt-0 px-4 py-2 font-medium border rounded-lg text-sky-400 bg-sky-500/10 border-sky-500/20 md:hidden"
+              className="mt-2 md:mt-0 px-4 py-2 font-medium border rounded-lg text-sky-400 bg-sky-500/10 border-sky-500/20 xl:hidden"
             >
               {currentAlgorithm || "Select Algorithm"}
             </button>
 
             <button
               onClick={() => handleAlgorithmClick(currentAlgorithm)}
-              className="mt-2 md:mt-0 px-4 py-2 font-medium border rounded-lg text-sky-400 bg-sky-500/10 border-sky-500/20 hidden md:block"
+              className="mt-2 md:mt-0 px-4 py-2 font-medium border rounded-lg text-sky-400 bg-sky-500/10 border-sky-500/20 hidden xl:block"
             >
               {currentAlgorithm || "Select Algorithm"}
             </button>

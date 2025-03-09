@@ -28,7 +28,7 @@ const MobileSidebar = ({ isOpen, onClose }) => {
 
   return (
     <motion.div
-      className="fixed inset-0 bg-black/70 z-50 md:hidden flex items-center justify-center"
+      className="fixed inset-0 bg-black/70 z-50 xl:hidden flex items-center justify-center"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
