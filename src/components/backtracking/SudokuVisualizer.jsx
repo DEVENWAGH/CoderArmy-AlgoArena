@@ -156,7 +156,7 @@ const SudokuVisualizer = () => {
           <h3 className="text-lg font-bold text-white">Sudoku Solver</h3>
           <button
             onClick={() => setShowCode(!showCode)}
-            className="absolute z-100 left-1/2 transform -translate-x-1/2 px-3 mt-6 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-full"
+            className="absolute z-100 left-1/2 transform -translate-x-1/2 lg:right-4 lg:top-26 px-3 mt-6 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-full"
           >
             {showCode ? "Hide Code" : "Show Code"}
           </button>

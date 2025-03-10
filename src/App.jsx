@@ -13,19 +13,8 @@ import TreeVisualizer from "./components/tree/TreeVisualizer";
 import MathVisualizer from "./components/mathematical/MathVisualizer";
 import ErrorBoundary from "./components/ErrorBoundary";
 import RaceMode from "./components/race/RaceMode";
-import Lenis from "lenis";
 
 const App = () => {
-  // Initialize Lenis
-  const lenis = new Lenis();
-
-  // Use requestAnimationFrame to continuously update the scroll
-  function raf(time) {
-    lenis.raf(time);
-    requestAnimationFrame(raf);
-  }
-
-  requestAnimationFrame(raf);
   // Structured data for SEO
   const structuredData = {
     "@context": "https://schema.org",
