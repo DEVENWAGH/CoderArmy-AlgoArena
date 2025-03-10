@@ -55,7 +55,7 @@ const Navbar = () => {
               </h1>
             </a>
             <p className="text-sm italic text-sky-400/80 animate-pulse">
-              Feel the heartbeat of dynamic DSA
+              Feel the heartbeat of Visualize DSA
             </p>
           </div>
 

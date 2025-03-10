@@ -145,6 +145,17 @@ npm run dev
 4. Push: `git push origin feature/amazing`
 5. Open pull request
 
+## 📷 Project Screenshots
+
+<div align="center">
+  <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+    <img src="./public/img1.png" alt="Screenshot 1" width="45%" />
+    <img src="./public/img2.png" alt="Screenshot 2" width="45%" />
+    <img src="./public/img3.png" alt="Screenshot 3" width="45%" />
+    <img src="./public/img4.png" alt="Screenshot 4" width="45%" />
+  </div>
+</div>
+
 ## 📄 License
 
 MIT © [License](./LICENSE)
