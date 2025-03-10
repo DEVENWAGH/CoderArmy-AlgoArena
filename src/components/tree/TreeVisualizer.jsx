@@ -55,6 +55,7 @@ const TreeVisualizer = () => {
   const dragRef = useRef({ x: 0, y: 0 });
   const [showControls, setShowControls] = useState(true);
   const [nodeValue, setNodeValue] = useState("");
+  const [showMobileSettings, setShowMobileSettings] = useState(false);
 
   // Add a check to determine if we're on the traversals page
   const isTraversalPage = algorithm === "tree-traversals";
@@ -73,11 +74,13 @@ const TreeVisualizer = () => {
       insertBST(value).finally(() => {
         setIsAnimating(false);
         setNodeValue("");
+        setShowMobileSettings(false); // Auto-close settings panel after operation
       });
     } else if (algorithm === "avl-tree") {
       insertAVL(value).finally(() => {
         setIsAnimating(false);
         setNodeValue("");
+        setShowMobileSettings(false); // Auto-close settings panel after operation
       });
     }
   };
@@ -95,11 +98,13 @@ const TreeVisualizer = () => {
       deleteBST(value).finally(() => {
         setIsAnimating(false);
         setNodeValue("");
+        setShowMobileSettings(false); // Auto-close settings panel after operation
       });
     } else if (algorithm === "avl-tree") {
       deleteAVL(value).finally(() => {
         setIsAnimating(false);
         setNodeValue("");
+        setShowMobileSettings(false); // Auto-close settings panel after operation
       });
     }
   };
@@ -115,6 +120,7 @@ const TreeVisualizer = () => {
 
     searchBST(value).finally(() => {
       setIsAnimating(false);
+      setShowMobileSettings(false); // Auto-close settings panel after operation
     });
   };
 
@@ -187,11 +193,20 @@ const TreeVisualizer = () => {
       }
     }
 
-    setTimeout(() => setIsAnimating(false), 500);
+    setTimeout(() => {
+      setIsAnimating(false);
+      setShowMobileSettings(false); // Auto-close settings panel after operation
+    }, 500);
   };
 
   const handleResetView = () => {
+    // Reset transform state
     setTransform({ x: 0, y: 0, scale: 1 });
+
+    // Wait for state update then center the tree
+    setTimeout(() => {
+      centerTreeInView();
+    }, 50);
   };
 
   // Function to handle traversal animation
@@ -200,11 +215,18 @@ const TreeVisualizer = () => {
       pauseTraversal();
     } else {
       startTraversal();
+      setShowMobileSettings(false); // Auto-close settings panel when starting traversal
     }
   };
 
   const handleResetTraversal = () => {
     resetTraversal();
+    setShowMobileSettings(false); // Auto-close settings panel when resetting
+  };
+
+  // Function to toggle mobile settings panel
+  const toggleMobileSettings = () => {
+    setShowMobileSettings(!showMobileSettings);
   };
 
   // Set up resize observer for responsive sizing
@@ -283,153 +305,45 @@ const TreeVisualizer = () => {
       // Store the updated layout
       setTreeLayout(layout);
 
-      // Center the tree initially with improved positioning logic
-      if (layout.nodes.length > 0) {
-        const rootNode = layout.nodes.find((n) => n.parentId === null);
-        if (rootNode) {
-          // More precise centering with adjustments for tree depth
-          const centerX = dimensions.width / 2 - rootNode.x;
-          // Adjust vertical position based on tree size
-          const centerY = isRedBlackTree
-            ? Math.min(100, dimensions.height / 6)
-            : Math.min(80, dimensions.height / 8);
+      // Center the tree initially
+      centerTreeInView();
 
-          setTransform((prev) => ({
-            ...prev,
-            x: centerX,
-            y: centerY,
-          }));
-        }
-      }
-
-      // Clear any existing animations to prevent conflicts
-      gsap.killTweensOf(".tree-node");
-      gsap.killTweensOf(".tree-link");
-
-      // Wait for next frame to ensure DOM elements are ready
+      // Position nodes and links immediately without animations
       requestAnimationFrame(() => {
-        // Enhanced element verification with retry mechanism
-        const checkAndAnimateElements = () => {
-          const nodeElements = document.querySelectorAll(".tree-node");
-          const linkElements = document.querySelectorAll(".tree-link");
-
-          // Check if all elements are rendered
-          if (
-            nodeElements.length !== layout.nodes.length ||
-            linkElements.length !== layout.links?.length
-          ) {
-            console.log("Element count mismatch, retrying...", {
-              expected: {
-                nodes: layout.nodes.length,
-                links: layout.links?.length,
-              },
-              actual: {
-                nodes: nodeElements.length,
-                links: linkElements.length,
-              },
+        // Directly set positions without animations
+        layout.nodes.forEach((node) => {
+          const element = document.querySelector(
+            `.tree-node[data-id="${node.id}"]`
+          );
+          if (element) {
+            gsap.set(element, {
+              x: node.x,
+              y: node.y,
+              opacity: 1,
+              scale: 1,
+              transformOrigin: "50% 50%",
             });
-            // Try again after a delay
-            setTimeout(() => {
-              // Force a re-render with the same layout data
-              setTreeLayout({ ...layout });
-              // Recursive retry with backoff
-              setTimeout(checkAndAnimateElements, 150);
-            }, 100);
-            return;
           }
+        });
 
-          // All elements are present, proceed with animation sequence
-          const timeline = gsap.timeline({ defaults: { ease: "power3.out" } });
-
-          // Force exact positioning first - critical for single node operations
-          layout.nodes.forEach((node, i) => {
-            const element = document.querySelector(
-              `.tree-node[data-id="${node.id}"]`
-            );
-            if (element) {
-              gsap.set(element, {
-                x: node.x,
-                y: node.y,
-                opacity: 0.5,
-                scale: 0.8,
-                transformOrigin: "50% 50%",
-              });
-            }
-          });
-
-          // Position links by direct selection rather than class
-          layout.links?.forEach((link, i) => {
-            const element = document.querySelector(
-              `path[data-link-id="${link.source.id}-${link.target.id}"]`
-            );
-            if (element) {
-              gsap.set(element, {
-                opacity: 0.3,
-                visibility: "visible",
-              });
-            }
-          });
-
-          // Enhanced animation sequence for better reliability
-          // First animate links for better structure visualization
-          timeline
-            .to(".tree-link", {
-              opacity: 0.7,
-              duration: 0.4,
-              stagger: 0.02,
-              ease: "power1.inOut",
-            })
-            // Then animate nodes with proper staggered appearance
-            .to(
-              ".tree-node",
-              {
-                opacity: 1,
-                scale: 1,
-                duration: isRedBlackTree ? 0.7 : 0.8, // Slightly faster for RB trees
-                stagger: {
-                  from: "start",
-                  amount: 0.4,
-                  grid: "auto",
-                },
-                ease: "back.out(1.2)",
-              },
-              "-=0.2"
-            ) // Slight overlap for smoother animation
-            // Finally, bring links to full opacity
-            .to(
-              ".tree-link",
-              {
-                opacity: 1,
-                duration: 0.3,
-              },
-              "-=0.3"
-            );
-
-          // Force a final position check after animations complete for extra insurance
-          timeline.add(() => {
-            layout.nodes.forEach((node, i) => {
-              const element = document.querySelector(
-                `.tree-node[data-id="${node.id}"]`
-              );
-              if (element) {
-                gsap.set(element, {
-                  x: node.x,
-                  y: node.y,
-                });
-              }
+        layout.links?.forEach((link) => {
+          const element = document.querySelector(
+            `path[data-link-id="${link.source.id}-${link.target.id}"]`
+          );
+          if (element) {
+            gsap.set(element, {
+              opacity: 1,
+              visibility: "visible",
             });
-          });
-        };
-
-        // Start the check and animation process
-        checkAndAnimateElements();
+          }
+        });
       });
     } catch (error) {
       console.error("Error creating tree layout:", error);
+      resetVisualization();
 
-      // Recovery mechanism: reset the tree after a short delay
+      // Use appropriate sample tree based on algorithm type
       setTimeout(() => {
-        resetVisualization();
         if (algorithm === "avl-tree") {
           setTree(createSampleAVL());
         } else if (algorithm === "red-black-tree") {
@@ -439,17 +353,7 @@ const TreeVisualizer = () => {
         }
       }, 500);
     }
-  }, [
-    tree,
-    dimensions,
-    isLoaded,
-    algorithm,
-    createSampleAVL,
-    createSampleRB,
-    createSampleTree,
-    setTree,
-    resetVisualization,
-  ]);
+  }, [tree, dimensions, isLoaded, algorithm]);
 
   // Add specific handling for Red-Black tree operations
   useEffect(() => {
@@ -570,7 +474,7 @@ const TreeVisualizer = () => {
   }
   // Right Left Case
   if (balance < -1 && key < node.right.key) {
-    node.right = leftRotate(node.right)
+    node.right = leftRotate(node)
     return leftRotate(node)
   }
   
@@ -636,9 +540,14 @@ const TreeVisualizer = () => {
 
   const info = getTraversalInfo();
 
-  // Add zoom handler
+  // Add zoom handler with passive option support for mobile browsers
   const handleWheel = (e) => {
-    e.preventDefault();
+    try {
+      e.preventDefault(); // Try to prevent default scroll
+    } catch (err) {
+      // Silent catch for browsers that don't allow preventDefault in passive listeners
+    }
+
     const delta = -e.deltaY;
     const scaleFactor = 0.05;
     const newScale = Math.max(
@@ -646,10 +555,13 @@ const TreeVisualizer = () => {
       Math.min(2, transform.scale + (delta > 0 ? scaleFactor : -scaleFactor))
     );
 
-    setTransform((prev) => ({
-      ...prev,
-      scale: newScale,
-    }));
+    // Use requestAnimationFrame for smoother zooming
+    requestAnimationFrame(() => {
+      setTransform((prev) => ({
+        ...prev,
+        scale: newScale,
+      }));
+    });
   };
 
   // Add drag handlers
@@ -775,38 +687,144 @@ const TreeVisualizer = () => {
       if (!containerRef.current) return;
 
       const rect = containerRef.current.getBoundingClientRect();
-      const isMobile = window.innerWidth < 768;
-      const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
+      const screenWidth = window.innerWidth;
+      const isMobile = screenWidth < 768;
+      const isTablet = screenWidth >= 768 && screenWidth < 1024;
 
       setDimensions({
-        width: Math.max(isMobile ? 350 : 800, rect.width),
-        height: Math.max(
-          isMobile ? 350 : isTablet ? 400 : 500,
-          rect.height - (isMobile ? 40 : 20)
-        ),
+        width: rect.width,
+        height: rect.height - (isMobile ? 20 : 10),
       });
 
-      // Adjust transform scale based on device
-      setTransform((prev) => ({
-        ...prev,
-        scale: isMobile ? 0.8 : isTablet ? 0.9 : 1,
-      }));
+      // Don't set transform scale here - let centerTreeInView handle it
     };
 
     updateSizeForDevice();
 
     const observer = new ResizeObserver(() => {
       updateSizeForDevice();
+      // Call centerTreeInView when container size changes
+      if (treeLayout.nodes && treeLayout.nodes.length > 0) {
+        centerTreeInView();
+      }
     });
 
     observer.observe(containerRef.current);
-    window.addEventListener("orientationchange", updateSizeForDevice);
+    window.addEventListener("orientationchange", () => {
+      setTimeout(updateSizeForDevice, 100);
+      setTimeout(centerTreeInView, 150);
+    });
 
     return () => {
       observer.disconnect();
       window.removeEventListener("orientationchange", updateSizeForDevice);
     };
   }, []);
+
+  // Improved center tree function with safer value handling and better mobile/tablet positioning
+  const centerTreeInView = () => {
+    if (!tree || !treeLayout || !treeLayout.nodes || !treeLayout.nodes.length)
+      return;
+
+    const rootNode = treeLayout.nodes.find((n) => n.parentId === null);
+    if (!rootNode) return;
+
+    // Calculate viewport dimensions
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    // Get screen width to determine device type
+    const screenWidth = window.innerWidth;
+
+    // Determine appropriate scale based on device size and tree size
+    let scale = 1;
+    let centerY = rect.height / 4;
+    // Add horizontal offset for mobile and tablet - new variable
+    let horizontalOffset = 0;
+
+    // Determine the tree width and height by finding extreme points
+    const minX = Math.min(...treeLayout.nodes.map((n) => n.x || 0));
+    const maxX = Math.max(...treeLayout.nodes.map((n) => n.x || 0));
+    const treeWidth = maxX - minX + 80; // Add some padding
+
+    const minY = Math.min(...treeLayout.nodes.map((n) => n.y || 0));
+    const maxY = Math.max(...treeLayout.nodes.map((n) => n.y || 0));
+    const treeHeight = maxY - minY + 80; // Add some padding
+
+    // Calculate scale to fit tree in viewport
+    const horizontalScale = rect.width / treeWidth;
+    const verticalScale = rect.height / treeHeight;
+
+    // Use the smaller scale to ensure the entire tree fits, but with minimums to prevent over-shrinking
+    const fitScale = Math.min(horizontalScale, verticalScale, 1);
+
+    // Adjust scale based on device type with improved zooming for better visibility
+    if (screenWidth < 640) {
+      // Small mobile - more conservative scaling
+      scale = Math.max(0.6, Math.min(fitScale, 0.7));
+      centerY = rect.height / 4;
+      horizontalOffset = rect.width * 0.08; // Add 8% width offset to move right on small mobile
+    } else if (screenWidth < 768) {
+      // Mobile - slightly more generous
+      scale = Math.max(0.65, Math.min(fitScale, 0.75));
+      centerY = rect.height / 3.8;
+      horizontalOffset = rect.width * 0.06; // Add 6% width offset to move right on mobile
+    } else if (screenWidth < 1024) {
+      // Tablet - improved scaling for better visibility and larger size
+      scale = Math.max(0.85, Math.min(fitScale, 0.95));
+      centerY = rect.height / 3.6;
+      horizontalOffset = rect.width * 0.07; // Add 7% width offset to move right on tablet
+    } else {
+      // Desktop
+      scale = Math.min(fitScale, 1);
+      centerY = rect.height / 3.2;
+    }
+
+    // Calculate center position for horizontal alignment
+    let centerX = rect.width / 2 - (rootNode.x || 0);
+
+    // Add the horizontal offset to move tree to the right on mobile/tablet
+    centerX += horizontalOffset;
+
+    // Apply additional centering adjustments for tablet view
+    if (screenWidth >= 768 && screenWidth < 1024) {
+      // Fine-tune vertical positioning for tablets
+      centerY = Math.min(centerY, rect.height / 3.4);
+
+      // Adjust horizontal centering based on tree width to fix left-bias
+      const treeWidthScaled = treeWidth * scale;
+
+      // Shift further to the right to fix the left alignment
+      centerX += rect.width * 0.05;
+
+      if (treeWidthScaled < rect.width * 0.9) {
+        // If tree is narrower than viewport, center it more precisely
+        centerX =
+          (rect.width - treeWidthScaled) / 2 + minX * scale + rect.width * 0.08; // Increased from 0.04 to 0.08
+      }
+    }
+
+    // Ensure we have valid numbers before setting transform to avoid NaN errors
+    if (isNaN(centerX) || isNaN(centerY) || isNaN(scale)) {
+      console.warn("Invalid transform values detected:", {
+        centerX,
+        centerY,
+        scale,
+      });
+      // Provide safe default values
+      setTransform({
+        x: rect.width / 2,
+        y: rect.height / 4,
+        scale: 0.8,
+      });
+    } else {
+      setTransform({
+        x: centerX,
+        y: centerY,
+        scale: scale,
+      });
+    }
+  };
 
   // Add feedback message for operations
   const getOperationFeedback = () => {
@@ -819,23 +837,56 @@ const TreeVisualizer = () => {
     }
   };
 
+  // Make sure to properly check for treeLayout before rendering
+  useEffect(() => {
+    if (treeLayout && treeLayout.nodes && treeLayout.nodes.length > 0) {
+      centerTreeInView();
+    }
+  }, [treeLayout]);
+
+  // Add safer wheel event listener with { passive: false }
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element) return;
+
+    // Use safe event binding for wheel events to prevent passive listener issues
+    const safeHandleWheel = (e) => handleWheel(e);
+
+    // Add event with passive: false to allow preventDefault()
+    element.addEventListener("wheel", safeHandleWheel, { passive: false });
+
+    return () => {
+      element.removeEventListener("wheel", safeHandleWheel);
+    };
+  }, [transform.scale]); // Add transform.scale dependency so it updates when scale changes
+
+  // Call centerTreeInView when tree layout changes
+  useEffect(() => {
+    if (treeLayout.nodes.length > 0) {
+      centerTreeInView();
+    }
+  }, [treeLayout]);
+
   return (
     <div className="flex flex-col w-full h-full bg-slate-800">
-      {/* Controls Section - make it more compact on mobile */}
+      {/* Controls Section - only show fully on desktop, simplified on mobile/tablet */}
       <div className="fixed right-0 z-40 p-2 sm:p-4 shadow-lg top-20 md:top-26 left-0 md:left-64 bg-slate-800 border-b border-slate-700">
         <div className="flex flex-col sm:flex-row justify-between mb-2 gap-2">
-          <div>
+          <div className="flex-1">
             <h2 className="text-xl font-bold text-white capitalize">
               {algorithm?.replace("-", " ")}
             </h2>
 
-            {/* Show traversal info - brief one-line description */}
+            {/* Show traversal info - brief one-line description ONLY ON DESKTOP */}
             {isTraversalPage && (
-              <p className="text-sm text-gray-300 mt-1">{info.description}</p>
+              <p className="hidden md:block text-sm text-gray-300 mt-1">
+                {info.description}
+              </p>
             )}
           </div>
 
-          <div className="flex flex-wrap gap-2 items-center justify-end">
+          {/* Only show controls on desktop screens */}
+          <div className="hidden md:flex flex-wrap gap-2 items-center justify-end">
             {/* Only show tree manipulation controls if not on the traversals page */}
             {showControls && !isTraversalPage && (
               <>
@@ -873,7 +924,7 @@ const TreeVisualizer = () => {
               </>
             )}
 
-            {/* Always show this button for all tree visualizations */}
+            {/* Always show this button for all tree visualizations on desktop */}
             <button
               onClick={handleResetView}
               className="px-3 py-1 bg-slate-600 rounded hover:bg-slate-700"
@@ -881,11 +932,13 @@ const TreeVisualizer = () => {
               Reset View
             </button>
           </div>
+
+          {/* Mobile floating settings button - removed from header */}
         </div>
 
-        {/* Input Controls with better feedback */}
+        {/* Input Controls with better feedback - Only show on desktop */}
         {showControls && !isTraversalPage && (
-          <>
+          <div className="hidden md:block">
             <div className="flex flex-col sm:flex-row gap-2 mt-2">
               <div className="flex gap-2 items-center">
                 <input
@@ -926,12 +979,12 @@ const TreeVisualizer = () => {
                 </p>
               ) : null}
             </div>
-          </>
+          </div>
         )}
 
-        {/* Improved responsive traversal controls */}
+        {/* Improved responsive traversal controls - Only show on desktop */}
         {isTraversalPage && (
-          <div className="mt-3">
+          <div className="hidden md:block mt-3">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-start">
               {/* Algorithm selection - more mobile friendly */}
               <div className="bg-slate-700/50 p-2 rounded-lg">
@@ -1072,8 +1125,277 @@ const TreeVisualizer = () => {
         )}
       </div>
 
+      {/* Mobile/Tablet settings panel - slide up from bottom */}
+      <div
+        className={`fixed bottom-0 left-0 right-0 z-50 md:hidden bg-slate-800 border-t border-slate-700 shadow-lg transition-transform duration-300 ease-in-out transform ${
+          showMobileSettings ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
+        <div className="p-4 max-h-[80vh] overflow-y-auto">
+          {/* Pull tab with handle */}
+          <div className="absolute -top-6 left-0 right-0 h-6 bg-slate-800 border-t border-l border-r border-slate-700 rounded-t-lg flex justify-center items-center">
+            <div className="w-16 h-1 bg-slate-600 rounded-full"></div>
+          </div>
+
+          <h3 className="text-lg font-bold text-white mb-4">Tree Controls</h3>
+
+          {/* Tree manipulation controls */}
+          {showControls && !isTraversalPage && (
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-gray-300 mb-2">
+                Operations
+              </h4>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={handleAdd}
+                  className="px-3 py-2 bg-green-600 rounded hover:bg-green-700 disabled:opacity-50 text-sm"
+                  disabled={isAnimating}
+                >
+                  Add Node
+                </button>
+
+                <button
+                  onClick={handleRemove}
+                  className="px-3 py-2 bg-red-600 rounded hover:bg-red-700 disabled:opacity-50 text-sm"
+                  disabled={isAnimating}
+                >
+                  Remove Node
+                </button>
+
+                <button
+                  onClick={handleSearch}
+                  className="px-3 py-2 bg-yellow-600 rounded hover:bg-yellow-700 disabled:opacity-50 text-sm"
+                  disabled={isAnimating}
+                >
+                  Search
+                </button>
+
+                <button
+                  onClick={randomizeTree}
+                  className="px-3 py-2 bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50 text-sm"
+                  disabled={isAnimating}
+                >
+                  Randomize
+                </button>
+              </div>
+
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-gray-300 mb-2">
+                  Input Value
+                </h4>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="number"
+                    value={nodeValue}
+                    onChange={(e) => setNodeValue(e.target.value)}
+                    placeholder="Node value"
+                    className="flex-1 px-3 py-2 text-white rounded bg-slate-700 border border-slate-600"
+                  />
+                </div>
+
+                {/* Operation feedback message */}
+                {searchFound !== null && bstTargetValue !== null && (
+                  <div
+                    className={`mt-2 p-2 rounded text-sm ${
+                      searchFound
+                        ? "bg-green-800/40 text-green-200"
+                        : "bg-red-800/40 text-red-200"
+                    }`}
+                  >
+                    {getOperationFeedback()}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Traversal Controls (if on traversal page) */}
+          {isTraversalPage && (
+            <div className="mb-4">
+              <div className="grid grid-cols-1 gap-4">
+                {/* Algorithm selection */}
+                <div className="bg-slate-700/50 p-2 rounded-lg">
+                  <h4 className="text-xs font-semibold text-gray-400 mb-2">
+                    Traversal Algorithm
+                  </h4>
+                  {/* Add description for mobile here for better context */}
+                  <p className="text-xs text-gray-400 mb-2">
+                    {info.description}
+                  </p>
+                  <div className="grid grid-cols-2 gap-1">
+                    {["inorder", "preorder", "postorder", "levelorder"].map(
+                      (type) => (
+                        <button
+                          key={type}
+                          onClick={() => {
+                            setTraversalType(type);
+                            resetTraversal(); // Reset traversal when changing algorithm
+                          }}
+                          className={`px-2 py-1.5 text-xs rounded transition-colors ${
+                            traversalType === type
+                              ? "bg-blue-600 text-white"
+                              : "bg-slate-600 text-gray-200 hover:bg-slate-500"
+                          }`}
+                          disabled={isTraversing}
+                        >
+                          {type.charAt(0).toUpperCase() + type.slice(1)}
+                        </button>
+                      )
+                    )}
+                  </div>
+                </div>
+
+                {/* Animation Controls */}
+                <div className="bg-slate-700/50 p-2 rounded-lg">
+                  <h4 className="text-xs font-semibold text-gray-400 mb-2">
+                    Animation Controls
+                  </h4>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleStartTraversal}
+                      className={`flex-1 px-3 py-2 rounded text-sm flex items-center justify-center gap-2 transition-colors ${
+                        isTraversing
+                          ? "bg-yellow-600 hover:bg-yellow-700"
+                          : "bg-green-600 hover:bg-green-700"
+                      }`}
+                    >
+                      {isTraversing ? (
+                        <>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          Pause
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          Start
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={handleResetTraversal}
+                      className="px-3 py-2 bg-red-600 rounded hover:bg-red-700 text-sm transition-colors flex items-center justify-center gap-2"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      Reset
+                    </button>
+                  </div>
+                </div>
+
+                {/* Speed control */}
+                <div className="bg-slate-700/50 p-2 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-semibold text-gray-400">
+                      Animation Speed
+                    </h4>
+                    <span className="text-xs text-blue-300">
+                      {traversalSpeed}ms
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 mt-2">
+                    <span className="text-xs text-gray-400">Fast</span>
+                    <input
+                      type="range"
+                      min="100"
+                      max="1000"
+                      step="50"
+                      value={traversalSpeed}
+                      onChange={(e) =>
+                        setTraversalSpeed(Number(e.target.value))
+                      }
+                      className="w-full accent-blue-500"
+                    />
+                    <span className="text-xs text-gray-400">Slow</span>
+                  </div>
+                </div>
+
+                {/* Code display */}
+                <div className="bg-slate-900/70 p-3 rounded-lg border border-slate-700/50">
+                  <div className="flex flex-wrap items-start gap-1">
+                    <span className="text-xs font-medium text-blue-400 whitespace-nowrap">
+                      {info.title}:
+                    </span>
+                    <code className="text-xs text-gray-100 font-mono break-all">
+                      {info.code.replace(/\n/g, " ")}
+                    </code>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Common actions for all tree types - Removed Reset View button */}
+          <div className="mt-4">
+            {/* Tree type information */}
+            {!isTraversalPage && (
+              <div className="mt-1 text-xs text-slate-400">
+                {algorithm === "binary-search-tree" ? (
+                  <p>
+                    Binary Search Tree: For each node, all nodes in left subtree
+                    have smaller values, and all nodes in right subtree have
+                    larger values.
+                  </p>
+                ) : algorithm === "avl-tree" ? (
+                  <p>
+                    AVL Tree: A self-balancing BST where the height difference
+                    between left and right subtrees is at most 1 for all nodes.
+                  </p>
+                ) : algorithm === "red-black-tree" ? (
+                  <p>
+                    Red-Black Tree: A self-balancing BST where each node is
+                    colored red or black to ensure the tree remains balanced
+                    after insertions and deletions.
+                  </p>
+                ) : null}
+              </div>
+            )}
+          </div>
+
+          {/* Close button */}
+          <button
+            onClick={toggleMobileSettings}
+            className="mt-4 w-full py-2 bg-slate-700 rounded text-sm"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+
       {/* Main content - Adjust padding for different devices */}
-      <div className="flex flex-col h-full pt-36 xs:pt-40 sm:pt-32 md:pt-28 pb-4 px-2 sm:px-4 overflow-hidden">
+      <div className="flex flex-col h-full pt-28 pb-4 px-2 sm:px-4 overflow-hidden">
         {/* Tree container */}
         <div
           ref={containerRef}
@@ -1082,38 +1404,47 @@ const TreeVisualizer = () => {
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
-          onWheel={handleWheel}
           onDoubleClick={handleDoubleClick}
         >
-          {/* Render nodes and links */}
+          {/* Render nodes and links with additional safety checks */}
           <svg width="100%" height="100%">
             <g
-              transform={`translate(${transform.x}, ${transform.y}) scale(${transform.scale})`}
+              transform={`translate(${isNaN(transform.x) ? 0 : transform.x}, ${
+                isNaN(transform.y) ? 0 : transform.y
+              }) scale(${isNaN(transform.scale) ? 1 : transform.scale})`}
             >
-              {treeLayout.links?.map((link) => (
-                <TreeLink
-                  key={`${link.source.id}-${link.target.id}`}
-                  link={link}
-                  isActive={
-                    activeNodePath.includes(link.source.id) &&
-                    activeNodePath.includes(link.target.id)
-                  }
-                />
-              ))}
-              {treeLayout.nodes?.map((node) => (
-                <TreeNode
-                  key={node.id}
-                  node={node}
-                  isActive={activeNodePath.includes(node.id)}
-                  isCurrent={currentNode === node.id}
-                  isVisited={visitedNodes.includes(node.id)}
-                />
-              ))}
+              {treeLayout.links?.map(
+                (link) =>
+                  link &&
+                  link.source &&
+                  link.target && (
+                    <TreeLink
+                      key={`${link.source.id}-${link.target.id}`}
+                      link={link}
+                      isActive={
+                        activeNodePath.includes(link.source.id) &&
+                        activeNodePath.includes(link.target.id)
+                      }
+                    />
+                  )
+              )}
+              {treeLayout.nodes?.map(
+                (node) =>
+                  node && (
+                    <TreeNode
+                      key={node.id}
+                      node={node}
+                      isActive={activeNodePath.includes(node.id)}
+                      isCurrent={currentNode === node.id}
+                      isVisited={visitedNodes.includes(node.id)}
+                    />
+                  )
+              )}
             </g>
           </svg>
 
-          {/* Mobile instructions overlay - repositioned for better visibility */}
-          <div className="absolute bottom-4 left-80 bg-slate-800 bg-opacity-90 p-2 rounded text-xs sm:text-sm text-white max-w-[180px] sm:max-w-none">
+          {/* Mobile instructions overlay - positioned better */}
+          <div className="absolute top-50 left-4 lg:top-80 lg:left-80 bg-slate-800 bg-opacity-90 p-2 rounded text-xs sm:text-sm text-white max-w-[180px]">
             <p className="hidden sm:block">
               Mouse: drag to move, wheel to zoom, double-click to reset
             </p>
@@ -1121,12 +1452,34 @@ const TreeVisualizer = () => {
               Touch: drag to move, pinch to zoom, double-tap to reset
             </p>
           </div>
+
+          {/* Mobile settings floating button - moved from header to bottom right corner */}
+          <div className="md:hidden absolute bottom-4 left-1/2 -translate-x-1/2">
+            <button
+              onClick={toggleMobileSettings}
+              className="w-12 h-12 flex items-center justify-center bg-slate-700 rounded-full shadow-lg hover:bg-slate-600 transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 text-white"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947z"
+                  clipRule="evenodd"
+                />
+                <path d="M10 13a3 3 0 100-6 3 3 0 000 6z" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Improve visited nodes display for better visibility */}
       {isTraversalPage && visitedNodes.length > 0 && (
-        <div className="fixed bottom-4 right-4 p-2 bg-slate-800/90 rounded-lg shadow-lg backdrop-blur-sm">
+        <div className="fixed bottom-20 md:bottom-4 right-4 p-2 bg-slate-800/90 rounded-lg shadow-lg backdrop-blur-sm z-40">
           <p className="text-xs font-medium text-white mb-1 flex items-center">
             <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mr-1"></span>
             Visited: {visitedNodes.length} nodes

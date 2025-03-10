@@ -18,28 +18,20 @@ export function animateTreeTransition(options = {}) {
     onComplete,
   });
 
-  // Setup initial state for smooth transition
+  // Only animate state changes, not initial load
+  // Skip the initial setup animation that causes the shooting effect
   timeline
-    .to(".tree-node", {
-      opacity: 0.7,
-      scale: 0.9,
-      duration: 0.3,
-    })
     .to(".tree-node", {
       opacity: 1,
       scale: 1,
       duration: duration,
-      stagger: {
-        amount: 0.2,
-        from: "center",
-      },
+      ease: "power2.out",
     })
     .to(
       ".tree-link",
       {
         opacity: 1,
         duration: duration * 0.8,
-        stagger: 0.05,
       },
       "-=0.4"
     );
@@ -63,11 +55,12 @@ export function centerTreeInViewport(tree, dimensions, setTransform) {
   }
 
   if (rootNode) {
-    // Center the tree horizontally and vertically
+    // Center the tree horizontally and position properly vertically
     setTransform((prev) => ({
       ...prev,
       x: dimensions.width / 2 - rootNode.x,
       y: dimensions.height / 5 - rootNode.y,
+      scale: prev.scale || 1, // Keep current scale or default to 1
     }));
   }
 }

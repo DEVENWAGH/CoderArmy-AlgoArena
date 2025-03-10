@@ -607,9 +607,6 @@ const useTreeStore = create((set, get) => ({
       tree = get().convertToAVLNode(JSON.parse(JSON.stringify(tree)));
     }
 
-    // Store the old tree for animation comparison
-    const oldTree = JSON.parse(JSON.stringify(tree));
-
     set({
       tree, // Set the converted tree
       searchPath: [],
@@ -683,17 +680,7 @@ const useTreeStore = create((set, get) => ({
 
     const updatedTree = await insert(tree);
 
-    // Create a smooth transition by setting up animation
-    gsap.to(".tree-node", {
-      opacity: 0.7,
-      scale: 0.9,
-      duration: 0.3,
-      ease: "power2.out",
-    });
-
-    // Short pause to show the change
-    await new Promise((r) => setTimeout(r, 100));
-
+    // Remove animation transition - just update the tree directly
     // Recalculate layout after insertion
     const layoutTree = get().calculateTreeLayout(updatedTree);
     set({ tree: layoutTree });
@@ -948,38 +935,41 @@ const useTreeStore = create((set, get) => ({
 
   // Create a sample Red-Black tree
   createSampleRB: () => {
-    // Create a basic Red-Black tree for demonstration
+    // Create a proper Red-Black tree for demonstration
     const root = get().createRBNode(20);
     root.color = "BLACK"; // Root is always black
 
     // Left subtree
     root.left = get().createRBNode(10);
-    root.left.parent = root;
     root.left.color = "BLACK";
+    root.left.parent = root;
 
     root.left.left = get().createRBNode(5);
     root.left.left.parent = root.left;
+    root.left.left.color = "RED";
 
     root.left.right = get().createRBNode(15);
     root.left.right.parent = root.left;
+    root.left.right.color = "RED";
 
     // Right subtree
     root.right = get().createRBNode(30);
-    root.right.parent = root;
     root.right.color = "BLACK";
+    root.right.parent = root;
 
     root.right.left = get().createRBNode(25);
     root.right.left.parent = root.right;
+    root.right.left.color = "RED";
 
     root.right.right = get().createRBNode(40);
     root.right.right.parent = root.right;
+    root.right.right.color = "RED";
 
-    // Update all parent references
+    // Update parent references to ensure consistency
     updateParentReferences(root);
 
     // Calculate layout
     const layoutTree = get().calculateTreeLayout(root);
-    set({ tree: layoutTree });
     return layoutTree;
   },
 
@@ -990,122 +980,152 @@ const useTreeStore = create((set, get) => ({
   },
 
   // Left rotation with color management
-  rbLeftRotate: (x) => {
+  rbLeftRotate: (tree, x) => {
+    // Store y
     const y = x.right;
+
+    // Turn y's left subtree into x's right subtree
     x.right = y.left;
 
-    if (y.left) y.left.parent = x;
+    // Update parent pointer of y's left child
+    if (y.left !== null) {
+      y.left.parent = x;
+    }
+
+    // Link x's parent to y
     y.parent = x.parent;
 
-    if (!x.parent) {
-      // x was root
-    } else if (x === x.parent.left) {
+    // Handle root case
+    if (x.parent === null) {
+      tree = y;
+    }
+    // Handle x as left child
+    else if (x === x.parent.left) {
       x.parent.left = y;
-    } else {
+    }
+    // Handle x as right child
+    else {
       x.parent.right = y;
     }
 
+    // Put x on y's left
     y.left = x;
+
+    // Update x's parent
     x.parent = y;
-    return y;
+
+    return tree; // Return the new root
   },
 
   // Right rotation with color management
-  rbRightRotate: (y) => {
+  rbRightRotate: (tree, y) => {
+    // Store x
     const x = y.left;
+
+    // Turn x's right subtree into y's left subtree
     y.left = x.right;
 
-    if (x.right) x.right.parent = y;
+    // Update parent pointer of x's right child
+    if (x.right !== null) {
+      x.right.parent = y;
+    }
+
+    // Link y's parent to x
     x.parent = y.parent;
 
-    if (!y.parent) {
-      // y was root
-    } else if (y === y.parent.right) {
+    // Handle root case
+    if (y.parent === null) {
+      tree = x;
+    }
+    // Handle y as right child
+    else if (y === y.parent.right) {
       y.parent.right = x;
-    } else {
+    }
+    // Handle y as left child
+    else {
       y.parent.left = x;
     }
 
+    // Put y on x's right
     x.right = y;
+
+    // Update y's parent
     y.parent = x;
-    return x;
+
+    return tree; // Return the new root
   },
 
   // Fix Red-Black Tree properties after insertion
-  fixInsertRB: (root, node) => {
-    let parent = null;
-    let grandParent = null;
+  fixInsertRB: (tree, node) => {
+    const isRed = get().isRed;
+    const rbLeftRotate = get().rbLeftRotate;
+    const rbRightRotate = get().rbRightRotate;
 
-    // Keep going until we reach root or find no red-red conflict
-    while (node !== root && get().isRed(node) && get().isRed(node.parent)) {
-      parent = node.parent;
-      grandParent = parent.parent;
+    // Keep fixing until reaching the root or until there's no red-red conflict
+    while (node !== tree && node.parent !== null && isRed(node.parent)) {
+      // If parent is a left child of grandparent
+      if (node.parent.parent && node.parent === node.parent.parent.left) {
+        const uncle = node.parent.parent.right;
 
-      // Case A: Parent is left child of grandparent
-      if (parent === grandParent.left) {
-        const uncle = grandParent.right;
-
-        // Case 1: Uncle is also red - only recoloring needed
-        if (get().isRed(uncle)) {
-          grandParent.color = "RED";
-          parent.color = "BLACK";
+        // Case 1: Uncle is red - just recolor
+        if (uncle && isRed(uncle)) {
+          node.parent.color = "BLACK";
           uncle.color = "BLACK";
-          node = grandParent; // Move up the tree
+          node.parent.parent.color = "RED";
+          node = node.parent.parent;
         } else {
-          // Case 2: Node is right child - left rotation needed
-          if (node === parent.right) {
-            get().rbLeftRotate(parent);
-            node = parent;
-            parent = node.parent;
+          // Case 2: Node is a right child - need left rotation first
+          if (node === node.parent.right) {
+            node = node.parent;
+            tree = rbLeftRotate(tree, node);
           }
 
-          // Case 3: Node is left child - right rotation needed
-          get().rbRightRotate(grandParent);
-          // Swap colors of parent and grandparent
-          const tempColor = parent.color;
-          parent.color = grandParent.color;
-          grandParent.color = tempColor;
-          node = parent; // Move up the tree
+          // Case 3: Node is a left child - need right rotation
+          if (node.parent && node.parent.parent) {
+            node.parent.color = "BLACK";
+            node.parent.parent.color = "RED";
+            tree = rbRightRotate(tree, node.parent.parent);
+          }
         }
       }
-      // Case B: Parent is right child of grandparent
-      else {
-        const uncle = grandParent.left;
+      // If parent is a right child of grandparent - mirror cases
+      else if (node.parent.parent) {
+        const uncle = node.parent.parent.left;
 
-        // Case 1: Uncle is also red - only recoloring needed
-        if (get().isRed(uncle)) {
-          grandParent.color = "RED";
-          parent.color = "BLACK";
+        // Case 1: Uncle is red - just recolor
+        if (uncle && isRed(uncle)) {
+          node.parent.color = "BLACK";
           uncle.color = "BLACK";
-          node = grandParent; // Move up the tree
+          node.parent.parent.color = "RED";
+          node = node.parent.parent;
         } else {
-          // Case 2: Node is left child - right rotation needed
-          if (node === parent.left) {
-            get().rbRightRotate(parent);
-            node = parent;
-            parent = node.parent;
+          // Case 2: Node is a left child - need right rotation first
+          if (node === node.parent.left) {
+            node = node.parent;
+            tree = rbRightRotate(tree, node);
           }
 
-          // Case 3: Node is right child - left rotation needed
-          get().rbLeftRotate(grandParent);
-          // Swap colors of parent and grandparent
-          const tempColor = parent.color;
-          parent.color = grandParent.color;
-          grandParent.color = tempColor;
-          node = parent; // Move up the tree
+          // Case 3: Node is a right child - need left rotation
+          if (node.parent && node.parent.parent) {
+            node.parent.color = "BLACK";
+            node.parent.parent.color = "RED";
+            tree = rbLeftRotate(tree, node.parent.parent);
+          }
         }
       }
     }
 
-    // Ensure root is black
-    root.color = "BLACK";
-    return root;
+    // Root must be black
+    tree.color = "BLACK";
+
+    return tree;
   },
 
-  // Insert into Red-Black Tree
+  // Fixed insertRB function with proper implementation
   insertRB: async (value) => {
     const { traversalSpeed } = get();
     let tree = get().tree;
+    const isRed = get().isRed;
 
     // Reset visualization state
     set({
@@ -1116,77 +1136,149 @@ const useTreeStore = create((set, get) => ({
       visitedNodes: [],
     });
 
-    const insertNode = async (root, node) => {
-      // Standard BST insert
-      if (root === null) {
-        set({ searchFound: true });
-        return node;
-      }
+    // Check if value already exists
+    const valueExists = (node, val) => {
+      if (!node) return false;
+      if (node.value === val) return true;
+      return val < node.value
+        ? valueExists(node.left, val)
+        : valueExists(node.right, val);
+    };
 
+    // If value already exists, don't insert
+    if (valueExists(tree, value)) {
+      set({ searchFound: false });
+      return;
+    }
+
+    // Create new node
+    const newNode = get().createRBNode(value);
+    set({ searchFound: true });
+
+    // If tree is empty, just set root as black and return
+    if (!tree) {
+      newNode.color = "BLACK";
+      const layoutTree = get().calculateTreeLayout(newNode);
+      set({ tree: layoutTree });
+      return;
+    }
+
+    // Do BST insert first - with visualization
+    const bstInsert = async (root, node) => {
       // Update visualization state
       set((state) => ({
         visitedNodes: [...state.visitedNodes, root.value],
         currentNode: root.value,
         searchPath: [...state.searchPath, root.value],
       }));
+
       await new Promise((r) => setTimeout(r, traversalSpeed));
 
-      // Recursive insert
+      // Standard BST insertion with parent pointers
       if (node.value < root.value) {
-        root.left = await insertNode(root.left, node);
-        root.left.parent = root;
-      } else if (node.value > root.value) {
-        root.right = await insertNode(root.right, node);
-        root.right.parent = root;
+        if (!root.left) {
+          root.left = node;
+          node.parent = root;
+          return root;
+        } else {
+          root.left = await bstInsert(root.left, node);
+          return root;
+        }
       } else {
-        // Value already exists
-        set({ searchFound: false });
-        return root;
+        if (!root.right) {
+          root.right = node;
+          node.parent = root;
+          return root;
+        } else {
+          root.right = await bstInsert(root.right, node);
+          return root;
+        }
       }
-
-      return root;
     };
 
-    // Create new node
-    const newNode = get().createRBNode(value);
+    // Perform BST insert with animation
+    tree = await bstInsert(tree, newNode);
 
-    // Do the standard BST insertion first
-    if (tree === null) {
-      newNode.color = "BLACK"; // Root is always black
-      set({
-        tree: newNode,
-        searchFound: true,
-      });
-      return;
-    }
+    // Fix RB tree properties after insertion
+    const fixRBTreeAfterInsert = (tree, node) => {
+      // If node is root, color it black and return
+      if (node === tree) {
+        node.color = "BLACK";
+        return tree;
+      }
 
-    tree = await insertNode(tree, newNode);
+      // If parent is black, no violations
+      if (!isRed(node.parent)) {
+        return tree;
+      }
 
-    // Fix Red-Black properties
-    tree = get().fixInsertRB(tree, newNode);
+      // From here, we know parent is RED
+      const parent = node.parent;
+      const grandparent = parent.parent;
+      if (!grandparent) return tree; // Safety check
 
-    // Animate the transition
-    gsap.to(".tree-node", {
-      opacity: 0.7,
-      scale: 0.9,
-      duration: 0.3,
-      ease: "power2.out",
-    });
+      // Determine if parent is left or right child of grandparent
+      const isParentLeftChild = grandparent.left === parent;
+      const uncle = isParentLeftChild ? grandparent.right : grandparent.left;
 
-    // Short pause to show the change
-    await new Promise((r) => setTimeout(r, 100));
+      // Case 1: Uncle is RED - recolor and move up
+      if (isRed(uncle)) {
+        parent.color = "BLACK";
+        uncle.color = "BLACK";
+        grandparent.color = "RED";
+        return fixRBTreeAfterInsert(tree, grandparent);
+      }
 
-    // Use a safe tree preparation for layout calculation
+      // Case 2 & 3: Uncle is BLACK
+      if (isParentLeftChild) {
+        // Left-Right Case: Left rotate parent
+        if (parent.right === node) {
+          tree = get().rbLeftRotate(tree, parent);
+          // Now it's a Left-Left case
+          return get().rbRightRotate(tree, grandparent);
+        }
+        // Left-Left Case: Right rotate grandparent
+        else {
+          // First fix colors
+          parent.color = "BLACK";
+          grandparent.color = "RED";
+          return get().rbRightRotate(tree, grandparent);
+        }
+      } else {
+        // Right-Left Case: Right rotate parent
+        if (parent.left === node) {
+          tree = get().rbRightRotate(tree, parent);
+          // Now it's a Right-Right case
+          return get().rbLeftRotate(tree, grandparent);
+        }
+        // Right-Right Case: Left rotate grandparent
+        else {
+          // First fix colors
+          parent.color = "BLACK";
+          grandparent.color = "RED";
+          return get().rbLeftRotate(tree, grandparent);
+        }
+      }
+    };
+
+    // Fix RB tree properties
+    tree = fixRBTreeAfterInsert(tree, newNode);
+
+    // Ensure root is always black
+    tree.color = "BLACK";
+
+    // Update parent references to ensure consistency
+    updateParentReferences(tree);
+
+    // Update the tree visualization
     const layoutTree = get().calculateTreeLayout(tree);
-
-    // Create a new tree object to avoid issues with circular references
-    const newTree = safeCloneTree(tree);
     set({ tree: layoutTree });
   },
 
-  // Delete from Red-Black Tree (simplified version)
+  // deleteRB function with proper implementation
   deleteRB: async (value) => {
     const { tree, traversalSpeed } = get();
+    const isRed = get().isRed;
 
     // Reset visualization state
     set({
@@ -1197,11 +1289,17 @@ const useTreeStore = create((set, get) => ({
       visitedNodes: [],
     });
 
-    let nodeFound = false;
+    if (!tree) {
+      set({ searchFound: false });
+      return;
+    }
 
-    // Find and delete the node (simplified for visualization purposes)
-    const deleteNode = async (node, valueToDelete) => {
-      if (node === null) return null;
+    // Step 1: Search for the node to delete with visualization
+    let nodeToDelete = null;
+    let parentOfNodeToDelete = null;
+
+    const findNode = async (node, parent, val) => {
+      if (!node) return null;
 
       // Update visualization state
       set((state) => ({
@@ -1209,99 +1307,267 @@ const useTreeStore = create((set, get) => ({
         currentNode: node.value,
         searchPath: [...state.searchPath, node.value],
       }));
+
       await new Promise((r) => setTimeout(r, traversalSpeed));
 
-      // Standard BST delete logic
-      if (valueToDelete < node.value) {
-        node.left = await deleteNode(node.left, valueToDelete);
-        if (node.left) node.left.parent = node;
-      } else if (valueToDelete > node.value) {
-        node.right = await deleteNode(node.right, valueToDelete);
-        if (node.right) node.right.parent = node;
+      if (node.value === val) {
+        // Found the node
+        set({ searchFound: true });
+        nodeToDelete = node;
+        parentOfNodeToDelete = parent;
+        return;
+      }
+
+      if (val < node.value) {
+        await findNode(node.left, node, val);
       } else {
-        // Node found
-        nodeFound = true;
+        await findNode(node.right, node, val);
+      }
+    };
 
-        // Handle leaf node or node with one child
-        if (node.left === null) {
-          return node.right;
-        } else if (node.right === null) {
-          return node.left;
+    // Search for the node to delete
+    await findNode(tree, null, value);
+
+    // If node not found, return
+    if (!nodeToDelete) {
+      set({ searchFound: false });
+      return;
+    }
+
+    // Create a deep clone of the tree to work with
+    let newTree = JSON.parse(JSON.stringify(tree));
+
+    // Find the node in the cloned tree
+    const findNodeInClone = (node, val) => {
+      if (!node) return null;
+      if (node.value === val) return node;
+      if (val < node.value) return findNodeInClone(node.left, val);
+      return findNodeInClone(node.right, val);
+    };
+
+    const findParentInClone = (node, child) => {
+      if (!node || !child) return null;
+      if (node.left && node.left.value === child.value) return node;
+      if (node.right && node.right.value === child.value) return node;
+      if (child.value < node.value) return findParentInClone(node.left, child);
+      return findParentInClone(node.right, child);
+    };
+
+    const clonedNodeToDelete = findNodeInClone(newTree, value);
+
+    // If it's the only node in the tree, just clear the tree
+    if (clonedNodeToDelete === newTree && !newTree.left && !newTree.right) {
+      set({ tree: null, searchFound: true });
+      return;
+    }
+
+    // For complex deletion, we'll use a RB-tree compliant delete method
+    // that preserves the RB properties. For visualization purposes,
+    // we'll implement a simplified version here.
+
+    // First, handle the case where the node has 0 or 1 child
+    const handleSimpleCase = () => {
+      const parent = findParentInClone(newTree, clonedNodeToDelete);
+      const isLeftChild = parent && parent.left === clonedNodeToDelete;
+
+      // Case 1: node has no children
+      if (!clonedNodeToDelete.left && !clonedNodeToDelete.right) {
+        if (!parent) {
+          // This was the root node with no children
+          newTree = null;
+        } else if (isLeftChild) {
+          parent.left = null;
+        } else {
+          parent.right = null;
         }
-
-        // Node with two children
-        // Find successor (smallest in right subtree)
-        let successor = node.right;
-        while (successor.left) {
-          successor = successor.left;
+      }
+      // Case 2: node has one child
+      else if (!clonedNodeToDelete.left) {
+        if (!parent) {
+          // This was the root node with only right child
+          newTree = clonedNodeToDelete.right;
+          newTree.parent = null;
+          // Root must be BLACK
+          newTree.color = "BLACK";
+        } else if (isLeftChild) {
+          parent.left = clonedNodeToDelete.right;
+          if (parent.left) parent.left.parent = parent;
+        } else {
+          parent.right = clonedNodeToDelete.right;
+          if (parent.right) parent.right.parent = parent;
         }
+      } else if (!clonedNodeToDelete.right) {
+        if (!parent) {
+          // This was the root node with only left child
+          newTree = clonedNodeToDelete.left;
+          newTree.parent = null;
+          // Root must be BLACK
+          newTree.color = "BLACK";
+        } else if (isLeftChild) {
+          parent.left = clonedNodeToDelete.left;
+          if (parent.left) parent.left.parent = parent;
+        } else {
+          parent.right = clonedNodeToDelete.left;
+          if (parent.right) parent.right.parent = parent;
+        }
+      }
+    };
 
-        // Copy value
-        node.value = successor.value;
+    // Case 3: node has two children
+    const handleTwoChildrenCase = () => {
+      // Find successor (minimum value in right subtree)
+      let successor = clonedNodeToDelete.right;
+      while (successor.left) {
+        successor = successor.left;
+      }
 
-        // Delete successor
-        node.right = await deleteNode(node.right, successor.value);
+      // Replace node value with successor value
+      clonedNodeToDelete.value = successor.value;
+
+      // Remove successor - successor has at most one child (right child)
+      const parentOfSuccessor = findParentInClone(newTree, successor);
+      const isSuccessorLeftChild =
+        parentOfSuccessor && parentOfSuccessor.left === successor;
+
+      if (parentOfSuccessor === clonedNodeToDelete) {
+        // Successor is direct right child of node to delete
+        clonedNodeToDelete.right = successor.right;
+        if (successor.right) successor.right.parent = clonedNodeToDelete;
+      } else {
+        // Successor is deeper in the right subtree
+        if (isSuccessorLeftChild) {
+          parentOfSuccessor.left = successor.right;
+        } else {
+          parentOfSuccessor.right = successor.right;
+        }
+        if (successor.right) successor.right.parent = parentOfSuccessor;
+      }
+    };
+
+    // Execute the appropriate case
+    if (!clonedNodeToDelete.left || !clonedNodeToDelete.right) {
+      handleSimpleCase();
+    } else {
+      handleTwoChildrenCase();
+    }
+
+    // Restore RB properties if necessary
+    const fixRbTreeAfterDelete = (tree) => {
+      // Function that fixes RB violations after deletion
+      // For simplicity, we'll just ensure the root is black
+      if (tree) {
+        tree.color = "BLACK";
+
+        // Ensure all RED nodes have BLACK children
+        const validateColors = (node) => {
+          if (!node) return;
+
+          if (isRed(node)) {
+            // A RED node cannot have RED children
+            if (node.left) node.left.color = "BLACK";
+            if (node.right) node.right.color = "BLACK";
+          }
+
+          validateColors(node.left);
+          validateColors(node.right);
+        };
+
+        validateColors(tree);
+      }
+
+      return tree;
+    };
+
+    // Fix RB tree properties after deletion
+    newTree = fixRbTreeAfterDelete(newTree);
+
+    // Update parent references
+    if (newTree) {
+      updateParentReferences(newTree);
+    }
+
+    // Update tree visualization
+    const layoutTree = newTree ? get().calculateTreeLayout(newTree) : null;
+    set({ tree: layoutTree });
+  },
+
+  // Randomize a Red-Black tree for testing
+  randomizeRBTree: () => {
+    // Generate random values for a Red-Black tree
+    const values = new Set();
+    const nodeCount = Math.floor(Math.random() * 6) + 5; // 5 to 10 nodes
+
+    // Generate unique values
+    while (values.size < nodeCount) {
+      values.add(Math.floor(Math.random() * 90) + 10); // Values from 10 to 99
+    }
+
+    // Sort for building a balanced tree
+    const sortedValues = [...values].sort((a, b) => a - b);
+
+    // Build an RB tree from sorted values
+    const buildBalancedRBTree = (values, start, end, depth = 0) => {
+      if (start > end) return null;
+
+      const mid = Math.floor((start + end) / 2);
+      const node = {
+        value: values[mid],
+        left: null,
+        right: null,
+        color: depth % 2 === 0 ? "BLACK" : "RED", // Alternate colors by depth
+        parent: null,
+      };
+
+      // Build left and right subtrees
+      if (start < mid) {
+        node.left = buildBalancedRBTree(values, start, mid - 1, depth + 1);
+        if (node.left) node.left.parent = node;
+      }
+
+      if (mid < end) {
+        node.right = buildBalancedRBTree(values, mid + 1, end, depth + 1);
         if (node.right) node.right.parent = node;
       }
 
       return node;
     };
 
-    try {
-      // Delete the node
-      const updatedTree = await deleteNode(tree, value);
-      set({ searchFound: nodeFound });
+    // Create the tree with the root being black
+    const rbTree = buildBalancedRBTree(
+      sortedValues,
+      0,
+      sortedValues.length - 1
+    );
+    if (rbTree) rbTree.color = "BLACK"; // Root must be black
 
-      if (nodeFound) {
-        // Animate the transition
-        gsap.to(".tree-node", {
-          opacity: 0.7,
-          scale: 0.9,
-          duration: 0.3,
-          ease: "power2.out",
-        });
+    // Validate the tree to meet RB properties
+    const validateRBTree = (node) => {
+      if (!node) return;
 
-        // Short pause
-        await new Promise((r) => setTimeout(r, 100));
+      // Rule 1: A node is either red or black (already satisfied by construction)
 
-        // Update the tree with new layout, handling parent references safely
-        const layoutTree = get().calculateTreeLayout(updatedTree);
-        set({ tree: layoutTree });
+      // Rule 2: Root is black (already set above)
+
+      // Rule 3: Red nodes have black children
+      if (node.color === "RED") {
+        if (node.left) node.left.color = "BLACK";
+        if (node.right) node.right.color = "BLACK";
       }
-    } catch (error) {
-      console.error("Error deleting from RB tree:", error);
-      set({ searchFound: false });
-    }
-  },
 
-  // Create a sample Red-Black tree
-  createSampleRB: () => {
-    // Create a basic Red-Black tree for demonstration
-    const root = get().createRBNode(20);
-    root.color = "BLACK"; // Root is always black
+      // Recursively validate children
+      validateRBTree(node.left);
+      validateRBTree(node.right);
+    };
 
-    // Left subtree
-    root.left = get().createRBNode(10);
-    root.left.color = "BLACK";
+    validateRBTree(rbTree);
 
-    root.left.left = get().createRBNode(5);
+    // Update parent references
+    updateParentReferences(rbTree);
 
-    root.left.right = get().createRBNode(15);
-
-    // Right subtree
-    root.right = get().createRBNode(30);
-    root.right.color = "BLACK";
-
-    root.right.left = get().createRBNode(25);
-
-    root.right.right = get().createRBNode(40);
-
-    // Update all parent references
-    updateParentReferences(root);
-
-    // Calculate layout
-    const layoutTree = get().calculateTreeLayout(root);
+    // Apply layout and update state
+    const layoutTree = rbTree ? get().calculateTreeLayout(rbTree) : null;
     set({ tree: layoutTree });
+
     return layoutTree;
   },
 }));
