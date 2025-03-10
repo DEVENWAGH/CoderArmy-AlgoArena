@@ -102,7 +102,13 @@ const Navbar = () => {
             {/* Mobile/Tablet button - visible on screens < xl */}
             <button
               onClick={() => setShowMobileSidebar(true)}
-              className="px-4 py-2 font-medium border rounded-lg text-sky-400 bg-sky-500/10 border-sky-500/20"
+              className="px-4 py-2 font-medium border rounded-lg text-sky-400 
+              bg-[linear-gradient(110deg,#041b36,45%,#0c7bb8,55%,#041b36)] 
+              bg-[length:200%_100%] animate-shimmer 
+              border-sky-500/30 hover:border-sky-500/80
+              hover:bg-[linear-gradient(110deg,#052243,45%,#0e96e0,55%,#052243)]
+              hover:shadow-[0_0_15px_rgba(14,150,224,0.5)]
+              transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-sky-500"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
