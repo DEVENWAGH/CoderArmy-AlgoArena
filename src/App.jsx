@@ -1,5 +1,6 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
+import { Helmet } from "react-helmet";
 import Layout from "./components/Layout";
 import Home from "./components/Home";
 import SortingVisualizer from "./components/sorting/SortingVisualizer";
@@ -12,10 +13,46 @@ import TreeVisualizer from "./components/tree/TreeVisualizer";
 import MathVisualizer from "./components/mathematical/MathVisualizer";
 import ErrorBoundary from "./components/ErrorBoundary";
 import RaceMode from "./components/race/RaceMode";
+import Lenis from "lenis";
 
 const App = () => {
+  // Initialize Lenis
+  const lenis = new Lenis();
+
+  // Use requestAnimationFrame to continuously update the scroll
+  function raf(time) {
+    lenis.raf(time);
+    requestAnimationFrame(raf);
+  }
+
+  requestAnimationFrame(raf);
+  // Structured data for SEO
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "Algorithm Arena",
+    description:
+      "Interactive platform to visualize and understand algorithms through animations and step-by-step explanations",
+    applicationCategory: "EducationalApplication",
+    operatingSystem: "Any",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+    author: {
+      "@type": "Person",
+      name: "Deven Wagh",
+    },
+  };
+
   return (
     <div className="flex flex-col w-screen">
+      <Helmet>
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
+      </Helmet>
       <ErrorBoundary>
         <Routes>
           <Route path="/" element={<Layout />}>
