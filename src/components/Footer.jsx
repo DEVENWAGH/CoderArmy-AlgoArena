@@ -5,7 +5,7 @@ const Footer = () => {
   const socialLinks = [
     {
       title: "GitHub",
-      href: "https://github.com",
+      href: "https://github.com/DEVENWAGH",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -22,8 +22,8 @@ const Footer = () => {
       ),
     },
     {
-      title: "Twitter",
-      href: "https://twitter.com",
+      title: "X",
+      href: "https://x.com/ntMUA4ZjcI66141",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -41,7 +41,7 @@ const Footer = () => {
     },
     {
       title: "LinkedIn",
-      href: "https://linkedin.com",
+      href: "https://www.linkedin.com/in/deven-wagh-5691b7271/",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -61,7 +61,7 @@ const Footer = () => {
     },
     {
       title: "Instagram",
-      href: "https://instagram.com",
+      href: "https://www.instagram.com/wagh_deven/",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -82,18 +82,18 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-slate-800 text-white py-8 px-4 w-full overflow-hidden relative z-20">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-wrap justify-between">
-          <div className="w-full md:w-1/2 lg:w-1/3 mb-6 md:mb-0">
-            <h3 className="text-lg font-bold mb-3">Algorithm Visualizer</h3>
-            <p className="text-gray-300 text-sm">
+    <footer className="relative z-20 w-full px-4 py-8 overflow-hidden text-white bg-slate-800">
+      <div className="mx-auto max-w-7xl">
+        <div className="flex flex-wrap justify-center">
+          <div className="w-full mb-6 text-center md:w-1/2 lg:w-1/3 md:mb-0">
+            <h3 className="mb-3 text-lg font-bold">Algorithm Visualizer</h3>
+            <p className="text-sm text-gray-300">
               An interactive platform to visualize and understand algorithms
               through animations and step-by-step explanations.
             </p>
           </div>
 
-          <div className="w-full md:w-1/2 lg:w-1/3">
+          <div className="w-full text-center md:w-1/2 lg:w-1/3">
             <div className="flex justify-center">
               <FloatingDock
                 items={socialLinks}
@@ -101,11 +101,11 @@ const Footer = () => {
                 mobileClassName="hidden"
               />
             </div>
-            <h3 className="text-lg font-bold ml-40 lg:ml-45">Connect</h3>
+            <h3 className="mt-3 text-lg font-bold">Connect</h3>
           </div>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-gray-700 text-center text-sm text-gray-400">
+        <div className="pt-6 mt-8 text-sm text-center text-gray-400 border-t border-gray-700">
           <p>
             © {new Date().getFullYear()} Algorithm Visualizer. All rights
             reserved.
