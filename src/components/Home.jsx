@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import Footer from "./Footer";
+import { Cover } from "./ui/cover";
 
 // Define SVG icon components outside of the main component
 const SortIcon = () => (
@@ -317,9 +318,11 @@ const Home = () => {
     <div className="flex flex-col min-h-screen w-full bg-slate-900 text-white">
       <div className="container mx-auto px-4 pt-24 pb-12 flex-grow overflow-x-hidden">
         <div className="flex flex-col items-center justify-center flex-1 p-8 mt-20">
-          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500">
-            Visualize Data Structures & Algorithms
-          </h1>
+          <Cover>
+            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500">
+              Visualize Data Structures & Algorithms
+            </h1>
+          </Cover>
           <p className="mt-4 text-lg text-center text-gray-300">
             Explore, understand, and master algorithms through interactive
             visualizations. Compare algorithm performance in real-time with our
