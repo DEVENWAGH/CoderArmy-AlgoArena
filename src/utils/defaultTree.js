@@ -28,17 +28,17 @@ export const createDefaultTree = () => ({
   },
 });
 
-// Create a smaller tree for mobile devices
+// Create a smaller tree for mobile devices - improved structure for better balance
 export const createMobileDefaultTree = () => ({
   value: 50,
   left: {
     value: 25,
-    left: { value: 12 },
-    right: { value: 37 },
+    left: { value: 15 },
+    right: { value: 35 },
   },
   right: {
     value: 75,
-    left: { value: 62 },
-    right: { value: 87 },
+    left: { value: 65 },
+    right: { value: 85 },
   },
 });

@@ -40,7 +40,7 @@ export function animateTreeTransition(options = {}) {
 }
 
 /**
- * Centers the tree in the viewport
+ * Centers the tree in the viewport with improved device-specific handling
  * @param {Object} tree The tree to center
  * @param {Object} dimensions Viewport dimensions
  * @param {Function} setTransform Function to update transform state
@@ -55,12 +55,38 @@ export function centerTreeInViewport(tree, dimensions, setTransform) {
   }
 
   if (rootNode) {
+    // Get device type
+    const screenWidth = window.innerWidth;
+
+    // Set vertical position based on device type
+    let verticalPosition = dimensions.height / 5;
+    if (screenWidth < 768) {
+      // Mobile devices - position tree higher
+      verticalPosition = dimensions.height / 6;
+    } else if (screenWidth < 1024) {
+      // Tablets - adjust position for better visibility
+      verticalPosition = dimensions.height / 5.5;
+    }
+
+    // Determine the appropriate scale based on device and viewport
+    let scale = 1;
+    if (screenWidth < 640) {
+      // Small mobile devices
+      scale = 0.7;
+    } else if (screenWidth < 768) {
+      // Standard mobile devices
+      scale = 0.8;
+    } else if (screenWidth < 1024) {
+      // Tablets
+      scale = 0.9;
+    }
+
     // Center the tree horizontally and position properly vertically
     setTransform((prev) => ({
       ...prev,
       x: dimensions.width / 2 - rootNode.x,
-      y: dimensions.height / 5 - rootNode.y,
-      scale: prev.scale || 1, // Keep current scale or default to 1
+      y: verticalPosition - rootNode.y,
+      scale: scale, // Use device-specific scale
     }));
   }
 }

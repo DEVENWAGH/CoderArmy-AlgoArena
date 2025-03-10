@@ -46,9 +46,9 @@ export const createTreeLayout = (data, width, height) => {
       nodeSeparation = 1.3;
     } else if (screenWidth < 1024) {
       // Tablet - improved spacing for better visibility and increased size
-      nodeSize = 65; // Increased from 58 for larger nodes
-      levelHeight = 85; // Increased from 75 for better vertical spacing
-      nodeSeparation = 1.6; // Increased from 1.5 for wider horizontal spacing
+      nodeSize = 55; // Reduced slightly from 65 for better horizontal spacing
+      levelHeight = 75; // Adjusted from 85 for better vertical distribution
+      nodeSeparation = 1.4; // Reduced from 1.6 for more compact but still clear layout
     }
 
     // Calculate the width needed based on tree depth and breadth
@@ -58,10 +58,10 @@ export const createTreeLayout = (data, width, height) => {
     // Adjust maxWidth calculation specifically for tablets to prevent excessive spacing
     let maxWidth;
     if (screenWidth >= 768 && screenWidth < 1024) {
-      // Less compact width calculation for tablets to allow bigger tree display
+      // More compact width calculation for tablets to avoid empty space on sides
       maxWidth = Math.max(
-        Math.pow(2, maxDepth) * (nodeSize * 1.0),
-        nodeCount * (nodeSize * 1.15)
+        Math.pow(2, maxDepth) * (nodeSize * 0.9),
+        nodeCount * (nodeSize * 1.0)
       );
     } else {
       maxWidth = Math.max(
@@ -82,9 +82,9 @@ export const createTreeLayout = (data, width, height) => {
       .tree()
       .nodeSize([nodeSize * 2, levelHeight])
       .separation((a, b) => {
-        // Special handling for tablets - more horizontal spacing
+        // Special handling for tablets - more balanced horizontal spacing
         if (screenWidth >= 768 && screenWidth < 1024) {
-          return a.parent === b.parent ? nodeSeparation : nodeSeparation + 0.4;
+          return a.parent === b.parent ? nodeSeparation : nodeSeparation + 0.2;
         }
         return a.parent === b.parent ? nodeSeparation : nodeSeparation + 0.5;
       });
@@ -96,18 +96,19 @@ export const createTreeLayout = (data, width, height) => {
     const xMin = d3.min(root.descendants(), (d) => d.x) || 0;
     const xMax = d3.max(root.descendants(), (d) => d.x) || 0;
 
-    // Adjust horizontal centering for tablets and mobile - add a stronger rightward shift
+    // Improve horizontal centering logic for tablets and mobile
     let xOffset = -((xMin + xMax) / 2);
 
-    // Add device-specific offsets
+    // Add device-specific offsets - refined for better positioning
     if (screenWidth < 640) {
-      // Small mobile
-      xOffset += nodeSize * 0.25; // Increased rightward shift
+      // Small mobile - increase rightward shift for better centering
+      xOffset += nodeSize * 0.15;
     } else if (screenWidth < 768) {
-      // Mobile
-      xOffset += nodeSize * 0.3; // Increased rightward shift
+      // Mobile - moderate rightward shift
+      xOffset += nodeSize * 0.2;
     } else if (screenWidth >= 768 && screenWidth < 1024) {
-      xOffset += nodeSize * 0.5; // Increased from 0.35 to 0.5 for stronger rightward shift
+      // Tablet - reduced rightward shift for better balanced appearance
+      xOffset += nodeSize * 0.25;
     }
 
     const yMin = d3.min(root.descendants(), (d) => d.y) || 0;

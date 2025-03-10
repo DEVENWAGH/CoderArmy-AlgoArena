@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import PropTypes from "prop-types"; // Import PropTypes
+import PropTypes from "prop-types";
 import Footer from "./Footer";
 
 // Define SVG icon components outside of the main component
@@ -346,121 +346,6 @@ const Home = () => {
               </svg>
               Try Race Mode
             </button>
-          </div>
-        </div>
-        {/* Main Content */}
-        <div className="flex-grow py-12 px-4 sm:px-6">
-          <div className="max-w-7xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 md:mb-8 text-center">
-              Explore Algorithm Categories
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-              {categories.map((category, index) => (
-                <AlgorithmCategory
-                  key={`category-${category.title}`}
-                  title={category.title}
-                  description={category.description}
-                  icon={category.icon}
-                  path={category.path}
-                  color={category.color}
-                  algorithms={category.algorithms}
-                />
-              ))}
-            </div>
-
-            {/* Feature Section */}
-            <div className="mt-16 bg-slate-800 rounded-xl p-6 md:p-8">
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 text-center">
-                Key Features
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="bg-slate-700 p-5 rounded-lg">
-                  <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center mb-4">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                      />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">
-                    Interactive Visualizations
-                  </h3>
-                  <p className="text-gray-300">
-                    Watch algorithms execute step-by-step with intuitive visual
-                    representations.
-                  </p>
-                </div>
-
-                <div className="bg-slate-700 p-5 rounded-lg">
-                  <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center mb-4">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
-                      />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">
-                    Customizable Parameters
-                  </h3>
-                  <p className="text-gray-300">
-                    Adjust array size, speed, and other parameters to see how
-                    algorithms perform under different conditions.
-                  </p>
-                </div>
-
-                <div className="bg-slate-700 p-5 rounded-lg">
-                  <div className="w-12 h-12 rounded-full bg-green-600 flex items-center justify-center mb-4">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                      />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">
-                    Race Mode
-                  </h3>
-                  <p className="text-gray-300">
-                    Directly compare multiple algorithms in a real-time race to
-                    understand their relative performances.
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

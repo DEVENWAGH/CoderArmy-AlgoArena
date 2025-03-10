@@ -40,6 +40,10 @@ const TreeVisualizer = () => {
     // Add AVL operations
     insertAVL,
     deleteAVL,
+    // Add RB tree operations
+    insertRB,
+    deleteRB,
+    randomizeRBTree,
     // Search and target values for UI feedback
     searchFound,
     bstTargetValue,
@@ -82,6 +86,12 @@ const TreeVisualizer = () => {
         setNodeValue("");
         setShowMobileSettings(false); // Auto-close settings panel after operation
       });
+    } else if (algorithm === "red-black-tree") {
+      insertRB(value).finally(() => {
+        setIsAnimating(false);
+        setNodeValue("");
+        setShowMobileSettings(false); // Auto-close settings panel after operation
+      });
     }
   };
 
@@ -102,6 +112,12 @@ const TreeVisualizer = () => {
       });
     } else if (algorithm === "avl-tree") {
       deleteAVL(value).finally(() => {
+        setIsAnimating(false);
+        setNodeValue("");
+        setShowMobileSettings(false); // Auto-close settings panel after operation
+      });
+    } else if (algorithm === "red-black-tree") {
+      deleteRB(value).finally(() => {
         setIsAnimating(false);
         setNodeValue("");
         setShowMobileSettings(false); // Auto-close settings panel after operation
@@ -128,6 +144,16 @@ const TreeVisualizer = () => {
     setIsAnimating(true);
 
     try {
+      if (algorithm === "red-black-tree") {
+        // Use the specialized RB tree randomization function
+        randomizeRBTree();
+        setTimeout(() => {
+          setIsAnimating(false);
+          setShowMobileSettings(false); // Auto-close settings panel after operation
+        }, 500);
+        return;
+      }
+
       // Generate a balanced random tree with 7-15 nodes
       const nodeCount = Math.floor(Math.random() * 9) + 7; // 7 to 15 nodes
       const values = new Set();
@@ -199,15 +225,7 @@ const TreeVisualizer = () => {
     }, 500);
   };
 
-  const handleResetView = () => {
-    // Reset transform state
-    setTransform({ x: 0, y: 0, scale: 1 });
-
-    // Wait for state update then center the tree
-    setTimeout(() => {
-      centerTreeInView();
-    }, 50);
-  };
+  // Remove the handleResetView function since we'll always maintain the proper view automatically
 
   // Function to handle traversal animation
   const handleStartTraversal = () => {
@@ -237,9 +255,10 @@ const TreeVisualizer = () => {
     const updateSize = () => {
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
+        // Use the actual container height rather than arbitrary values
         setDimensions({
-          width: Math.max(800, rect.width),
-          height: Math.max(500, rect.height - 20),
+          width: rect.width,
+          height: rect.height,
         });
       }
     };
@@ -587,9 +606,10 @@ const TreeVisualizer = () => {
     setIsDragging(false);
   };
 
-  // Add double click to reset
+  // Remove double click to reset view since we're always maintaining proper view automatically
   const handleDoubleClick = () => {
-    setTransform({ x: 0, y: 0, scale: 1 });
+    // Instead of resetting to default coordinates, recenter the tree
+    centerTreeInView();
   };
 
   // Enhanced touch support for mobile devices
@@ -721,7 +741,7 @@ const TreeVisualizer = () => {
     };
   }, []);
 
-  // Improved center tree function with safer value handling and better mobile/tablet positioning
+  // Enhanced centerTreeInView function for better automatic positioning
   const centerTreeInView = () => {
     if (!tree || !treeLayout || !treeLayout.nodes || !treeLayout.nodes.length)
       return;
@@ -738,8 +758,8 @@ const TreeVisualizer = () => {
 
     // Determine appropriate scale based on device size and tree size
     let scale = 1;
-    let centerY = rect.height / 4;
-    // Add horizontal offset for mobile and tablet - new variable
+    // Move tree upward by positioning centerY higher in the container
+    let centerY = rect.height / 6; // Position tree higher (was rect.height/4)
     let horizontalOffset = 0;
 
     // Determine the tree width and height by finding extreme points
@@ -753,7 +773,7 @@ const TreeVisualizer = () => {
 
     // Calculate scale to fit tree in viewport
     const horizontalScale = rect.width / treeWidth;
-    const verticalScale = rect.height / treeHeight;
+    const verticalScale = (rect.height * 1.4) / treeHeight; // Increase vertical space by 40%
 
     // Use the smaller scale to ensure the entire tree fits, but with minimums to prevent over-shrinking
     const fitScale = Math.min(horizontalScale, verticalScale, 1);
@@ -761,23 +781,28 @@ const TreeVisualizer = () => {
     // Adjust scale based on device type with improved zooming for better visibility
     if (screenWidth < 640) {
       // Small mobile - more conservative scaling
-      scale = Math.max(0.6, Math.min(fitScale, 0.7));
-      centerY = rect.height / 4;
-      horizontalOffset = rect.width * 0.08; // Add 8% width offset to move right on small mobile
-    } else if (screenWidth < 768) {
-      // Mobile - slightly more generous
       scale = Math.max(0.65, Math.min(fitScale, 0.75));
-      centerY = rect.height / 3.8;
-      horizontalOffset = rect.width * 0.06; // Add 6% width offset to move right on mobile
+      centerY = rect.height / 6; // Position higher (was rect.height/4)
+      horizontalOffset = rect.width * 0.05;
+    } else if (screenWidth < 768) {
+      // Mobile - slightly more generous scaling
+      scale = Math.max(0.7, Math.min(fitScale, 0.8));
+      centerY = rect.height / 5.5; // Position higher (was rect.height/3.8)
+      horizontalOffset = rect.width * 0.03;
     } else if (screenWidth < 1024) {
       // Tablet - improved scaling for better visibility and larger size
-      scale = Math.max(0.85, Math.min(fitScale, 0.95));
-      centerY = rect.height / 3.6;
-      horizontalOffset = rect.width * 0.07; // Add 7% width offset to move right on tablet
+      scale = Math.max(0.8, Math.min(fitScale, 0.9));
+      centerY = rect.height / 5; // Position higher (was rect.height/3.5)
+      // Adjust horizontal offset based on tree width to improve centering
+      if (treeWidth * scale < rect.width * 0.8) {
+        horizontalOffset = rect.width * 0.02;
+      } else {
+        horizontalOffset = 0;
+      }
     } else {
       // Desktop
       scale = Math.min(fitScale, 1);
-      centerY = rect.height / 3.2;
+      centerY = rect.height / 5; // Position higher (was rect.height/3.2)
     }
 
     // Calculate center position for horizontal alignment
@@ -788,19 +813,16 @@ const TreeVisualizer = () => {
 
     // Apply additional centering adjustments for tablet view
     if (screenWidth >= 768 && screenWidth < 1024) {
-      // Fine-tune vertical positioning for tablets
-      centerY = Math.min(centerY, rect.height / 3.4);
+      // Fine-tune vertical positioning for tablets - moved higher
+      centerY = Math.min(centerY, rect.height / 5);
 
-      // Adjust horizontal centering based on tree width to fix left-bias
+      // Adjust horizontal centering based on tree width for better proportioning
       const treeWidthScaled = treeWidth * scale;
 
-      // Shift further to the right to fix the left alignment
-      centerX += rect.width * 0.05;
-
-      if (treeWidthScaled < rect.width * 0.9) {
-        // If tree is narrower than viewport, center it more precisely
-        centerX =
-          (rect.width - treeWidthScaled) / 2 + minX * scale + rect.width * 0.08; // Increased from 0.04 to 0.08
+      // For wider trees, ensure they're centered properly
+      if (treeWidthScaled > rect.width * 0.7) {
+        // Calculate exact center position based on scaled tree width
+        centerX = (rect.width - treeWidthScaled) / 2 + minX * scale;
       }
     }
 
@@ -811,10 +833,10 @@ const TreeVisualizer = () => {
         centerY,
         scale,
       });
-      // Provide safe default values
+      // Provide safe default values - move default position higher too
       setTransform({
         x: rect.width / 2,
-        y: rect.height / 4,
+        y: rect.height / 6, // Position higher (was rect.height/4)
         scale: 0.8,
       });
     } else {
@@ -860,15 +882,40 @@ const TreeVisualizer = () => {
     };
   }, [transform.scale]); // Add transform.scale dependency so it updates when scale changes
 
-  // Call centerTreeInView when tree layout changes
+  // Ensure tree is always properly positioned after any changes
   useEffect(() => {
-    if (treeLayout.nodes.length > 0) {
-      centerTreeInView();
+    if (treeLayout && treeLayout.nodes && treeLayout.nodes.length > 0) {
+      // Use a slightly longer timeout to ensure DOM is fully ready
+      setTimeout(() => {
+        centerTreeInView();
+      }, 200);
     }
   }, [treeLayout]);
 
+  // Add an additional effect to re-center the tree after operations
+  useEffect(() => {
+    if (tree && isLoaded) {
+      // Center after operations like insert, delete, etc.
+      setTimeout(() => {
+        centerTreeInView();
+      }, 300);
+    }
+  }, [tree, visitedNodes.length]);
+
+  // Call centerTreeInView on window resize for responsive adjustment
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current && treeLayout.nodes?.length > 0) {
+        centerTreeInView();
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [treeLayout]);
+
   return (
-    <div className="flex flex-col w-full h-full bg-slate-800">
+    <div className="flex flex-col w-full h-screen bg-slate-800">
       {/* Controls Section - only show fully on desktop, simplified on mobile/tablet */}
       <div className="fixed right-0 z-40 p-2 sm:p-4 shadow-lg top-20 md:top-26 left-0 md:left-64 bg-slate-800 border-b border-slate-700">
         <div className="flex flex-col sm:flex-row justify-between mb-2 gap-2">
@@ -885,7 +932,7 @@ const TreeVisualizer = () => {
             )}
           </div>
 
-          {/* Only show controls on desktop screens */}
+          {/* Only show controls on desktop screens - REMOVED Reset View button */}
           <div className="hidden md:flex flex-wrap gap-2 items-center justify-end">
             {/* Only show tree manipulation controls if not on the traversals page */}
             {showControls && !isTraversalPage && (
@@ -924,16 +971,8 @@ const TreeVisualizer = () => {
               </>
             )}
 
-            {/* Always show this button for all tree visualizations on desktop */}
-            <button
-              onClick={handleResetView}
-              className="px-3 py-1 bg-slate-600 rounded hover:bg-slate-700"
-            >
-              Reset View
-            </button>
+            {/* Reset View button removed */}
           </div>
-
-          {/* Mobile floating settings button - removed from header */}
         </div>
 
         {/* Input Controls with better feedback - Only show on desktop */}
@@ -1394,20 +1433,19 @@ const TreeVisualizer = () => {
         </div>
       </div>
 
-      {/* Main content - Adjust padding for different devices */}
-      <div className="flex flex-col h-full pt-28 pb-4 px-2 sm:px-4 overflow-hidden">
+      {/* Main content */}
+      <div className="flex flex-col h-full pt-16 md:pt-20 pb-4 px-2 sm:px-4">
         {/* Tree container */}
         <div
           ref={containerRef}
-          className="flex-1 w-full overflow-hidden rounded-lg bg-slate-900 touch-none"
+          className="flex-1 w-full h-full rounded-lg bg-slate-900 touch-none relative overflow-hidden"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
           onDoubleClick={handleDoubleClick}
         >
-          {/* Render nodes and links with additional safety checks */}
-          <svg width="100%" height="100%">
+          <svg width="100%" height="100%" className="w-full h-full">
             <g
               transform={`translate(${isNaN(transform.x) ? 0 : transform.x}, ${
                 isNaN(transform.y) ? 0 : transform.y
@@ -1442,42 +1480,42 @@ const TreeVisualizer = () => {
               )}
             </g>
           </svg>
-
-          {/* Mobile instructions overlay - positioned better */}
-          <div className="absolute top-50 left-4 lg:top-80 lg:left-80 bg-slate-800 bg-opacity-90 p-2 rounded text-xs sm:text-sm text-white max-w-[180px]">
+          /* Tree position instructions */}
+          <div className="absolute top-2 left-5 bg-slate-800 bg-opacity-90 p-2 rounded text-xs sm:text-sm text-white max-w-[180px] z-10">
             <p className="hidden sm:block">
-              Mouse: drag to move, wheel to zoom, double-click to reset
+              Mouse: drag to move, wheel to zoom, double-click to center
             </p>
             <p className="sm:hidden">
-              Touch: drag to move, pinch to zoom, double-tap to reset
+              Touch: drag to move, pinch to zoom, double-tap to center
             </p>
           </div>
-
-          {/* Mobile settings floating button - moved from header to bottom right corner */}
-          <div className="md:hidden absolute bottom-4 left-1/2 -translate-x-1/2">
+          {/* Mobile settings floating button - positioned lower */}
+          <div className="md:hidden absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
             <button
               onClick={toggleMobileSettings}
-              className="w-12 h-12 flex items-center justify-center bg-slate-700 rounded-full shadow-lg hover:bg-slate-600 transition-colors"
+              className="w-16 h-16 flex items-center justify-center bg-slate-700 rounded-full shadow-lg hover:bg-slate-600 transition-colors"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-white"
-                viewBox="0 0 20 20"
-                fill="currentColor"
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="lucide lucide-settings h-6 w-6"
               >
-                <path
-                  fillRule="evenodd"
-                  d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947z"
-                  clipRule="evenodd"
-                />
-                <path d="M10 13a3 3 0 100-6 3 3 0 000 6z" />
+                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
               </svg>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Improve visited nodes display for better visibility */}
+      {/* Improve visited nodes display */}
       {isTraversalPage && visitedNodes.length > 0 && (
         <div className="fixed bottom-20 md:bottom-4 right-4 p-2 bg-slate-800/90 rounded-lg shadow-lg backdrop-blur-sm z-40">
           <p className="text-xs font-medium text-white mb-1 flex items-center">

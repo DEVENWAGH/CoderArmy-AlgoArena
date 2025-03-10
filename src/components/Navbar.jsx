@@ -99,9 +99,10 @@ const Navbar = () => {
               )}
             </div>
 
+            {/* Mobile/Tablet button - visible on screens < xl */}
             <button
               onClick={() => setShowMobileSidebar(true)}
-              className="px-4 py-2 font-medium border rounded-lg text-sky-400 bg-sky-500/10 border-sky-500/20 xl:hidden"
+              className="px-4 py-2 font-medium border rounded-lg text-sky-400 bg-sky-500/10 border-sky-500/20"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -121,80 +122,15 @@ const Navbar = () => {
               </svg>
               {currentAlgorithm || "Explore Algorithms"}
             </button>
-
-            {(isHomePage || isRaceModePage) && ( // Conditionally render the button based on the current route
-              <button
-                onClick={() => setShowSidebar(!showSidebar)} // Toggle sidebar visibility
-                className="mt-2 md:mt-0 px-4 py-2 font-medium border rounded-lg text-sky-400 bg-sky-500/10 border-sky-500/20 hidden xl:block"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="lucide lucide-code-xml h-5 w-5 mr-2 inline-block"
-                >
-                  <path d="m18 16 4-4-4-4"></path>
-                  <path d="m6 8-4 4 4 4"></path>
-                  <path d="m14.5 4-5 16"></path>
-                </svg>
-                {currentAlgorithm || "Explore Algorithms"}
-              </button>
-            )}
           </div>
         </div>
       </nav>
 
-      {/* Use the separate MobileSidebar component */}
+      {/* Use MobileSidebar for all screen sizes */}
       <MobileSidebar
         isOpen={showMobileSidebar}
         onClose={() => setShowMobileSidebar(false)}
       />
-
-      {/* Sidebar for larger devices */}
-      <AnimatePresence>
-        {showSidebar && (
-          <div className="fixed inset-0 z-40 flex">
-            <div
-              className="fixed inset-0 bg-black opacity-50"
-              onClick={() => setShowSidebar(false)}
-            ></div>
-            <motion.div
-              className="relative flex-1 flex flex-col max-w-xs w-full bg-slate-900"
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            >
-              <button
-                className="absolute top-0 right-0 mt-4 mr-4 text-white"
-                onClick={() => setShowSidebar(false)}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="lucide lucide-x h-6 w-6"
-                >
-                  <path d="M18 6L6 18M6 6l12 12"></path>
-                </svg>
-              </button>
-              <Sidebar />
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </>
   );
 };
