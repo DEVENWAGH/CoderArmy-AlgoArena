@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import Footer from "../Footer"; // Import the Footer component
+import Footer from "../Footer";
 
 const RaceMode = () => {
   const [algorithms, setAlgorithms] = useState([]);
@@ -17,6 +17,7 @@ const RaceMode = () => {
   const [customArrayInput, setCustomArrayInput] = useState("");
   const [useCustomArray, setUseCustomArray] = useState(false);
 
+  // Extended algorithm collections
   const sortingAlgorithms = [
     { name: "Bubble Sort", id: "bubble", color: "#FF5733" },
     { name: "Selection Sort", id: "selection", color: "#33FF57" },
@@ -24,6 +25,9 @@ const RaceMode = () => {
     { name: "Merge Sort", id: "merge", color: "#F033FF" },
     { name: "Quick Sort", id: "quick", color: "#FF33A8" },
     { name: "Heap Sort", id: "heap", color: "#33FFF3" },
+    { name: "Radix Sort", id: "radix", color: "#FF9433" },
+    { name: "Counting Sort", id: "counting", color: "#33BCFF" },
+    { name: "Shell Sort", id: "shell", color: "#A233FF" },
   ];
 
   const searchingAlgorithms = [
@@ -31,14 +35,45 @@ const RaceMode = () => {
     { name: "Binary Search", id: "binary", color: "#33FF57" },
     { name: "Jump Search", id: "jump", color: "#3357FF" },
     { name: "Interpolation Search", id: "interpolation", color: "#F033FF" },
+    { name: "Exponential Search", id: "exponential", color: "#A233FF" },
+    { name: "Fibonacci Search", id: "fibonacci", color: "#33BCFF" },
+  ];
+
+  const graphAlgorithms = [
+    { name: "Breadth First Search", id: "bfs", color: "#FF5733" },
+    { name: "Depth First Search", id: "dfs", color: "#33FF57" },
+    { name: "Dijkstra's Algorithm", id: "dijkstra", color: "#3357FF" },
+    { name: "Kruskal's Algorithm", id: "kruskal", color: "#F033FF" },
+    { name: "Prim's Algorithm", id: "prim", color: "#FF33A8" },
+  ];
+
+  const dpAlgorithms = [
+    { name: "Fibonacci", id: "fibonacci", color: "#FF5733" },
+    { name: "Knapsack Problem", id: "knapsack", color: "#33FF57" },
+    { name: "Longest Common Subsequence", id: "lcs", color: "#3357FF" },
+    {
+      name: "Matrix Chain Multiplication",
+      id: "matrix-chain",
+      color: "#F033FF",
+    },
+  ];
+
+  const algorithmCategories = [
+    { name: "Sorting", value: "sorting", algorithms: sortingAlgorithms },
+    { name: "Searching", value: "searching", algorithms: searchingAlgorithms },
+    { name: "Graph", value: "graph", algorithms: graphAlgorithms },
+    { name: "Dynamic Programming", value: "dp", algorithms: dpAlgorithms },
   ];
 
   useEffect(() => {
-    if (algorithmType === "sorting") {
-      setAlgorithms(sortingAlgorithms);
-    } else {
-      setAlgorithms(searchingAlgorithms);
+    // Set the algorithms based on selected algorithm type
+    const category = algorithmCategories.find(
+      (cat) => cat.value === algorithmType
+    );
+    if (category) {
+      setAlgorithms(category.algorithms);
     }
+
     setSelectedAlgorithms([]);
     setRaceResults([]);
     setRaceStarted(false);
@@ -78,6 +113,12 @@ const RaceMode = () => {
       { length: arraySize },
       () => Math.floor(Math.random() * 1000) + 1
     );
+
+    // Sort the array for certain algorithms that require sorted input
+    if (algorithmType === "searching") {
+      newArray.sort((a, b) => a - b);
+    }
+
     setOriginalArray(newArray);
 
     // For searching algorithms, set a target value
@@ -140,15 +181,23 @@ const RaceMode = () => {
         const newResults = prevResults.map((result) => {
           if (result.finished) return result;
 
-          // Speed factor based on algorithm efficiency
+          // Speed factor based on algorithm efficiency and type
           let speedFactor = 1;
+
           if (algorithmType === "sorting") {
-            // Simulated big-O performance
+            // Sorting algorithms
             switch (result.id) {
               case "quick":
               case "merge":
               case "heap":
                 speedFactor = 1.8; // O(n log n)
+                break;
+              case "shell":
+                speedFactor = 1.4; // Between O(n log n) and O(n²)
+                break;
+              case "radix":
+              case "counting":
+                speedFactor = 2.0; // O(n) for specific inputs
                 break;
               case "insertion":
                 speedFactor = 0.9; // O(n²) but can be fast for small arrays
@@ -160,11 +209,13 @@ const RaceMode = () => {
               default:
                 speedFactor = 1;
             }
-          } else {
+          } else if (algorithmType === "searching") {
             // Search algorithms
             switch (result.id) {
               case "binary":
               case "interpolation":
+              case "fibonacci":
+              case "exponential":
                 speedFactor = 1.8; // O(log n)
                 break;
               case "jump":
@@ -172,6 +223,41 @@ const RaceMode = () => {
                 break;
               case "linear":
                 speedFactor = 0.8; // O(n)
+                break;
+              default:
+                speedFactor = 1;
+            }
+          } else if (algorithmType === "graph") {
+            // Graph algorithms
+            switch (result.id) {
+              case "bfs":
+              case "dfs":
+                speedFactor = 1.5; // O(V+E)
+                break;
+              case "dijkstra":
+                speedFactor = 1.2; // O(V²) or O(E log V)
+                break;
+              case "kruskal":
+                speedFactor = 1.3; // O(E log E)
+                break;
+              case "prim":
+                speedFactor = 1.4; // O(V²) or O(E log V)
+                break;
+              default:
+                speedFactor = 1;
+            }
+          } else if (algorithmType === "dp") {
+            // Dynamic programming algorithms
+            switch (result.id) {
+              case "fibonacci":
+                speedFactor = 2.0; // O(n)
+                break;
+              case "lcs":
+              case "knapsack":
+                speedFactor = 1.3; // O(n*m)
+                break;
+              case "matrix-chain":
+                speedFactor = 1.1; // O(n³)
                 break;
               default:
                 speedFactor = 1;
@@ -184,7 +270,7 @@ const RaceMode = () => {
           // Calculate progress
           let progress = Math.min((elapsed * speedFactor) / 5000, 1);
 
-          // Add steps based on algorithm
+          // Add steps based on algorithm and dataset size
           const steps = Math.floor(
             progress *
               (arraySize *
@@ -258,128 +344,244 @@ const RaceMode = () => {
     </svg>
   );
 
+  // Get algorithm description based on ID
+  const getAlgorithmDescription = (id) => {
+    const descriptions = {
+      // Sorting
+      bubble: "O(n²) - Simple but inefficient",
+      selection: "O(n²) - Simple selection method",
+      insertion: "O(n²) - Good for small arrays",
+      merge: "O(n log n) - Divide and conquer",
+      quick: "O(n log n) - Fast but unstable",
+      heap: "O(n log n) - Uses heap data structure",
+      radix: "O(nk) - Non-comparative integer sort",
+      counting: "O(n+k) - Integer sorting with fixed range",
+      shell: "O(n log² n) - Improved insertion sort",
+
+      // Searching
+      linear: "O(n) - Checks every element",
+      binary: "O(log n) - Requires sorted array",
+      jump: "O(√n) - Block jumping search",
+      interpolation: "O(log log n) - Position estimation",
+      exponential: "O(log n) - For unbounded searches",
+      fibonacci: "O(log n) - Uses Fibonacci numbers",
+
+      // Graph
+      bfs: "O(V+E) - Level by level traversal",
+      dfs: "O(V+E) - Explore as far as possible",
+      dijkstra: "O(V²) or O(E log V) - Shortest path",
+      kruskal: "O(E log E) - Minimum spanning tree",
+      prim: "O(V²) - Minimum spanning tree",
+
+      // DP
+      fibonacci: "O(n) - Classic DP problem",
+      knapsack: "O(nW) - Optimal item selection",
+      lcs: "O(mn) - String subsequence matching",
+      "matrix-chain": "O(n³) - Matrix multiplication order",
+    };
+
+    return descriptions[id] || "Algorithm details";
+  };
+
+  // Show array size control only for sorting and searching algorithms
+  const showArraySizeControl = ["sorting", "searching"].includes(algorithmType);
+
   return (
-    <div className="flex flex-col w-full min-h-screen bg-slate-900 text-white overflow-y-auto">
-      <div className="flex flex-col items-center justify-center p-8 mt-20 mb-12">
-        <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500">
+    <div className="flex flex-col w-full min-h-screen bg-slate-900 text-white overflow-hidden">
+      <div className="flex flex-col items-center justify-center p-4 md:p-8 mt-16 md:mt-20 mb-12">
+        <h1 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500">
           Algorithm Race Mode
         </h1>
-        <p className="mt-4 text-lg text-center text-gray-300">
+        <p className="mt-4 text-sm md:text-lg text-center text-gray-300 px-2 md:px-0">
           Compare algorithm performance in real-time with our unique Race Mode.
         </p>
 
-        <div className="w-full max-w-4xl mt-8">
-          <div className="flex flex-col sm:flex-row justify-between mb-6">
-            <div className="flex space-x-4 mb-4 sm:mb-0">
-              <button
-                className={`px-4 py-2 rounded-lg ${
-                  algorithmType === "sorting" ? "bg-blue-600" : "bg-gray-700"
-                }`}
-                onClick={() => setAlgorithmType("sorting")}
-              >
-                Sorting Algorithms
-              </button>
-              <button
-                className={`px-4 py-2 rounded-lg ${
-                  algorithmType === "searching" ? "bg-blue-600" : "bg-gray-700"
-                }`}
-                onClick={() => setAlgorithmType("searching")}
-              >
-                Searching Algorithms
-              </button>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <label className="text-gray-300">Array Size:</label>
-              <input
-                type="range"
-                min="10"
-                max="1000"
-                value={arraySize}
-                onChange={(e) => setArraySize(Number(e.target.value))}
-                className="w-32"
-                disabled={raceStarted || useCustomArray}
-              />
-              <span>{arraySize}</span>
+        <div className="w-full max-w-4xl mt-6 md:mt-8">
+          {/* Algorithm Type Selection - Responsive scrollable tab bar */}
+          <div className="mb-6 overflow-x-auto hide-scrollbar">
+            <div className="flex space-x-2 md:space-x-4 min-w-min p-1">
+              {algorithmCategories.map((category) => (
+                <button
+                  key={category.value}
+                  className={`px-3 md:px-4 py-2 rounded-lg text-sm md:text-base whitespace-nowrap
+                    ${
+                      algorithmType === category.value
+                        ? "bg-blue-600"
+                        : "bg-gray-700"
+                    }`}
+                  onClick={() => setAlgorithmType(category.value)}
+                  disabled={raceStarted}
+                >
+                  {category.name}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="mb-4 flex justify-between">
-            <button
-              onClick={toggleCustomInput}
-              className="px-4 py-2 bg-indigo-600 rounded-lg hover:bg-indigo-700"
-              disabled={raceStarted}
-            >
-              {useCustomArray ? "Edit Custom Array" : "Use Custom Array"}
-            </button>
+          <div className="flex flex-col md:flex-row justify-between mb-6">
+            {/* Only show array size controls for sorting and searching */}
+            {showArraySizeControl && (
+              <div className="flex items-center space-x-2 md:space-x-4 mb-4 md:mb-0">
+                <label className="text-gray-300 text-sm md:text-base">
+                  Array Size:
+                </label>
+                <input
+                  type="range"
+                  min="10"
+                  max="1000"
+                  value={arraySize}
+                  onChange={(e) => setArraySize(Number(e.target.value))}
+                  className="w-24 md:w-32"
+                  disabled={raceStarted || useCustomArray}
+                />
+                <span className="text-sm md:text-base">{arraySize}</span>
+              </div>
+            )}
 
-            {useCustomArray && (
-              <button
-                onClick={resetToRandomArray}
-                className="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700"
-                disabled={raceStarted}
-              >
-                Reset to Random Array
-              </button>
+            {/* Show custom array option only for sorting and searching */}
+            {showArraySizeControl && (
+              <div className="flex space-x-2">
+                <button
+                  onClick={toggleCustomInput}
+                  className="px-3 py-2 text-sm md:text-base bg-indigo-600 rounded-lg hover:bg-indigo-700"
+                  disabled={raceStarted}
+                >
+                  {useCustomArray ? "Edit Custom Array" : "Use Custom Array"}
+                </button>
+
+                {useCustomArray && (
+                  <button
+                    onClick={resetToRandomArray}
+                    className="px-3 py-2 text-sm md:text-base bg-gray-600 rounded-lg hover:bg-gray-700"
+                    disabled={raceStarted}
+                  >
+                    Reset to Random
+                  </button>
+                )}
+              </div>
             )}
           </div>
 
           {showCustomInput && (
             <div className="fixed inset-0 backdrop-blur-sm bg-slate-900/50 flex items-center justify-center z-50 p-4">
-              <div className="bg-slate-800 rounded-lg p-6 w-full max-w-2xl shadow-xl">
-                <h3 className="text-xl font-bold mb-4">Custom Array Input</h3>
-                <p className="mb-2 text-gray-300">
+              <div className="bg-slate-800 rounded-lg p-4 md:p-6 w-full max-w-2xl shadow-xl">
+                <h3 className="text-lg md:text-xl font-bold mb-4">
+                  Custom Array Input
+                </h3>
+                <p className="mb-2 text-sm md:text-base text-gray-300">
                   Enter numbers separated by spaces or commas:
                 </p>
                 <textarea
-                  className="w-full h-32 p-3 bg-slate-700 text-white rounded-lg resize-none"
+                  className="w-full h-24 md:h-32 p-3 bg-slate-700 text-white rounded-lg resize-none"
                   value={customArrayInput}
                   onChange={(e) => setCustomArrayInput(e.target.value)}
                   placeholder="Example: 45, 23, 78, 12, 56"
                 ></textarea>
                 <div className="flex justify-end mt-4 space-x-4">
                   <button
-                    className="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700"
+                    className="px-3 md:px-4 py-2 text-sm md:text-base bg-gray-600 rounded-lg hover:bg-gray-700"
                     onClick={cancelCustomArray}
                   >
                     Cancel
                   </button>
                   <button
-                    className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700"
+                    className="px-3 md:px-4 py-2 text-sm md:text-base bg-green-600 rounded-lg hover:bg-green-700"
                     onClick={applyCustomArray}
                   >
-                    Apply Custom Array
+                    Apply
                   </button>
                 </div>
               </div>
             </div>
           )}
 
-          {useCustomArray && (
-            <div className="mb-4 p-4 bg-slate-800 rounded-lg">
-              <h3 className="font-bold mb-2">Custom Array:</h3>
-              <div className="text-yellow-400 overflow-x-auto whitespace-nowrap">
+          {useCustomArray && showArraySizeControl && (
+            <div className="mb-4 p-3 md:p-4 bg-slate-800 rounded-lg">
+              <h3 className="text-sm md:text-base font-bold mb-1 md:mb-2">
+                Custom Array:
+              </h3>
+              <div className="text-yellow-400 text-xs md:text-sm overflow-x-auto whitespace-nowrap pb-2">
                 [{originalArray.join(", ")}]
               </div>
             </div>
           )}
 
           {algorithmType === "searching" && targetValue !== null && (
-            <div className="mb-4 p-4 bg-slate-800 rounded-lg">
-              <span className="font-bold">Target Value to Search: </span>
+            <div className="mb-4 p-3 md:p-4 bg-slate-800 rounded-lg">
+              <span className="text-sm md:text-base font-bold">
+                Target Value to Search:{" "}
+              </span>
               <span className="text-yellow-400">{targetValue}</span>
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+          {/* Race Parameters Card */}
+          <div className="mb-6 p-4 bg-slate-800 rounded-lg border border-slate-700">
+            <h3 className="text-lg font-bold mb-3 text-blue-400">
+              Race Parameters
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-300">
+                  <span className="font-semibold">Algorithm Type:</span>{" "}
+                  {
+                    algorithmCategories.find(
+                      (cat) => cat.value === algorithmType
+                    )?.name
+                  }
+                </p>
+                {showArraySizeControl && (
+                  <p className="text-sm text-gray-300 mt-1">
+                    <span className="font-semibold">Data Size:</span>{" "}
+                    {arraySize} elements
+                  </p>
+                )}
+                {algorithmType === "searching" && targetValue !== null && (
+                  <p className="text-sm text-gray-300 mt-1">
+                    <span className="font-semibold">Target Value:</span>{" "}
+                    {targetValue}
+                  </p>
+                )}
+              </div>
+              <div>
+                <p className="text-sm text-gray-300">
+                  <span className="font-semibold">Selected Algorithms:</span>{" "}
+                  {selectedAlgorithms.length}/5
+                </p>
+                <p className="text-sm text-gray-300 mt-1">
+                  <span className="font-semibold">Data Source:</span>{" "}
+                  {useCustomArray ? "Custom Input" : "Random Generation"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Selected algorithms count indicator - inside the parameters card */}
+          <div className="mb-3 text-sm md:text-base">
+            <span className="text-gray-300">
+              Select algorithms to compare (up to 5):
+            </span>
+            {selectedAlgorithms.length === 5 && (
+              <span className="ml-2 text-yellow-400">(Maximum reached)</span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-6">
             {algorithms.map((algorithm) => (
               <div
                 key={algorithm.id}
-                className={`p-4 rounded-lg cursor-pointer border-2 ${
-                  selectedAlgorithms.some((alg) => alg.id === algorithm.id)
-                    ? `border-${algorithm.color.substring(1)} bg-slate-700`
-                    : "border-gray-700 bg-slate-800"
-                }`}
+                className={`p-3 md:p-4 rounded-lg cursor-pointer border-2 transition-colors
+                  ${
+                    selectedAlgorithms.some((alg) => alg.id === algorithm.id)
+                      ? `border-${algorithm.color.substring(1)} bg-slate-700`
+                      : "border-gray-700 bg-slate-800"
+                  }
+                  ${
+                    raceStarted
+                      ? "cursor-not-allowed opacity-80"
+                      : "hover:border-gray-500"
+                  }
+                `}
                 onClick={() =>
                   !raceStarted && toggleAlgorithmSelection(algorithm)
                 }
@@ -391,25 +593,11 @@ const RaceMode = () => {
                     : undefined,
                 }}
               >
-                <h3 className="text-xl font-semibold">{algorithm.name}</h3>
-                <p className="text-sm text-gray-400">
-                  {algorithm.id === "bubble" &&
-                    "O(n²) - Simple but inefficient"}
-                  {algorithm.id === "selection" &&
-                    "O(n²) - Simple selection method"}
-                  {algorithm.id === "insertion" &&
-                    "O(n²) - Good for small arrays"}
-                  {algorithm.id === "merge" &&
-                    "O(n log n) - Divide and conquer"}
-                  {algorithm.id === "quick" && "O(n log n) - Fast but unstable"}
-                  {algorithm.id === "heap" &&
-                    "O(n log n) - Uses heap data structure"}
-                  {algorithm.id === "linear" && "O(n) - Checks every element"}
-                  {algorithm.id === "binary" &&
-                    "O(log n) - Requires sorted array"}
-                  {algorithm.id === "jump" && "O(√n) - Block jumping search"}
-                  {algorithm.id === "interpolation" &&
-                    "O(log log n) - Position estimation"}
+                <h3 className="text-base md:text-xl font-semibold">
+                  {algorithm.name}
+                </h3>
+                <p className="text-xs md:text-sm text-gray-400">
+                  {getAlgorithmDescription(algorithm.id)}
                 </p>
               </div>
             ))}
@@ -418,7 +606,7 @@ const RaceMode = () => {
           <div className="flex justify-center mb-8">
             {!raceStarted ? (
               <button
-                className="px-6 py-3 bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                className="px-5 md:px-6 py-2 md:py-3 bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center text-sm md:text-base"
                 onClick={startRace}
                 disabled={selectedAlgorithms.length < 2}
               >
@@ -427,7 +615,7 @@ const RaceMode = () => {
               </button>
             ) : (
               <button
-                className="px-6 py-3 bg-red-600 rounded-lg hover:bg-red-700"
+                className="px-5 md:px-6 py-2 md:py-3 bg-red-600 rounded-lg hover:bg-red-700 text-sm md:text-base"
                 onClick={resetRace}
               >
                 Reset Race
@@ -436,21 +624,31 @@ const RaceMode = () => {
           </div>
 
           {raceStarted && (
-            <div className="w-full p-6 bg-slate-800 rounded-lg">
-              <h2 className="text-2xl font-bold mb-4">Race Progress</h2>
+            <div className="w-full p-4 md:p-6 bg-slate-800 rounded-lg">
+              <h2 className="text-xl md:text-2xl font-bold mb-4">
+                Race Progress
+              </h2>
 
               {raceResults.map((result, index) => (
-                <div key={result.id} className="mb-6">
-                  <div className="flex justify-between mb-1">
-                    <span className="font-semibold">{result.name}</span>
-                    <span>
+                <div key={result.id} className="mb-4 md:mb-6">
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="flex items-center">
+                      <span
+                        className="w-2 h-2 md:w-3 md:h-3 rounded-full mr-2"
+                        style={{ backgroundColor: result.color }}
+                      ></span>
+                      <span className="text-sm md:text-base font-semibold">
+                        {result.name}
+                      </span>
+                    </div>
+                    <span className="text-xs md:text-sm">
                       {Math.floor(result.progress * 100)}%
                       {result.finished &&
                         ` - ${(result.timeElapsed / 1000).toFixed(2)}s`}
                       {index === 0 && raceFinished && " 🏆"}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
+                  <div className="w-full bg-gray-700 rounded-full h-3 md:h-4 overflow-hidden">
                     <motion.div
                       className="h-full rounded-full"
                       style={{
@@ -462,7 +660,7 @@ const RaceMode = () => {
                       transition={{ duration: 0.3 }}
                     />
                   </div>
-                  <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <div className="flex justify-between text-xs md:text-sm text-gray-400 mt-1">
                     <span>Steps: {result.steps.toLocaleString()}</span>
                     <span>{(result.timeElapsed / 1000).toFixed(2)}s</span>
                   </div>
@@ -470,51 +668,120 @@ const RaceMode = () => {
               ))}
 
               {raceFinished && (
-                <div className="mt-8 p-4 bg-slate-700 rounded-lg">
-                  <h3 className="text-xl font-bold mb-2">Leaderboard</h3>
+                <div className="mt-6 md:mt-8 p-3 md:p-4 bg-slate-700 rounded-lg">
+                  <h3 className="text-lg md:text-xl font-bold mb-3 text-blue-300 flex items-center">
+                    <span className="mr-2">🏆</span> Race Results Leaderboard
+                  </h3>
                   <div className="overflow-x-auto">
-                    <table className="w-full">
+                    <table className="w-full text-xs md:text-sm">
                       <thead>
                         <tr className="border-b border-gray-600">
-                          <th className="py-2 px-2 text-left">Rank</th>
-                          <th className="py-2 px-2 text-left">Algorithm</th>
-                          <th className="py-2 px-2 text-right">Time (s)</th>
-                          <th className="py-2 px-2 text-right">Steps</th>
+                          <th className="py-2 px-1 md:px-2 text-left">Rank</th>
+                          <th className="py-2 px-1 md:px-2 text-left">
+                            Algorithm
+                          </th>
+                          <th className="py-2 px-1 md:px-2 text-right">
+                            Time (s)
+                          </th>
+                          <th className="py-2 px-1 md:px-2 text-right">
+                            Steps
+                          </th>
+                          <th className="py-2 px-1 md:px-2 text-right">
+                            Efficiency
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
                         {raceResults
                           .sort((a, b) => a.timeElapsed - b.timeElapsed)
-                          .map((result, i) => (
-                            <tr
-                              key={result.id}
-                              className={`${
-                                i === 0 ? "bg-green-900/30" : ""
-                              } border-b border-gray-700`}
-                            >
-                              <td className="py-2 px-2">
-                                {i + 1}
-                                {i === 0 ? " 🏆" : ""}
-                              </td>
-                              <td className="py-2 px-2 font-medium">
-                                <div className="flex items-center">
-                                  <span
-                                    className="w-3 h-3 rounded-full mr-2"
-                                    style={{ backgroundColor: result.color }}
-                                  ></span>
-                                  {result.name}
-                                </div>
-                              </td>
-                              <td className="py-2 px-2 text-right">
-                                {(result.timeElapsed / 1000).toFixed(2)}
-                              </td>
-                              <td className="py-2 px-2 text-right">
-                                {result.steps.toLocaleString()}
-                              </td>
-                            </tr>
-                          ))}
+                          .map((result, i) => {
+                            // Calculate efficiency ratio (steps per millisecond) - lower is better
+                            const bestTime = raceResults.sort(
+                              (a, b) => a.timeElapsed - b.timeElapsed
+                            )[0].timeElapsed;
+                            const relativePerfPercent = Math.round(
+                              (bestTime / result.timeElapsed) * 100
+                            );
+
+                            // Add medal colors for top 3 positions
+                            let rowClass = "";
+                            let medal = "";
+
+                            if (i === 0) {
+                              rowClass =
+                                "bg-gradient-to-r from-green-900/30 to-green-800/20";
+                              medal = "🥇";
+                            } else if (i === 1) {
+                              rowClass =
+                                "bg-gradient-to-r from-slate-600/30 to-slate-600/20";
+                              medal = "🥈";
+                            } else if (i === 2) {
+                              rowClass =
+                                "bg-gradient-to-r from-amber-900/30 to-amber-800/20";
+                              medal = "🥉";
+                            } else if (i === raceResults.length - 1) {
+                              rowClass = "bg-red-900/20";
+                            }
+
+                            return (
+                              <tr
+                                key={result.id}
+                                className={`${rowClass} border-b border-gray-700 hover:bg-slate-600/20`}
+                              >
+                                <td className="py-1 md:py-2 px-1 md:px-2 font-medium">
+                                  {i + 1}
+                                  {medal && (
+                                    <span className="ml-1">{medal}</span>
+                                  )}
+                                </td>
+                                <td className="py-1 md:py-2 px-1 md:px-2 font-medium">
+                                  <div className="flex items-center">
+                                    <span
+                                      className="w-2 h-2 md:w-3 md:h-3 rounded-full mr-1 md:mr-2"
+                                      style={{ backgroundColor: result.color }}
+                                    ></span>
+                                    {result.name}
+                                  </div>
+                                </td>
+                                <td className="py-1 md:py-2 px-1 md:px-2 text-right">
+                                  {(result.timeElapsed / 1000).toFixed(2)}
+                                </td>
+                                <td className="py-1 md:py-2 px-1 md:px-2 text-right">
+                                  {result.steps.toLocaleString()}
+                                </td>
+                                <td className="py-1 md:py-2 px-1 md:px-2 text-right">
+                                  {i === 0 ? (
+                                    <span className="text-green-400 font-bold">
+                                      100%
+                                    </span>
+                                  ) : (
+                                    <span className="text-yellow-300">
+                                      {relativePerfPercent}%
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
                       </tbody>
                     </table>
+                  </div>
+                  <div className="mt-4 bg-slate-800/50 p-3 rounded-lg text-xs text-gray-300">
+                    <h4 className="font-bold text-blue-400 mb-1">
+                      Interpreting Results
+                    </h4>
+                    <p>
+                      <span className="text-green-400 font-bold">
+                        Efficiency
+                      </span>
+                      : Shows relative performance compared to the fastest
+                      algorithm (100%).
+                    </p>
+                    <p className="mt-1">
+                      <span className="text-yellow-300 font-bold">Steps</span>:
+                      Total operations performed by the algorithm during
+                      execution.
+                    </p>
                   </div>
                 </div>
               )}
@@ -522,6 +789,18 @@ const RaceMode = () => {
           )}
         </div>
       </div>
+
+      {/* Add a global CSS class for hiding scrollbars */}
+      <style jsx>{`
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+
       <Footer />
     </div>
   );

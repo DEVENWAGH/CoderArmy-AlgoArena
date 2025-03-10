@@ -16,7 +16,6 @@ const GraphVisualizer = () => {
     currentNode,
     setGraphType,
     setGraphSize,
-    setRepresentation,
     generateGraph,
     startTraversal,
     pauseTraversal,
@@ -32,7 +31,6 @@ const GraphVisualizer = () => {
     gridVariant,
     setGridVariant,
     parentNodes,
-    setParentNodes,
   } = useGraphStore();
 
   const [activeEdge, setActiveEdge] = useState(null);

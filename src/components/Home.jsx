@@ -1,6 +1,233 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import Footer from "./Footer"; // Import the Footer component
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import PropTypes from "prop-types"; // Import PropTypes
+import Footer from "./Footer";
+
+// Define SVG icon components outside of the main component
+const SortIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-6 w-6"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+    />
+  </svg>
+);
+
+const SearchIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-6 w-6"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+    />
+  </svg>
+);
+
+const GraphIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-6 w-6"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
+    />
+  </svg>
+);
+
+const DPIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-6 w-6"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
+    />
+  </svg>
+);
+
+const RaceIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-6 w-6"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M13 10V3L4 14h7v7l9-11h-7z"
+    />
+  </svg>
+);
+
+// Create the AlgorithmCategory component with PropTypes
+const AlgorithmCategory = ({
+  title,
+  description,
+  icon,
+  path,
+  color,
+  algorithms,
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div className="bg-slate-800 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+      <div
+        className="p-5 cursor-pointer"
+        onClick={() => setIsExpanded(!isExpanded)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setIsExpanded(!isExpanded);
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-expanded={isExpanded}
+      >
+        <div className="flex items-center mb-3">
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center mr-3 text-white"
+            style={{ backgroundColor: color }}
+          >
+            {icon}
+          </div>
+          <h3 className="text-xl font-bold text-white">{title}</h3>
+        </div>
+        <p className="text-gray-300 text-sm md:text-base mb-3">{description}</p>
+
+        <div className="flex justify-between items-center">
+          {path.includes(":algorithm") && algorithms.length > 0 ? (
+            <Link
+              to={path.replace(":algorithm", algorithms[0].id)}
+              className="text-blue-400 text-sm font-medium hover:text-blue-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              View Algorithms
+            </Link>
+          ) : (
+            <Link
+              to={path}
+              className="text-blue-400 text-sm font-medium hover:text-blue-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Try {title}
+            </Link>
+          )}
+          {algorithms.length > 0 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(!isExpanded);
+              }}
+              className="text-gray-400 hover:text-white"
+              aria-label={isExpanded ? "Collapse" : "Expand"}
+            >
+              {isExpanded ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Expanded algorithm list */}
+      {isExpanded && algorithms.length > 0 && (
+        <div className="bg-slate-700 px-5 py-3">
+          <h4 className="text-sm font-medium text-gray-300 mb-2">
+            Popular algorithms:
+          </h4>
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {algorithms.map((algo) => (
+              <li key={algo.id}>
+                <Link
+                  to={path.replace(":algorithm", algo.id)}
+                  className="text-white hover:text-blue-300 text-sm flex items-center py-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <span
+                    className="w-2 h-2 rounded-full mr-2"
+                    style={{ backgroundColor: color }}
+                  ></span>
+                  {algo.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Add PropTypes validation
+AlgorithmCategory.propTypes = {
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string.isRequired,
+  icon: PropTypes.node.isRequired,
+  path: PropTypes.string.isRequired,
+  color: PropTypes.string.isRequired,
+  algorithms: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+};
 
 const Home = () => {
   const navigate = useNavigate();
@@ -9,9 +236,86 @@ const Home = () => {
     navigate("/race-mode");
   };
 
+  // Sample algorithms for each category
+  const sortingAlgorithms = [
+    { id: "bubble", name: "Bubble Sort" },
+    { id: "merge", name: "Merge Sort" },
+    { id: "quick", name: "Quick Sort" },
+    { id: "heap", name: "Heap Sort" },
+  ];
+
+  const searchingAlgorithms = [
+    { id: "linear", name: "Linear Search" },
+    { id: "binary", name: "Binary Search" },
+    { id: "jump", name: "Jump Search" },
+    { id: "interpolation", name: "Interpolation Search" },
+  ];
+
+  const graphAlgorithms = [
+    { id: "bfs", name: "Breadth First Search" },
+    { id: "dfs", name: "Depth First Search" },
+    { id: "dijkstra", name: "Dijkstra's Algorithm" },
+    { id: "kruskal", name: "Kruskal's Algorithm" },
+  ];
+
+  const dpAlgorithms = [
+    { id: "fibonacci", name: "Fibonacci Sequence" },
+    { id: "knapsack", name: "0/1 Knapsack" },
+    { id: "lcs", name: "Longest Common Subsequence" },
+    { id: "edit-distance", name: "Edit Distance" },
+  ];
+
+  const categories = [
+    {
+      title: "Sorting Algorithms",
+      description:
+        "Visualize and learn how different sorting algorithms work and compare their efficiencies.",
+      icon: <SortIcon />,
+      path: "/sorting/:algorithm",
+      color: "#4C1D95",
+      algorithms: sortingAlgorithms,
+    },
+    {
+      title: "Searching Algorithms",
+      description:
+        "Explore various techniques to find elements in data structures.",
+      icon: <SearchIcon />,
+      path: "/searching/:algorithm",
+      color: "#065F46",
+      algorithms: searchingAlgorithms,
+    },
+    {
+      title: "Graph Algorithms",
+      description:
+        "Understand the fundamental algorithms used in graph theory.",
+      icon: <GraphIcon />,
+      path: "/graph/:algorithm",
+      color: "#1E40AF",
+      algorithms: graphAlgorithms,
+    },
+    {
+      title: "Dynamic Programming",
+      description:
+        "Learn optimization techniques by breaking problems down into simpler subproblems.",
+      icon: <DPIcon />,
+      path: "/dynamic-programming/:algorithm",
+      color: "#9D174D",
+      algorithms: dpAlgorithms,
+    },
+    {
+      title: "Race Mode",
+      description:
+        "Compare different algorithms head-to-head in an interactive race visualization.",
+      icon: <RaceIcon />,
+      path: "/race-mode",
+      color: "#B45309",
+      algorithms: [],
+    },
+  ];
+
   return (
-    <div className="flex flex-col min-h-screen w-full bg-slate-900 text-white overflow-y-auto">
-      <div className="container mx-auto px-4 pt-24 pb-12 flex-grow">
+    <div className="flex flex-col min-h-screen w-full bg-slate-900 text-white">
+      <div className="container mx-auto px-4 pt-24 pb-12 flex-grow overflow-x-hidden">
         <div className="flex flex-col items-center justify-center flex-1 p-8 mt-20">
           <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500">
             Visualize Data Structures & Algorithms
@@ -44,139 +348,118 @@ const Home = () => {
             </button>
           </div>
         </div>
-        <div className="w-full max-w-4xl p-8 mt-12 bg-slate-800 rounded-lg">
-          <h2 className="text-2xl font-bold text-center text-white">
-            Algorithm Categories
-          </h2>
-          <div className="grid grid-cols-1 gap-8 mt-8 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="p-6 bg-slate-700 rounded-lg">
-              <h3 className="text-xl font-semibold text-white">
-                Sorting Algorithms
-              </h3>
-              <p className="mt-2 text-gray-400">
-                Visualize and compare different sorting techniques
-              </p>
-              <div className="mt-4 space-y-2">
-                <span className="inline-block px-3 py-1 text-sm text-white bg-blue-600 rounded">
-                  Bubble Sort
-                </span>
-                <span className="inline-block px-3 py-1 text-sm text-white bg-blue-600 rounded">
-                  Selection Sort
-                </span>
-                <span className="inline-block px-3 py-1 text-sm text-white bg-blue-600 rounded">
-                  Insertion Sort
-                </span>
-                <span className="inline-block px-3 py-1 text-sm text-white bg-blue-600 rounded">
-                  Merge Sort
-                </span>
-                <span className="inline-block px-3 py-1 text-sm text-white bg-blue-600 rounded">
-                  Quick Sort
-                </span>
-              </div>
-              <a
-                href="#"
-                className="flex items-center mt-4 text-purple-500 hover:underline"
-              >
-                Explore Sorting Algorithms
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="lucide lucide-arrow-right h-4 w-4 ml-1"
-                >
-                  <path d="M5 12h14"></path>
-                  <path d="m12 5 7 7-7 7"></path>
-                </svg>
-              </a>
+        {/* Main Content */}
+        <div className="flex-grow py-12 px-4 sm:px-6">
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 md:mb-8 text-center">
+              Explore Algorithm Categories
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+              {categories.map((category, index) => (
+                <AlgorithmCategory
+                  key={`category-${category.title}`}
+                  title={category.title}
+                  description={category.description}
+                  icon={category.icon}
+                  path={category.path}
+                  color={category.color}
+                  algorithms={category.algorithms}
+                />
+              ))}
             </div>
-            <div className="p-6 bg-slate-700 rounded-lg">
-              <h3 className="text-xl font-semibold text-white">
-                Searching Algorithms
-              </h3>
-              <p className="mt-2 text-gray-400">
-                Explore efficient ways to find elements in data structures
-              </p>
-              <div className="mt-4 space-y-2">
-                <span className="inline-block px-3 py-1 text-sm text-white bg-blue-600 rounded">
-                  Linear Search
-                </span>
-                <span className="inline-block px-3 py-1 text-sm text-white bg-blue-600 rounded">
-                  Binary Search
-                </span>
+
+            {/* Feature Section */}
+            <div className="mt-16 bg-slate-800 rounded-xl p-6 md:p-8">
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 text-center">
+                Key Features
+              </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="bg-slate-700 p-5 rounded-lg">
+                  <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center mb-4">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    Interactive Visualizations
+                  </h3>
+                  <p className="text-gray-300">
+                    Watch algorithms execute step-by-step with intuitive visual
+                    representations.
+                  </p>
+                </div>
+
+                <div className="bg-slate-700 p-5 rounded-lg">
+                  <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center mb-4">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    Customizable Parameters
+                  </h3>
+                  <p className="text-gray-300">
+                    Adjust array size, speed, and other parameters to see how
+                    algorithms perform under different conditions.
+                  </p>
+                </div>
+
+                <div className="bg-slate-700 p-5 rounded-lg">
+                  <div className="w-12 h-12 rounded-full bg-green-600 flex items-center justify-center mb-4">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    Race Mode
+                  </h3>
+                  <p className="text-gray-300">
+                    Directly compare multiple algorithms in a real-time race to
+                    understand their relative performances.
+                  </p>
+                </div>
               </div>
-              <a
-                href="#"
-                className="flex items-center mt-4 text-purple-500 hover:underline"
-              >
-                Explore Searching Algorithms
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="lucide lucide-arrow-right h-4 w-4 ml-1"
-                >
-                  <path d="M5 12h14"></path>
-                  <path d="m12 5 7 7-7 7"></path>
-                </svg>
-              </a>
-            </div>
-            <div className="p-6 bg-slate-700 rounded-lg">
-              <h3 className="text-xl font-semibold text-white">
-                Graph Algorithms
-              </h3>
-              <p className="mt-2 text-gray-400">
-                Visualize traversal and pathfinding techniques
-              </p>
-              <div className="mt-4 space-y-2">
-                <span className="inline-block px-3 py-1 text-sm text-white bg-blue-600 rounded">
-                  BFS
-                </span>
-                <span className="inline-block px-3 py-1 text-sm text-white bg-blue-600 rounded">
-                  DFS
-                </span>
-                <span className="inline-block px-3 py-1 text-sm text-white bg-blue-600 rounded">
-                  Dijkstra's
-                </span>
-                <span className="inline-block px-3 py-1 text-sm text-white bg-blue-600 rounded">
-                  Prim's
-                </span>
-                <span className="inline-block px-3 py-1 text-sm text-white bg-blue-600 rounded">
-                  Kruskal's
-                </span>
-              </div>
-              <a
-                href="#"
-                className="flex items-center mt-4 text-purple-500 hover:underline"
-              >
-                Explore Graph Algorithms
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="lucide lucide-arrow-right h-4 w-4 ml-1"
-                >
-                  <path d="M5 12h14"></path>
-                  <path d="m12 5 7 7-7 7"></path>
-                </svg>
-              </a>
             </div>
           </div>
         </div>

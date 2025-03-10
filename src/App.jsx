@@ -15,7 +15,7 @@ import RaceMode from "./components/race/RaceMode";
 
 const App = () => {
   return (
-    <div className="flex flex-col w-screen  overflow-hidden">
+    <div className="flex flex-col w-screen overflow-hidden">
       <ErrorBoundary>
         <Routes>
           <Route path="/" element={<Layout />}>
@@ -44,6 +44,8 @@ const App = () => {
               element={<MathVisualizer />}
             />
             <Route path="race-mode" element={<RaceMode />} />
+            {/* Add a catch-all route as fallback */}
+            <Route path="*" element={<Home />} />
           </Route>
         </Routes>
       </ErrorBoundary>

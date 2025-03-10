@@ -1,5 +1,12 @@
+/* Fix horizontal scrolling issues */
+html,
+body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
 #root {
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   margin: 0;
   padding: 0;
