@@ -52,6 +52,12 @@ const SearchVisualizer = () => {
       pauseSearch();
     } else if (isSearchPaused) {
       resumeSearch();
+    } else {
+      // Add this condition to start a new search when not already searching
+      const target = parseInt(targetValue);
+      if (!isNaN(target)) {
+        startSearch(target);
+      }
     }
   };
 
@@ -95,11 +101,11 @@ const SearchVisualizer = () => {
           {/* Settings button to toggle sidebar */}
           <button
             onClick={toggleSettingsSidebar}
-            className="px-3 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 lg:mt-4"
+            className="flex items-center gap-2 px-3 py-4 text-white bg-blue-600 rounded-lg hover:bg-blue-700 lg:mt-4"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
+              className="w-5 h-5"
               viewBox="0 0 20 20"
               fill="currentColor"
             >
@@ -116,7 +122,7 @@ const SearchVisualizer = () => {
 
       {/* Settings Sidebar */}
       <motion.div
-        className="fixed right-0 top-0 h-full bg-slate-900 z-50 border-l border-slate-700 shadow-xl overflow-y-auto"
+        className="fixed top-0 right-0 z-50 h-full overflow-y-auto border-l shadow-xl bg-slate-900 border-slate-700"
         initial={{ width: 0, opacity: 0 }}
         animate={{
           width: showSettingsSidebar ? 300 : 0,
@@ -129,7 +135,7 @@ const SearchVisualizer = () => {
       >
         {/* Settings Content */}
         <div className="p-6 pt-20">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold text-blue-400">Settings</h3>
             <button
               onClick={toggleSettingsSidebar}
@@ -137,7 +143,7 @@ const SearchVisualizer = () => {
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
+                className="w-6 h-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -154,7 +160,7 @@ const SearchVisualizer = () => {
 
           {/* Array Size Control */}
           <div className="mb-6">
-            <h4 className="text-sm font-semibold text-gray-400 mb-2">
+            <h4 className="mb-2 text-sm font-semibold text-gray-400">
               Array Size
             </h4>
             <div className="flex flex-col gap-2">
@@ -190,7 +196,7 @@ const SearchVisualizer = () => {
 
           {/* Target Value Input */}
           <div className="mb-6">
-            <h4 className="text-sm font-semibold text-gray-400 mb-2">
+            <h4 className="mb-2 text-sm font-semibold text-gray-400">
               Search Value
             </h4>
             <div className="flex items-center gap-2">
@@ -208,7 +214,7 @@ const SearchVisualizer = () => {
 
           {/* Animation Speed Control */}
           <div className="mb-6">
-            <h4 className="text-sm font-semibold text-gray-400 mb-2">
+            <h4 className="mb-2 text-sm font-semibold text-gray-400">
               Animation Speed
             </h4>
             <div className="flex flex-col gap-2">
@@ -219,7 +225,7 @@ const SearchVisualizer = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setSpeed(Math.max(1, speed - 10))}
-                  className="px-2 py-1 bg-blue-600 text-white rounded-l hover:bg-blue-700"
+                  className="px-2 py-1 text-white bg-blue-600 rounded-l hover:bg-blue-700"
                 >
                   <span className="font-bold">-</span>
                 </button>
@@ -233,12 +239,12 @@ const SearchVisualizer = () => {
                 />
                 <button
                   onClick={() => setSpeed(Math.min(100, speed + 10))}
-                  className="px-2 py-1 bg-blue-600 text-white rounded-r hover:bg-blue-700"
+                  className="px-2 py-1 text-white bg-blue-600 rounded-r hover:bg-blue-700"
                 >
                   <span className="font-bold">+</span>
                 </button>
               </div>
-              <div className="text-center text-sm text-gray-300 mt-1">
+              <div className="mt-1 text-sm text-center text-gray-300">
                 {speed}%
               </div>
             </div>
@@ -248,7 +254,7 @@ const SearchVisualizer = () => {
           <button
             onClick={handleSearch}
             disabled={isSearching && isSearchPlaying}
-            className="w-full px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 mb-6 disabled:opacity-50"
+            className="w-full px-4 py-2 mb-6 text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
             Search
           </button>
@@ -256,7 +262,7 @@ const SearchVisualizer = () => {
           {/* Generate New Array Button */}
           <button
             onClick={generateSearchArray}
-            className="w-full px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700 mb-4"
+            className="w-full px-4 py-2 mb-4 text-white bg-green-600 rounded-lg hover:bg-green-700"
             disabled={isSearching && isSearchPlaying}
           >
             Generate Random Array
@@ -266,7 +272,7 @@ const SearchVisualizer = () => {
 
       {/* Main Content Area - Adjusted positioning for the new header height */}
       <div className="flex flex-col flex-1 mt-36 md:mt-32">
-        <div className="flex-1 p-6 mx-4 rounded-lg bg-slate-900 flex items-center justify-center">
+        <div className="flex items-center justify-center flex-1 p-6 mx-4 rounded-lg bg-slate-900">
           <div className="flex flex-col items-center justify-center gap-8 w-full min-h-[calc(100vh-240px)]">
             {/* Result Message */}
             {searchResult !== null && (
@@ -331,7 +337,7 @@ const SearchVisualizer = () => {
           </div>
           <button
             onClick={handlePlayPause}
-            disabled={!isSearching}
+            disabled={isSearching && isSearchPlaying}
             className={`px-4 py-2 text-white rounded ${
               isSearchPlaying
                 ? "bg-red-600 hover:bg-red-700"
