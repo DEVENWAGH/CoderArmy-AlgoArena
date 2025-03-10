@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import PropTypes from "prop-types";
-import Footer from "./Footer";
+import Footer from "./Footer"; // Re-add Footer import
 import { Cover } from "./ui/cover";
+import { TextGenerateEffect } from "./ui/text-generate-effect";
+import { WavyBackground } from "./ui/wavy-background";
+import { HoverBorderGradient } from "./ui/hover-border-gradient";
 
 // Define SVG icon components outside of the main component
 const SortIcon = () => (
@@ -316,22 +319,34 @@ const Home = () => {
 
   return (
     <div className="flex flex-col min-h-screen w-full bg-slate-900 text-white">
-      <div className="container mx-auto px-4 pt-24 pb-12 flex-grow overflow-x-hidden">
+      <WavyBackground
+        containerClassName="w-full min-h-screen absolute inset-0"
+        className="w-full relative"
+        colors={["#2563eb", "#4f46e5", "#7e22ce", "#a21caf"]}
+        waveWidth={50}
+        backgroundFill="#0f172a"
+        blur={10}
+        waveOpacity={0.5}
+      />
+
+      <div className="container mx-auto px-4 pt-24 pb-12 flex-grow overflow-x-hidden relative z-10">
         <div className="flex flex-col items-center justify-center flex-1 p-8 mt-20">
           <Cover>
             <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500">
               Visualize Data Structures & Algorithms
             </h1>
           </Cover>
-          <p className="mt-4 text-lg text-center text-gray-300">
-            Explore, understand, and master algorithms through interactive
-            visualizations. Compare algorithm performance in real-time with our
-            unique Race Mode.
-          </p>
+          <TextGenerateEffect
+            words="Explore, understand, and master algorithms through interactive visualizations. Compare algorithm performance in real-time with our unique Race Mode."
+            className="mt-4 text-center text-gray-300"
+          />
           <div className="flex mt-8 space-x-4">
-            <button
-              className="flex items-center px-6 py-3 text-lg font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            <HoverBorderGradient
               onClick={handleRaceModeClick}
+              containerClassName="rounded-full"
+              as="button"
+              className="dark:bg-slate-800/95 bg-slate-900/95 text-white flex items-center space-x-3 text-base md:text-lg"
+              duration={1.5}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -343,15 +358,17 @@ const Home = () => {
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="lucide lucide-zap h-5 w-5 mr-2"
+                className="h-6 w-6 text-blue-500"
               >
                 <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path>
               </svg>
-              Try Race Mode
-            </button>
+              <span>Try Race Mode</span>
+            </HoverBorderGradient>
           </div>
         </div>
       </div>
+
+      {/* Add Footer component back */}
       <Footer />
     </div>
   );
