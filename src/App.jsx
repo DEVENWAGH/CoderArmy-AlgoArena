@@ -15,7 +15,7 @@ import RaceMode from "./components/race/RaceMode";
 
 const App = () => {
   return (
-    <div className="flex flex-col w-screen h-screen overflow-hidden">
+    <div className="flex flex-col w-screen  overflow-hidden">
       <ErrorBoundary>
         <Routes>
           <Route path="/" element={<Layout />}>

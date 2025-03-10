@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
+import Footer from "../Footer"; // Import the Footer component
 
 const RaceMode = () => {
   const [algorithms, setAlgorithms] = useState([]);
@@ -258,8 +259,8 @@ const RaceMode = () => {
   );
 
   return (
-    <div className="flex flex-col w-full h-full bg-slate-900 text-white">
-      <div className="flex flex-col items-center justify-center p-8 mt-20">
+    <div className="flex flex-col w-full min-h-screen bg-slate-900 text-white overflow-y-auto">
+      <div className="flex flex-col items-center justify-center p-8 mt-20 mb-12">
         <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500">
           Algorithm Race Mode
         </h1>
@@ -521,6 +522,7 @@ const RaceMode = () => {
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
