@@ -40,7 +40,13 @@ const useAlgorithmStore = create((set, get) => ({
   },
 
   array: [],
-  arraySize: window.innerWidth < 768 ? 26 : 36, // Changed from 10 to 26 for mobile, keeping 36 for desktop
+  // Simplify nested ternary by using separate variable assignments
+  arraySize: (() => {
+    const screenWidth = window.innerWidth;
+    if (screenWidth < 640) return 16; // Mobile
+    if (screenWidth < 1024) return 26; // Tablet
+    return 36; // Desktop
+  })(),
   isSorting: false,
   isPlaying: false,
   speed: 50, // Set initial speed to middle value
@@ -57,44 +63,72 @@ const useAlgorithmStore = create((set, get) => ({
   searchTarget: null,
   searchResult: null,
   isSearching: false,
-  searchArraySize: 15,
+  searchArraySize: window.innerWidth < 640 ? 10 : 15, // Smaller default for mobile
   isSearchPlaying: false,
   isSearchPaused: false,
 
+  // Fixed setArraySize to prevent unwanted resets
   setArraySize: (size) => {
     const { currentAlgorithm } = get();
-    // Limit maximum array size on mobile
-    const isMobile = window.innerWidth < 768;
-    const adjustedSize = isMobile ? Math.min(size, 26) : size; // Changed from 15 to 26 for mobile
+    // Update size limits based on device
+    const screenWidth = window.innerWidth;
+    let maxSize;
+    let minSize;
 
-    set({
+    if (screenWidth < 640) {
+      minSize = 10;
+      maxSize = 30; // More restrictive for mobile
+    } else if (screenWidth < 1024) {
+      minSize = 16;
+      maxSize = 50; // Medium restriction for tablet
+    } else {
+      minSize = 20;
+      maxSize = 200; // Large limit for desktop
+    }
+
+    const adjustedSize = Math.min(Math.max(size, minSize), maxSize);
+
+    // Store the size first, then generate a new array with this size
+    set((state) => ({
+      ...state,
       arraySize: adjustedSize,
       isSorting: false,
       isPlaying: false,
       isSorted: false,
       currentIndex: -1,
       compareIndex: -1,
-      // Maintain current algorithm
-      currentAlgorithm: currentAlgorithm,
-    });
+      currentAlgorithm, // Maintain current algorithm
+    }));
+
+    // Generate new array with the updated size
     get().generateNewArray();
   },
 
+  // Modified to respect the current arraySize in state
   generateNewArray: () => {
-    const { arraySize, currentAlgorithm } = get();
-    // Create array with larger height differences for mobile to make visualization clearer
-    const isMobile = window.innerWidth < 768;
-    const heightMultiplier = isMobile ? 20 : 10; // Adjusted from 30 to 20 for mobile
-    const baseHeight = isMobile ? 40 : 10; // Adjusted from 50 to 40 for mobile
+    const { arraySize } = get();
+    // Remove unused heightMultiplier variable and only keep baseHeight
+    const screenWidth = window.innerWidth;
+    let baseHeight;
 
-    const newArray = Array.from(
-      { length: arraySize },
-      () =>
-        Math.floor(((Math.random() * 300) / arraySize) * heightMultiplier) +
-        baseHeight
+    if (screenWidth < 640) {
+      // Mobile
+      baseHeight = 20;
+    } else if (screenWidth < 1024) {
+      // Tablet
+      baseHeight = 15;
+    } else {
+      // Desktop
+      baseHeight = 10;
+    }
+
+    // Use the current arraySize explicitly
+    const newArray = Array.from({ length: arraySize }, () =>
+      Math.floor(Math.random() * (200 - baseHeight) + baseHeight)
     );
 
-    set({
+    set((state) => ({
+      ...state,
       array: newArray,
       currentIndex: -1,
       compareIndex: -1,
@@ -102,8 +136,8 @@ const useAlgorithmStore = create((set, get) => ({
       isSorting: false,
       isSorted: false,
       isPaused: false,
-      currentAlgorithm, // Maintain current algorithm
-    });
+      // Don't change the arraySize here
+    }));
   },
 
   generateSearchArray: () => {
@@ -130,12 +164,28 @@ const useAlgorithmStore = create((set, get) => ({
   },
 
   setCurrentAlgorithm: (algorithm) => {
+    // Reset array size based on screen width when changing algorithms
+    const screenWidth = window.innerWidth;
+    let resetSize;
+
+    if (screenWidth < 640) {
+      resetSize = 16; // Mobile
+    } else if (screenWidth < 1024) {
+      resetSize = 26; // Tablet
+    } else {
+      resetSize = 36; // Desktop
+    }
+
     set({
       currentAlgorithm: algorithm,
+      arraySize: resetSize,
       isSorting: false,
       isPlaying: false,
       isSorted: false,
     });
+
+    // Generate new array with the reset size
+    get().generateNewArray();
   },
 
   // Search functionality
@@ -192,7 +242,15 @@ const useAlgorithmStore = create((set, get) => ({
       if (algorithm) {
         await algorithm(
           array,
-          (newArray) => set({ array: newArray }),
+          (newArray, currentIdx = -1, compareIdx = -1) => {
+            set({
+              array: newArray,
+              currentIndex:
+                currentIdx !== undefined ? currentIdx : get().currentIndex,
+              compareIndex:
+                compareIdx !== undefined ? compareIdx : get().compareIndex,
+            });
+          },
           (index) => set({ currentIndex: index }),
           (index) => set({ compareIndex: index }),
           () => get().speed,

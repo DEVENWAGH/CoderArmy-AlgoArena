@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react"; // Removed unused React import
 import { useParams } from "react-router-dom";
 import { motion } from "motion/react";
 import useAlgorithmStore from "../../store/algorithmStore";
@@ -29,10 +29,14 @@ const SortingVisualizer = () => {
   const [isSorting, setIsSorting] = useState(false);
   const [customSize, setCustomSize] = useState(arraySize);
   const [customArrayInput, setCustomArrayInput] = useState("");
-  const [showCustomInput, setShowCustomInput] = useState(false);
+  // Removed unused showCustomInput state
   const scrollContainerRef = useRef(null);
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(false);
 
+  // Store the user's last manually set size using ref
+  const userSelectedSizeRef = useRef(arraySize);
+
+  // First effect - for algorithm setup
   useEffect(() => {
     if (algorithm) {
       const formattedAlgo = algorithm
@@ -42,42 +46,94 @@ const SortingVisualizer = () => {
       setCurrentAlgorithm(formattedAlgo);
     }
 
-    // Adjust array size for mobile devices when generating a new array
-    const isMobile = window.innerWidth < 768;
-    if (isMobile && arraySize > 26) {
-      setArraySize(26); // Changed from 10 to 26 for mobile
-    } else {
+    // Only generate a new array if this is the initial mount
+    // Don't reset array size or generate new array on re-renders
+    if (!array.length) {
       generateNewArray();
     }
 
     setIsSorting(false);
-  }, [algorithm]);
+  }, [algorithm, setCurrentAlgorithm, generateNewArray, array.length]);
 
+  // Update ref when array size changes
+  useEffect(() => {
+    userSelectedSizeRef.current = arraySize;
+  }, [arraySize]);
+
+  // Separate effect for window resize
+  useEffect(() => {
+    const handleResize = () => {
+      // Only change size automatically if window size category changes dramatically
+      const width = window.innerWidth;
+
+      // If user has manually set a size, don't override it on minor resize events
+      if (
+        (width < 640 && arraySize > 40) ||
+        (width >= 640 && width < 1024 && arraySize > 80) ||
+        (width >= 1024 && arraySize > 150)
+      ) {
+        // Only adjust for major device category changes (like desktop to mobile)
+        let newSize;
+        if (width < 640) newSize = 16;
+        else if (width < 1024) newSize = 26;
+        else newSize = 36;
+
+        setArraySize(newSize);
+        setCustomSize(newSize);
+      }
+    };
+
+    // Use a debounced version of the resize handler to prevent frequent updates
+    let resizeTimeout;
+    const debouncedHandleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(handleResize, 500);
+    };
+
+    window.addEventListener("resize", debouncedHandleResize);
+    return () => {
+      window.removeEventListener("resize", debouncedHandleResize);
+      clearTimeout(resizeTimeout);
+    };
+  }, [arraySize, setArraySize]);
+
+  // Clean up effect
   useEffect(() => {
     return () => {
       pauseSorting();
       setIsSorting(false);
     };
-  }, []);
+  }, [pauseSorting]); // Added missing dependency
 
   const handleSizeChange = (e) => {
     const value = Number(e.target.value);
     setCustomSize(value);
   };
 
+  // Modified to prevent immediate array size reset
   const handleSizeSubmit = () => {
-    const size = Math.min(Math.max(5, customSize), 200);
-    setIsSorting(false);
-    setArraySize(size);
-    setCustomSize(size);
-    // Ensure current algorithm is set after size change
-    if (algorithm) {
-      const formattedAlgo = algorithm
-        .split("-")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
-      setCurrentAlgorithm(formattedAlgo);
+    if (isSorting) return; // Don't change during active sorting
+
+    // Ensure size is within allowed limits
+    const screenWidth = window.innerWidth;
+    let minSize, maxSize;
+
+    if (screenWidth < 640) {
+      minSize = 10;
+      maxSize = 30;
+    } else if (screenWidth < 1024) {
+      minSize = 16;
+      maxSize = 50;
+    } else {
+      minSize = 20;
+      maxSize = 200;
     }
+
+    const size = Math.min(Math.max(minSize, customSize), maxSize);
+
+    // Update both local and global state
+    setCustomSize(size);
+    setArraySize(size); // This will also generate a new array
   };
 
   const handleInputKeyPress = (e) => {
@@ -139,28 +195,6 @@ const SortingVisualizer = () => {
     document.addEventListener("mouseup", mouseUpHandler);
   };
 
-  // Calculate bar width based on array size and container width
-  const getBarWidth = () => {
-    if (arraySize <= 30) return "w-8";
-    if (arraySize <= 50) return "w-6";
-    if (arraySize <= 100) return "w-4";
-    return "w-3";
-  };
-
-  // Calculate dynamic bar height scaling with increased max height
-  const getBarHeight = (value) => {
-    const maxHeight = 430; // Reduced from 450 to ensure bars fit better with indices
-    const scale = maxHeight / Math.max(...array);
-    return `h-[${value * scale}px]`;
-  };
-
-  // Calculate container width based on array size
-  const getContainerWidth = () => {
-    if (arraySize <= 30) return "w-4/5";
-    if (arraySize <= 50) return "w-9/10";
-    return `w-[${Math.max(100, array.length * 12)}%]`;
-  };
-
   const handleGenerateNewArray = () => {
     generateNewArray();
     setIsSorting(false);
@@ -176,8 +210,7 @@ const SortingVisualizer = () => {
       if (values.length > 0) {
         // Apply custom values directly
         setCustomArray(values);
-        setShowCustomInput(false);
-        setCustomArrayInput("");
+        setCustomArrayInput(""); // Clear input field after applying
         setCustomSize(values.length);
       }
     } catch (error) {
@@ -190,26 +223,41 @@ const SortingVisualizer = () => {
       return { barWidth: 0, gap: 0, containerWidth: "w-full" };
     }
 
-    const isMobile = window.innerWidth < 768;
+    const screenWidth = window.innerWidth;
+    const isMobile = screenWidth < 640;
+    const isTablet = screenWidth >= 640 && screenWidth < 1024;
 
-    // Adjust container width calculation for different screen sizes
-    const containerWidth = window.innerWidth - (isMobile ? 20 : 300);
+    // Calculate container width based on screen size
+    const containerWidth = screenWidth - (isMobile ? 20 : isTablet ? 60 : 300);
     const rightPadding = isMobile ? 40 : 200;
-    const minGap = isMobile ? 1 : 3; // Reduced gap on mobile for more bars
 
-    // Increased bar widths for mobile to make them more visible
-    const maxBarWidth = isMobile ? 50 : 50;
-    const minBarWidth = isMobile ? 25 : 20;
+    // Adjust gap size based on array length and device
+    let minGap;
+    if (isMobile) {
+      minGap = array.length <= 20 ? 2 : 1;
+    } else if (isTablet) {
+      minGap = array.length <= 30 ? 3 : 2;
+    } else {
+      minGap = array.length <= 40 ? 4 : 2;
+    }
 
-    // Calculate bar width based on container size and array length
-    let barWidth =
-      Math.floor((containerWidth - rightPadding) / array.length) - minGap;
+    // Calculate bar width based on available space
+    let barWidth = Math.max(
+      8, // Minimum width for visibility
+      Math.floor(
+        (containerWidth - rightPadding - array.length * minGap) / array.length
+      )
+    );
 
-    // Apply min/max constraints with preference for larger bars
-    barWidth = Math.min(maxBarWidth, Math.max(minBarWidth, barWidth));
+    // Ensure bars aren't too wide on devices
+    if (isMobile) {
+      barWidth = Math.min(barWidth, 30);
+    } else if (isTablet) {
+      barWidth = Math.min(barWidth, 40);
+    }
 
-    // Add extra space to ensure last bar is fully visible when scrolling
-    const totalWidth = array.length * (barWidth + minGap) + rightPadding + 100;
+    // Calculate total width needed
+    const totalWidth = (barWidth + minGap) * array.length + rightPadding + 100;
 
     return {
       barWidth,
@@ -218,40 +266,48 @@ const SortingVisualizer = () => {
     };
   };
 
-  const barVariants = {
-    initial: {
-      y: 500, // Start from below
-      opacity: 0,
-    },
-    animate: (idx) => ({
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.8,
-        delay: idx * 0.03, // Faster delay for smoother wave
-        type: "spring",
-        stiffness: 80,
-        damping: 8,
-      },
-    }),
-    exit: {
-      y: 500,
-      opacity: 0,
-    },
-  };
-
   const toggleSettingsSidebar = () => {
     setShowSettingsSidebar(!showSettingsSidebar);
   };
 
+  // Add real-time size change handler for range slider
+  // Modified slider handler to use a debounce pattern
+  const handleSliderSizeChange = (e) => {
+    const value = Number(e.target.value);
+    setCustomSize(value);
+
+    if (sliderTimeoutRef.current) {
+      clearTimeout(sliderTimeoutRef.current);
+    }
+
+    // Use ref to store the timeout ID
+    sliderTimeoutRef.current = setTimeout(() => {
+      if (!isSorting) {
+        setArraySize(value);
+      }
+    }, 300); // 300ms debounce
+  };
+
+  // Create a ref to store the timeout ID for the slider
+  const sliderTimeoutRef = useRef(null);
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (sliderTimeoutRef.current) {
+        clearTimeout(sliderTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div className="flex flex-col w-full overflow-y-auto bg-slate-800">
       {/* Fixed Header Section - simplified for better mobile visibility */}
-      <div className="fixed w-full right-0 z-40 p-2 border-b shadow-lg top-16 left-0 md:left-64 bg-slate-800 border-slate-700 mt-4 sm:mt-6 md:mt-8 pt-2 sm:pt-3 md:pt-3">
+      <div className="fixed left-0 right-0 z-40 w-full p-2 pt-2 mt-4 border-b shadow-lg top-16 md:left-64 bg-slate-800 border-slate-700 sm:mt-6 md:mt-8 sm:pt-3 md:pt-3">
         {/* Algorithm Title and Settings - Combined in one line */}
         <div className="flex flex-row items-center justify-evenly">
           <div className="flex items-center">
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-400 capitalize mr-3">
+            <h2 className="mr-3 text-lg font-bold text-blue-400 capitalize sm:text-xl lg:text-2xl">
               {algorithm?.replace("-", " ")}
             </h2>
             {isSorted && (
@@ -262,7 +318,7 @@ const SortingVisualizer = () => {
           </div>
 
           {/* Quick settings controls for larger screens - now in same line as algorithm name */}
-          <div className="hidden lg:flex items-center gap-3">
+          <div className="items-center hidden gap-3 lg:flex">
             {/* Array size control */}
             <div className="flex items-center gap-1">
               <span className="text-sm font-medium text-gray-300">Size:</span>
@@ -289,7 +345,7 @@ const SortingVisualizer = () => {
             <div className="flex items-center">
               <button
                 onClick={toggleSortOrder}
-                className="px-2 py-1 text-sm bg-indigo-600 rounded hover:bg-indigo-700 flex items-center gap-1"
+                className="flex items-center gap-1 px-2 py-1 text-sm bg-indigo-600 rounded hover:bg-indigo-700"
                 disabled={isSorting && isPlaying}
               >
                 {isAscending ? (
@@ -316,7 +372,7 @@ const SortingVisualizer = () => {
                 className="w-24"
                 disabled={isSorting && isPlaying}
               />
-              <span className="text-xs text-gray-400 w-8">{speed}%</span>
+              <span className="w-8 text-xs text-gray-400">{speed}%</span>
             </div>
           </div>
 
@@ -326,7 +382,7 @@ const SortingVisualizer = () => {
 
       {/* Settings Sidebar */}
       <motion.div
-        className="fixed right-0 top-0 h-full bg-slate-900 z-50 border-l border-slate-700 shadow-xl overflow-y-auto"
+        className="fixed top-0 right-0 z-50 h-full overflow-y-auto border-l shadow-xl bg-slate-900 border-slate-700"
         initial={{ width: 0, opacity: 0 }}
         animate={{
           width: showSettingsSidebar ? 300 : 0,
@@ -339,7 +395,7 @@ const SortingVisualizer = () => {
       >
         {/* Settings Content */}
         <div className="p-6 pt-20">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold text-blue-400">Settings</h3>
             <button
               onClick={toggleSettingsSidebar}
@@ -347,7 +403,7 @@ const SortingVisualizer = () => {
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-8 w-8"
+                className="w-8 h-8"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -364,7 +420,7 @@ const SortingVisualizer = () => {
 
           {/* Array Size Control */}
           <div className="mb-6">
-            <h4 className="text-sm font-semibold text-gray-400 mb-2">
+            <h4 className="mb-2 text-sm font-semibold text-gray-400">
               Array Size
             </h4>
             <div className="flex flex-col gap-2">
@@ -390,30 +446,39 @@ const SortingVisualizer = () => {
               <input
                 type="range"
                 min="5"
-                max="200"
+                max={
+                  window.innerWidth < 640
+                    ? 30
+                    : window.innerWidth < 1024
+                    ? 50
+                    : 200
+                }
                 value={customSize}
-                onChange={handleSizeChange}
+                onChange={handleSliderSizeChange}
                 className="w-full"
                 disabled={isSorting}
               />
+              <div className="text-xs text-center text-gray-400">
+                Current size: {arraySize}
+              </div>
             </div>
           </div>
 
           {/* Sort Direction */}
           <div className="mb-6">
-            <h4 className="text-sm font-semibold text-gray-400 mb-2">
+            <h4 className="mb-2 text-sm font-semibold text-gray-400">
               Sort Direction
             </h4>
             <button
               onClick={toggleSortOrder}
-              className="w-full px-4 py-2 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700 flex items-center justify-center gap-2"
+              className="flex items-center justify-center w-full gap-2 px-4 py-2 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700"
             >
               {isAscending ? (
                 <>
                   <span>Ascending</span>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4"
+                    className="w-4 h-4"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                   >
@@ -429,7 +494,7 @@ const SortingVisualizer = () => {
                   <span>Descending</span>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4"
+                    className="w-4 h-4"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                   >
@@ -446,7 +511,7 @@ const SortingVisualizer = () => {
 
           {/* Animation Speed Control */}
           <div className="mb-6">
-            <h4 className="text-sm font-semibold text-gray-400 mb-2">
+            <h4 className="mb-2 text-sm font-semibold text-gray-400">
               Animation Speed
             </h4>
             <div className="flex flex-col gap-2">
@@ -457,7 +522,7 @@ const SortingVisualizer = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setSpeed(Math.max(1, speed - 10))}
-                  className="px-2 py-1 bg-blue-600 text-white rounded-l hover:bg-blue-700"
+                  className="px-2 py-1 text-white bg-blue-600 rounded-l hover:bg-blue-700"
                 >
                   <span className="font-bold">-</span>
                 </button>
@@ -471,12 +536,12 @@ const SortingVisualizer = () => {
                 />
                 <button
                   onClick={() => setSpeed(Math.min(100, speed + 10))}
-                  className="px-2 py-1 bg-blue-600 text-white rounded-r hover:bg-blue-700"
+                  className="px-2 py-1 text-white bg-blue-600 rounded-r hover:bg-blue-700"
                 >
                   <span className="font-bold">+</span>
                 </button>
               </div>
-              <div className="text-center text-sm text-gray-300 mt-1">
+              <div className="mt-1 text-sm text-center text-gray-300">
                 {speed}%
               </div>
             </div>
@@ -484,7 +549,7 @@ const SortingVisualizer = () => {
 
           {/* Custom Array Input */}
           <div className="mb-6">
-            <h4 className="text-sm font-semibold text-gray-400 mb-2">
+            <h4 className="mb-2 text-sm font-semibold text-gray-400">
               Custom Array
             </h4>
             <div className="flex flex-col gap-2">
@@ -492,7 +557,7 @@ const SortingVisualizer = () => {
                 value={customArrayInput}
                 onChange={(e) => setCustomArrayInput(e.target.value)}
                 placeholder="Enter comma-separated numbers"
-                className="w-full px-2 py-1 text-white border rounded bg-slate-700 border-slate-600 h-20"
+                className="w-full h-20 px-2 py-1 text-white border rounded bg-slate-700 border-slate-600"
                 disabled={isSorting}
               />
               <button
@@ -508,7 +573,7 @@ const SortingVisualizer = () => {
           {/* Generate New Array Button */}
           <button
             onClick={handleGenerateNewArray}
-            className="w-full px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700 mb-4"
+            className="w-full px-4 py-2 mb-4 text-white bg-green-600 rounded-lg hover:bg-green-700"
             disabled={isSorting && isPlaying}
           >
             Generate Random Array
@@ -518,7 +583,7 @@ const SortingVisualizer = () => {
 
       {/* Scrollable Content Section - using percentage-based margins for better mobile and tablet responsiveness */}
       <div className="pb-20 mt-[20%] sm:mt-[15%] md:mt-[12%] lg:mt-10">
-        <div className="flex-1 p-2 sm:p-6 mx-2 sm:mx-4 rounded-lg bg-slate-900">
+        <div className="flex-1 p-2 mx-2 rounded-lg sm:p-6 sm:mx-4 bg-slate-900">
           <div
             ref={scrollContainerRef}
             onWheel={handleWheel}
@@ -527,7 +592,7 @@ const SortingVisualizer = () => {
           >
             <div className="relative flex items-end min-h-full pt-8 pr-[200px]">
               <div
-                className="relative h-full w-full min-w-full"
+                className="relative w-full h-full min-w-full"
                 style={{ width: `${getBarDimensions().containerWidth}` }}
               >
                 {array.map((value, idx) => {
@@ -610,12 +675,12 @@ const SortingVisualizer = () => {
       </div>
 
       {/* Fixed Footer Section */}
-      <div className="fixed bottom-0 right-0 z-40 flex flex-row justify-between items-center w-full p-3 sm:p-4 border-t shadow-lg left-0 md:left-64 bg-slate-800 border-slate-700">
+      <div className="fixed bottom-0 left-0 right-0 z-40 flex flex-row items-center justify-between w-full p-3 border-t shadow-lg sm:p-4 md:left-64 bg-slate-800 border-slate-700">
         {/* Action Buttons */}
         <div className="flex gap-4">
           <button
             onClick={handleGenerateNewArray}
-            className="px-3 sm:px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 text-sm sm:text-base"
+            className="px-3 py-2 text-sm text-white bg-blue-600 rounded-lg sm:px-4 hover:bg-blue-700 sm:text-base"
           >
             {isSorted ? "New Array" : "Randomize"}
           </button>
@@ -635,11 +700,11 @@ const SortingVisualizer = () => {
         {/* Settings button in footer for quick access */}
         <button
           onClick={toggleSettingsSidebar}
-          className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2 lg:hidden"
+          className="flex items-center gap-2 px-3 py-2 text-white bg-gray-600 rounded-lg hover:bg-gray-700 lg:hidden"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
+            className="w-6 h-6"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"

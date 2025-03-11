@@ -1,5 +1,6 @@
 const getDelay = (speed) => {
-  return Math.floor(800 - (speed / 100) * 750);
+  // More responsive delay calculation with a better curve
+  return Math.floor(1000 - (speed / 100) * 950);
 };
 
 const waitForResume = async (getIsPlaying) => {
@@ -24,19 +25,11 @@ const animateSwap = async (arr, i, j, setArray, getSpeed) => {
 };
 
 const shouldSwap = (a, b, isAscending) => {
-  if (isAscending) {
-    return a > b; // For ascending order, swap if first element is greater than second
-  } else {
-    return a < b; // For descending order, swap if first element is less than second
-  }
+  return isAscending ? a > b : a < b;
 };
 
 const isInOrder = (a, b, isAscending) => {
-  if (isAscending) {
-    return a <= b; // For ascending order, elements are in order if first <= second
-  } else {
-    return a >= b; // For descending order, elements are in order if first >= second
-  }
+  return isAscending ? a <= b : a >= b;
 };
 
 export const bubbleSort = async (
@@ -49,27 +42,43 @@ export const bubbleSort = async (
   isAscending
 ) => {
   const arr = [...array];
-  let hasSwapped;
-  let lastUnsorted = arr.length;
+  const n = arr.length;
 
-  // Optimization: Track last swap position
-  do {
-    hasSwapped = false;
-    for (let i = 0; i < lastUnsorted - 1; i++) {
+  // Flag to track if any swaps occurred in the current pass
+  let swapped;
+
+  // Main bubble sort algorithm
+  for (let i = 0; i < n - 1; i++) {
+    swapped = false;
+
+    // Each pass finds the next largest/smallest element
+    for (let j = 0; j < n - i - 1; j++) {
       if (!getIsPlaying()) await waitForResume(getIsPlaying);
 
-      setCurrentIndex(i);
-      setCompareIndex(i + 1);
+      // Highlight the two elements being compared
+      setCurrentIndex(j);
+      setCompareIndex(j + 1);
       await new Promise((resolve) => setTimeout(resolve, getDelay(getSpeed())));
 
-      if (shouldSwap(arr[i], arr[i + 1], isAscending)) {
-        await animateSwap(arr, i, i + 1, setArray, getSpeed);
-        hasSwapped = true;
-        lastUnsorted = i + 1; // Update last unsorted position
+      // Check if we need to swap based on sort direction
+      if (shouldSwap(arr[j], arr[j + 1], isAscending)) {
+        // Perform the swap with animation
+        [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+        setArray([...arr], j, j + 1);
+        swapped = true;
+
+        // Pause slightly longer on swap to make it visible
+        await new Promise((resolve) =>
+          setTimeout(resolve, getDelay(getSpeed()) * 0.7)
+        );
       }
     }
-  } while (hasSwapped);
 
+    // If no swapping occurred in this pass, array is sorted
+    if (!swapped) break;
+  }
+
+  // Clear highlighting when sort is complete
   setCurrentIndex(-1);
   setCompareIndex(-1);
   return arr;
@@ -87,10 +96,6 @@ export const insertionSort = async (
   const arr = [...array];
   const n = arr.length;
 
-  // Highlight the first element before starting insertion sort
-  setCurrentIndex(0);
-  await new Promise((resolve) => setTimeout(resolve, getDelay(getSpeed())));
-
   for (let i = 1; i < n; i++) {
     if (!getIsPlaying()) await waitForResume(getIsPlaying);
 
@@ -98,37 +103,33 @@ export const insertionSort = async (
     const key = arr[i];
     let j = i - 1;
 
-    // Simple and direct implementation for correctness
-    setCompareIndex(j);
-    await new Promise((resolve) => setTimeout(resolve, getDelay(getSpeed())));
+    // Highlight the current element to be inserted
+    await new Promise((resolve) =>
+      setTimeout(resolve, getDelay(getSpeed()) * 0.5)
+    );
 
-    // Fix: properly handle ascending/descending for insertion sort
+    // Simple insertion sort for better visualization
     while (j >= 0 && shouldSwap(arr[j], key, isAscending)) {
-      arr[j + 1] = arr[j];
-      setArray([...arr]);
+      if (!getIsPlaying()) await waitForResume(getIsPlaying);
+
       setCompareIndex(j);
-      await new Promise((resolve) => setTimeout(resolve, getDelay(getSpeed())));
+      await new Promise((resolve) =>
+        setTimeout(resolve, getDelay(getSpeed()) * 0.5)
+      );
+
+      arr[j + 1] = arr[j];
+      setArray([...arr], j + 1, j);
+      await new Promise((resolve) =>
+        setTimeout(resolve, getDelay(getSpeed()) * 0.5)
+      );
+
       j--;
     }
 
-    // Insert at correct position
     arr[j + 1] = key;
     setArray([...arr]);
-
-    // Highlight the current sorted section
-    for (let k = 0; k <= i; k++) {
-      setCompareIndex(k);
-      await new Promise((resolve) =>
-        setTimeout(resolve, getDelay(getSpeed()) * 0.1)
-      );
-    }
-  }
-
-  // Final visualization sweep from left to right
-  for (let i = 0; i < n; i++) {
-    setCurrentIndex(i);
     await new Promise((resolve) =>
-      setTimeout(resolve, getDelay(getSpeed()) * 0.2)
+      setTimeout(resolve, getDelay(getSpeed()) * 0.5)
     );
   }
 
@@ -187,6 +188,7 @@ export const mergeSort = async (
   const arr = [...array];
 
   const merge = async (start, mid, end) => {
+    // Create temporary arrays
     const leftArr = arr.slice(start, mid + 1);
     const rightArr = arr.slice(mid + 1, end + 1);
     let i = 0,
@@ -200,7 +202,10 @@ export const mergeSort = async (
       setCompareIndex(mid + 1 + j);
       await new Promise((resolve) => setTimeout(resolve, getDelay(getSpeed())));
 
-      if (isInOrder(leftArr[i], rightArr[j], isAscending)) {
+      // Use isInOrder with the correct order
+      const shouldSelectLeft = isInOrder(leftArr[i], rightArr[j], isAscending);
+
+      if (shouldSelectLeft) {
         arr[k] = leftArr[i];
         i++;
       } else {
@@ -275,59 +280,20 @@ export const quickSort = async (
 ) => {
   const arr = [...array];
 
-  // Optimization: Median-of-three pivot selection
-  const medianOfThree = (arr, low, high) => {
-    const mid = Math.floor((low + high) / 2);
-    const a = arr[low];
-    const b = arr[mid];
-    const c = arr[high];
-
-    // Sort a, b, c and put median at high-1
-    if (a > b) [arr[low], arr[mid]] = [arr[mid], arr[low]];
-    if (b > c) [arr[mid], arr[high]] = [arr[high], arr[mid]];
-    if (a > b) [arr[low], arr[mid]] = [arr[mid], arr[low]];
-
-    return mid;
-  };
-
-  // Insertion sort for small subarrays
-  const insertionSortRange = async (start, end) => {
-    for (let i = start + 1; i <= end; i++) {
-      if (!getIsPlaying()) await waitForResume(getIsPlaying);
-
-      let key = arr[i];
-      let j = i - 1;
-
-      while (j >= start && shouldSwap(arr[j], key, isAscending)) {
-        setCurrentIndex(j + 1);
-        setCompareIndex(j);
-        await new Promise((resolve) =>
-          setTimeout(resolve, getDelay(getSpeed()))
-        );
-
-        arr[j + 1] = arr[j];
-        setArray([...arr]);
-        j--;
-      }
-
-      arr[j + 1] = key;
-      setArray([...arr]);
-    }
-  };
-
+  // Simplified pivot selection for better visualization
   const partition = async (low, high) => {
-    // Use median-of-three for pivot selection
-    const pivotIndex = medianOfThree(arr, low, high);
-    const pivot = arr[pivotIndex];
-    await animateSwap(arr, pivotIndex, high, setArray, getSpeed);
+    const pivot = arr[high]; // Use the last element as pivot for clarity
+    setCurrentIndex(high);
+    await new Promise((resolve) =>
+      setTimeout(resolve, getDelay(getSpeed()) * 0.5)
+    );
 
     let i = low - 1;
 
     for (let j = low; j < high; j++) {
       if (!getIsPlaying()) await waitForResume(getIsPlaying);
 
-      setCurrentIndex(j);
-      setCompareIndex(high);
+      setCompareIndex(j);
       await new Promise((resolve) => setTimeout(resolve, getDelay(getSpeed())));
 
       if (isInOrder(arr[j], pivot, isAscending)) {
@@ -343,14 +309,16 @@ export const quickSort = async (
   };
 
   const quickSortHelper = async (low, high) => {
-    // Use insertion sort for small subarrays
-    if (high - low < 10) {
-      await insertionSortRange(low, high);
-      return;
-    }
-
     if (low < high) {
       const pi = await partition(low, high);
+
+      // Visualize partitioning
+      setCurrentIndex(-1);
+      setCompareIndex(-1);
+      await new Promise((resolve) =>
+        setTimeout(resolve, getDelay(getSpeed()) * 0.3)
+      );
+
       await quickSortHelper(low, pi - 1);
       await quickSortHelper(pi + 1, high);
     }
