@@ -53,11 +53,20 @@ const SortingVisualizer = () => {
     }
 
     setIsSorting(false);
-  }, [algorithm, setCurrentAlgorithm, generateNewArray, array.length]);
+    // Keep customSize synced with arraySize
+    setCustomSize(arraySize);
+  }, [
+    algorithm,
+    setCurrentAlgorithm,
+    generateNewArray,
+    array.length,
+    arraySize,
+  ]);
 
   // Update ref when array size changes
   useEffect(() => {
     userSelectedSizeRef.current = arraySize;
+    setCustomSize(arraySize); // Keep customSize synced with actual array size
   }, [arraySize]);
 
   // Separate effect for window resize
@@ -115,28 +124,39 @@ const SortingVisualizer = () => {
     if (isSorting) return; // Don't change during active sorting
 
     // Ensure size is within allowed limits
-    const screenWidth = window.innerWidth;
-    let minSize, maxSize;
-
-    if (screenWidth < 640) {
-      minSize = 10;
-      maxSize = 30;
-    } else if (screenWidth < 1024) {
-      minSize = 16;
-      maxSize = 50;
-    } else {
-      minSize = 20;
-      maxSize = 200;
-    }
+    const minSize = getMinSize();
+    const maxSize = getMaxSize();
 
     const size = Math.min(Math.max(minSize, customSize), maxSize);
 
     // Update both local and global state
     setCustomSize(size);
-    setArraySize(size); // This will also generate a new array
+
+    // Apply the size directly without relying on the store to reset it
+    const arrayLength = setArraySize(size);
+
+    // Ensure our local customSize stays in sync
+    if (arrayLength && arrayLength !== size) {
+      setCustomSize(arrayLength);
+    }
   };
 
-  const handleInputKeyPress = (e) => {
+  // Helper function to get minimum size based on device
+  const getMinSize = () => {
+    if (window.innerWidth < 640) return 10; // Mobile
+    if (window.innerWidth < 1024) return 16; // Tablet
+    return 20; // Desktop
+  };
+
+  // Get maximum size based on device
+  const getMaxSize = () => {
+    if (window.innerWidth < 640) return 30; // Mobile
+    if (window.innerWidth < 1024) return 50; // Tablet
+    return 200; // Desktop
+  };
+
+  // Replace deprecated onKeyPress with onKeyDown
+  const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       handleSizeSubmit();
     }
@@ -211,7 +231,7 @@ const SortingVisualizer = () => {
         // Apply custom values directly
         setCustomArray(values);
         setCustomArrayInput(""); // Clear input field after applying
-        setCustomSize(values.length);
+        setCustomSize(values.length); // Update customSize to match the new array length
       }
     } catch (error) {
       console.error("Invalid input:", error);
@@ -283,7 +303,13 @@ const SortingVisualizer = () => {
     // Use ref to store the timeout ID
     sliderTimeoutRef.current = setTimeout(() => {
       if (!isSorting) {
-        setArraySize(value);
+        // Apply the size directly like handleSizeSubmit
+        const arrayLength = setArraySize(value);
+
+        // Ensure our local customSize stays in sync
+        if (arrayLength && arrayLength !== value) {
+          setCustomSize(arrayLength);
+        }
       }
     }, 300); // 300ms debounce
   };
@@ -304,10 +330,10 @@ const SortingVisualizer = () => {
     <div className="flex flex-col w-full overflow-y-auto bg-slate-800">
       {/* Fixed Header Section - simplified for better mobile visibility */}
       <div className="fixed left-0 right-0 z-40 w-full p-2 pt-2 mt-4 border-b shadow-lg top-16 md:left-64 bg-slate-800 border-slate-700 sm:mt-6 md:mt-8 sm:pt-3 md:pt-3">
-        {/* Algorithm Title and Settings - Combined in one line */}
-        <div className="flex flex-row items-center justify-evenly">
+        {/* Algorithm Title and Settings - Combined in one line with tighter spacing */}
+        <div className="flex flex-row items-center px-1 lg:mt-2 justify-evenly">
           <div className="flex items-center">
-            <h2 className="mr-3 text-lg font-bold text-blue-400 capitalize sm:text-xl lg:text-2xl">
+            <h2 className="mr-2 text-lg font-bold text-blue-400 capitalize sm:text-xl lg:text-2xl">
               {algorithm?.replace("-", " ")}
             </h2>
             {isSorted && (
@@ -317,9 +343,9 @@ const SortingVisualizer = () => {
             )}
           </div>
 
-          {/* Quick settings controls for larger screens - now in same line as algorithm name */}
-          <div className="items-center hidden gap-3 lg:flex">
-            {/* Array size control */}
+          {/* Quick settings controls with tighter spacing */}
+          <div className="items-center hidden gap-2 lg:flex">
+            {/* Array size control with more compact layout */}
             <div className="flex items-center gap-1">
               <span className="text-sm font-medium text-gray-300">Size:</span>
               <input
@@ -328,7 +354,7 @@ const SortingVisualizer = () => {
                 max="200"
                 value={customSize}
                 onChange={handleSizeChange}
-                onKeyPress={handleInputKeyPress}
+                onKeyDown={handleKeyDown}
                 className="w-12 px-1 py-1 text-white border rounded bg-slate-700 border-slate-600"
                 disabled={isSorting}
               />
@@ -341,26 +367,47 @@ const SortingVisualizer = () => {
               </button>
             </div>
 
-            {/* Sort direction toggle */}
-            <div className="flex items-center">
+            {/* Custom Array Input - more compact */}
+            <div className="flex items-center gap-1">
+              <input
+                type="text"
+                value={customArrayInput}
+                onChange={(e) => setCustomArrayInput(e.target.value)}
+                placeholder="Custom array (e.g., 5,3,8,1)"
+                className="w-48 px-2 py-1 text-sm text-white border rounded bg-slate-700 border-slate-600"
+                disabled={isSorting}
+                onKeyDown={(e) =>
+                  e.key === "Enter" && handleCustomArraySubmit()
+                }
+              />
               <button
-                onClick={toggleSortOrder}
-                className="flex items-center gap-1 px-2 py-1 text-sm bg-indigo-600 rounded hover:bg-indigo-700"
-                disabled={isSorting && isPlaying}
+                onClick={handleCustomArraySubmit}
+                className="px-1 py-1 text-xs bg-blue-500 rounded hover:bg-blue-600 disabled:opacity-50"
+                disabled={isSorting}
+                title="Apply custom array"
               >
-                {isAscending ? (
-                  <>
-                    Ascending <span className="text-xs">▲</span>
-                  </>
-                ) : (
-                  <>
-                    Descending <span className="text-xs">▼</span>
-                  </>
-                )}
+                Apply
               </button>
             </div>
 
-            {/* Speed control */}
+            {/* Sort direction toggle - more compact */}
+            <button
+              onClick={toggleSortOrder}
+              className="flex items-center gap-1 px-2 py-1 text-sm bg-indigo-600 rounded hover:bg-indigo-700"
+              disabled={isSorting && isPlaying}
+            >
+              {isAscending ? (
+                <>
+                  Ascending <span className="text-xs">▲</span>
+                </>
+              ) : (
+                <>
+                  Descending <span className="text-xs">▼</span>
+                </>
+              )}
+            </button>
+
+            {/* Speed control - more compact */}
             <div className="flex items-center gap-1">
               <span className="text-sm font-medium text-gray-300">Speed:</span>
               <input
@@ -369,14 +416,12 @@ const SortingVisualizer = () => {
                 max="100"
                 value={speed}
                 onChange={handleSpeedChange}
-                className="w-24"
+                className="w-20"
                 disabled={isSorting && isPlaying}
               />
-              <span className="w-8 text-xs text-gray-400">{speed}%</span>
+              <span className="w-6 text-xs text-gray-400">{speed}%</span>
             </div>
           </div>
-
-          {/* Mobile settings button moved to footer only */}
         </div>
       </div>
 
@@ -428,10 +473,10 @@ const SortingVisualizer = () => {
                 <input
                   type="number"
                   min="5"
-                  max="200"
+                  max={getMaxSize()}
                   value={customSize}
                   onChange={handleSizeChange}
-                  onKeyPress={handleInputKeyPress}
+                  onKeyDown={handleKeyDown}
                   className="w-20 px-2 py-1 text-white border rounded bg-slate-700 border-slate-600"
                   disabled={isSorting}
                 />
@@ -446,13 +491,7 @@ const SortingVisualizer = () => {
               <input
                 type="range"
                 min="5"
-                max={
-                  window.innerWidth < 640
-                    ? 30
-                    : window.innerWidth < 1024
-                    ? 50
-                    : 200
-                }
+                max={getMaxSize()}
                 value={customSize}
                 onChange={handleSliderSizeChange}
                 className="w-full"
@@ -500,7 +539,7 @@ const SortingVisualizer = () => {
                   >
                     <path
                       fillRule="evenodd"
-                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 011.414 1.414l-4 4a1 1 01-1.414 0l-4-4a1 1 0 010-1.414z"
                       clipRule="evenodd"
                     />
                   </svg>

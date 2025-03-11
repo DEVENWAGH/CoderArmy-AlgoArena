@@ -88,20 +88,19 @@ const useAlgorithmStore = create((set, get) => ({
 
     const adjustedSize = Math.min(Math.max(size, minSize), maxSize);
 
-    // Store the size first, then generate a new array with this size
+    // Store the size first, but DON'T generate a new array automatically
     set((state) => ({
       ...state,
       arraySize: adjustedSize,
-      isSorting: false,
-      isPlaying: false,
-      isSorted: false,
-      currentIndex: -1,
-      compareIndex: -1,
+      // Don't reset sorting state here - this caused the issue
       currentAlgorithm, // Maintain current algorithm
     }));
 
     // Generate new array with the updated size
     get().generateNewArray();
+
+    // Return the adjusted size so component state can be updated if needed
+    return adjustedSize;
   },
 
   // Modified to respect the current arraySize in state
@@ -138,6 +137,9 @@ const useAlgorithmStore = create((set, get) => ({
       isPaused: false,
       // Don't change the arraySize here
     }));
+
+    // Return array size for sync purposes
+    return arraySize;
   },
 
   generateSearchArray: () => {
@@ -164,27 +166,15 @@ const useAlgorithmStore = create((set, get) => ({
   },
 
   setCurrentAlgorithm: (algorithm) => {
-    // Reset array size based on screen width when changing algorithms
-    const screenWidth = window.innerWidth;
-    let resetSize;
-
-    if (screenWidth < 640) {
-      resetSize = 16; // Mobile
-    } else if (screenWidth < 1024) {
-      resetSize = 26; // Tablet
-    } else {
-      resetSize = 36; // Desktop
-    }
-
+    // Don't reset array size when changing algorithms - this was part of the problem
     set({
       currentAlgorithm: algorithm,
-      arraySize: resetSize,
       isSorting: false,
       isPlaying: false,
       isSorted: false,
     });
 
-    // Generate new array with the reset size
+    // Generate new array but preserve size
     get().generateNewArray();
   },
 
@@ -342,6 +332,7 @@ const useAlgorithmStore = create((set, get) => ({
       typeof value === "object" ? value.value : Number(value)
     );
 
+    // Update state with new array
     set({
       array: processedValues,
       arraySize: processedValues.length,
@@ -352,6 +343,9 @@ const useAlgorithmStore = create((set, get) => ({
       isSorted: false,
       isPaused: false,
     });
+
+    // Return the length so it can be used to update local state if needed
+    return processedValues.length;
   },
 
   toggleSortOrder: () => {
