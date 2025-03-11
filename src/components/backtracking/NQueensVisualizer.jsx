@@ -44,25 +44,21 @@ const NQueensVisualizer = () => {
   return (
     <div className="flex flex-col gap-4 sm:gap-6">
       {/* Algorithm explanation - simplified for mobile */}
-      <div className="p-3 sm:p-4 rounded-lg bg-slate-800">
+      <div className="p-3 mt-20 rounded-lg sm:p-4 bg-slate-800">
         <h3 className="mb-2 text-lg font-bold text-white">N-Queens Problem</h3>
-        <p className="mb-2 text-gray-300 text-sm sm:text-base">
+        <p className="hidden mb-2 text-sm text-gray-300 lg:flex sm:text-base">
           Place N queens on an N×N chessboard so that no queen threatens any
           other queen horizontally, vertically, or diagonally.
         </p>
-        <div className="text-gray-300 text-sm sm:text-base">
+        <div className="mt-4 text-sm text-gray-300 lg:mt-0 sm:text-base">
           <h4 className="font-semibold">Backtracking Approach:</h4>
-          <ol className="pl-4 sm:pl-5 mt-1 list-decimal">
+          <ol className="pl-4 mt-1 list-decimal sm:pl-5">
             <li>Start with an empty board</li>
             <li>Place queens one by one in each column</li>
             <li>For each column, try each row</li>
-            {viewportWidth >= 640 && (
-              <>
-                <li>Check if the position is safe</li>
-                <li>If safe, recursively try remaining queens</li>
-                <li>If we cannot place all queens, backtrack</li>
-              </>
-            )}
+            <li>Check if the position is safe</li>
+            <li>If safe, recursively try remaining queens</li>
+            <li>If we cannot place all queens, backtrack</li>
           </ol>
         </div>
       </div>
@@ -161,22 +157,22 @@ const NQueensVisualizer = () => {
       </div>
 
       {/* Results - More mobile-friendly layout */}
-      <div className="p-3 sm:p-4 rounded-lg bg-slate-800">
-        <h3 className="mb-2 text-base sm:text-lg font-bold text-white">
+      <div className="p-3 rounded-lg sm:p-4 bg-slate-800">
+        <h3 className="mb-2 text-base font-bold text-white sm:text-lg">
           Solutions
         </h3>
         {solutions && solutions.length > 0 ? (
-          <div className="text-green-300 text-sm sm:text-base">
+          <div className="text-sm text-green-300 sm:text-base">
             Found {solutions.length} solution(s) for {boardSize}×{boardSize}{" "}
             board
             {currentSolution !== undefined && (
-              <p className="mt-1 text-xs sm:text-sm text-white">
+              <p className="mt-1 text-xs text-white sm:text-sm">
                 Currently viewing solution #{currentSolution + 1}
               </p>
             )}
           </div>
         ) : (
-          <div className="text-gray-400 text-sm sm:text-base">
+          <div className="text-sm text-gray-400 sm:text-base">
             Run the algorithm to find solutions
           </div>
         )}
@@ -184,22 +180,17 @@ const NQueensVisualizer = () => {
 
       {/* Visual representation of the solution - Scrollable on mobile */}
       {solutions && solutions.length > 0 && (
-        <div className="p-3 sm:p-4 rounded-lg bg-slate-800">
-          <h3 className="mb-2 text-base sm:text-lg font-bold text-white">
+        <div className="p-3 rounded-lg sm:p-4 bg-slate-800">
+          <h3 className="mb-2 text-base font-bold text-white sm:text-lg">
             Solution #{currentSolution + 1} Pattern
           </h3>
-          <div className="font-mono text-green-300 whitespace-pre overflow-x-auto text-xs sm:text-sm p-1">
+          <div className="p-1 mb-10 overflow-x-auto font-mono text-xs text-green-300 whitespace-pre sm:text-sm">
             {solutions[currentSolution]
               ?.map((row) => row.map((cell) => (cell ? "Q" : ".")).join(" "))
               .join("\n")}
           </div>
         </div>
       )}
-
-      {/* Mobile device helper text */}
-      <div className="sm:hidden text-center text-xs text-gray-400 p-2 italic">
-        Tap "Start" to run the algorithm and find solutions
-      </div>
     </div>
   );
 };

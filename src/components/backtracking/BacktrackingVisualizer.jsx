@@ -84,29 +84,11 @@ const BacktrackingVisualizer = () => {
     return (
       <div className="flex flex-col gap-4">
         {/* Standard Controls - Reorganized for responsive layout */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="flex flex-col gap-3 mt-24 lg:mt-0 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <h2 className="text-xl font-bold text-white capitalize">
               {algorithm?.replace("-", " ")}
             </h2>
-
-            {algorithm === "n-queens" && (
-              <div className="flex items-center gap-2">
-                <label className="text-gray-300">Board Size:</label>
-                <select
-                  value={boardSize}
-                  onChange={(e) => setBoardSize(Number(e.target.value))}
-                  className="px-2 py-1 bg-slate-700 text-white rounded"
-                  disabled={isPlaying}
-                >
-                  {[4, 5, 6, 7, 8].map((size) => (
-                    <option key={size} value={size}>
-                      {size}x{size}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -124,9 +106,9 @@ const BacktrackingVisualizer = () => {
         </div>
 
         {/* Algorithm Controls - Responsive layout with justify-between for buttons */}
-        <div className="flex flex-wrap gap-y-3 justify-between">
+        <div className="flex flex-wrap justify-between gap-y-3">
           {/* Control buttons with justify-between */}
-          <div className="flex items-center justify-between w-full sm:w-auto gap-2">
+          <div className="flex items-center gap-2">
             <button
               onClick={handleStartPauseResume}
               className={`px-4 py-2 rounded ${
@@ -140,6 +122,25 @@ const BacktrackingVisualizer = () => {
               {isPlaying ? "Pause" : isPaused ? "Resume" : "Start"}
             </button>
 
+            {/* Add board size selector next to start/reset buttons for N-Queens */}
+            {algorithm === "n-queens" && (
+              <div className="flex items-center px-2 py-1 rounded bg-slate-700">
+                <span className="mr-2 text-sm text-gray-300">Size:</span>
+                <select
+                  value={boardSize}
+                  onChange={(e) => setBoardSize(Number(e.target.value))}
+                  className="px-2 py-1 text-white rounded bg-slate-700"
+                  disabled={isPlaying}
+                >
+                  {[4, 5, 6, 7, 8].map((size) => (
+                    <option key={size} value={size}>
+                      {size}×{size}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <button
               onClick={handleReset}
               className="px-4 py-2 bg-blue-500 rounded"
@@ -148,10 +149,10 @@ const BacktrackingVisualizer = () => {
             </button>
           </div>
 
-          {/* Navigation Controls - Better mobile touch targets */}
-          <div className="flex flex-wrap gap-2">
+          {/* Navigation Controls - Only visible on desktop */}
+          <div className="flex-wrap hidden gap-2 md:flex">
             {solutions.length > 0 && (
-              <div className="flex items-center gap-1 px-2 bg-slate-700 rounded">
+              <div className="flex items-center gap-1 px-2 rounded bg-slate-700">
                 <button
                   onClick={previousSolution}
                   className="px-3 py-1.5 text-white hover:bg-slate-600 rounded touch-target"
@@ -172,9 +173,9 @@ const BacktrackingVisualizer = () => {
               </div>
             )}
 
-            {/* Step Navigation - Larger touch targets */}
+            {/* Step Navigation - Only visible on desktop */}
             {steps.length > 0 && (
-              <div className="flex items-center gap-1 px-2 bg-slate-700 rounded">
+              <div className="flex items-center gap-1 px-2 rounded bg-slate-700">
                 <button
                   onClick={previousStep}
                   className="px-3 py-1.5 text-white hover:bg-slate-600 rounded touch-target"
@@ -200,24 +201,80 @@ const BacktrackingVisualizer = () => {
     );
   };
 
+  // Render bottom navigation controls for mobile and tablet
+  const renderBottomControls = () => {
+    if (!solutions.length && !steps.length) return null;
+    
+    return (
+      <div className="fixed bottom-0 left-0 right-0 z-40 p-3 border-t shadow-lg md:hidden bg-slate-800 border-slate-700">
+        <div className="flex flex-col gap-3">
+          {solutions.length > 0 && (
+            <div className="flex items-center justify-center w-full gap-2 px-2 py-2 rounded bg-slate-700">
+              <button
+                onClick={previousSolution}
+                className="flex items-center justify-center w-10 h-10 text-white rounded-full bg-slate-600"
+                disabled={isPlaying}
+              >
+                &lt;
+              </button>
+              <span className="text-sm text-white min-w-[120px] text-center">
+                Solution {currentSolution + 1}/{solutions.length}
+              </span>
+              <button
+                onClick={nextSolution}
+                className="flex items-center justify-center w-10 h-10 text-white rounded-full bg-slate-600"
+                disabled={isPlaying}
+              >
+                &gt;
+              </button>
+            </div>
+          )}
+
+          {steps.length > 0 && (
+            <div className="flex items-center justify-center w-full gap-2 px-2 py-2 rounded bg-slate-700">
+              <button
+                onClick={previousStep}
+                className="flex items-center justify-center w-10 h-10 text-white rounded-full bg-slate-600"
+                disabled={isPlaying || currentStep === 0}
+              >
+                &lt;
+              </button>
+              <span className="text-sm text-white min-w-[100px] text-center">
+                Step {currentStep + 1}/{steps.length}
+              </span>
+              <button
+                onClick={nextStep}
+                className="flex items-center justify-center w-10 h-10 text-white rounded-full bg-slate-600"
+                disabled={isPlaying || currentStep === steps.length - 1}
+              >
+                &gt;
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Check if bottom controls are visible
+  const hasBottomControls = solutions.length > 0 || steps.length > 0;
+
   return (
     <div className="flex flex-col w-full h-full bg-slate-800">
       {/* Controls Header - Responsive height and padding */}
-      <div className="fixed right-0 z-40 p-2 sm:p-4 border-b shadow-lg top-16 left-0 md:left-64 bg-slate-800 border-slate-700">
+      <div className="fixed left-0 right-0 z-40 p-2 border-b shadow-lg sm:p-4 top-16 md:left-64 bg-slate-800 border-slate-700">
         {renderControls()}
       </div>
 
       {/* Main Content - Adjusted margins for mobile responsiveness */}
-      <div className="flex-1 p-2 sm:p-6 mt-36 sm:mt-32 md:mt-28 overflow-hidden">
-        <div className="p-2 sm:p-4 rounded-lg bg-slate-900 h-[calc(100vh-180px)] overflow-auto">
+      <div className={`flex-1 p-2 overflow-hidden sm:p-6 mt-36 sm:mt-32 md:mt-28 md:mb-0 ${hasBottomControls ? 'mb-24' : ''}`}>
+        <div className="min-h-screen p-2 overflow-auto rounded-lg sm:p-4 bg-slate-900">
           {renderAlgorithmVisualizer()}
         </div>
       </div>
-
-      {/* Mobile helper text */}
-      <div className="md:hidden text-center text-xs text-gray-400 p-2">
-        Rotate your device for a better visualization experience
-      </div>
+      
+      {/* Bottom Controls for Mobile/Tablet */}
+      {renderBottomControls()}
     </div>
   );
 };
