@@ -40,11 +40,15 @@ const useAlgorithmStore = create((set, get) => ({
   },
 
   array: [],
-  // Simplify nested ternary by using separate variable assignments
+  // Fixed default sizes to ensure consistency
   arraySize: (() => {
     const screenWidth = window.innerWidth;
-    if (screenWidth < 640) return 16; // Mobile
-    if (screenWidth < 1024) return 26; // Tablet
+    if (screenWidth < 1024) return 16; // Mobile and tablet
+    return 36; // Desktop
+  })(),
+  defaultArraySize: (() => {
+    const screenWidth = window.innerWidth;
+    if (screenWidth < 1024) return 16; // Mobile and tablet
     return 36; // Desktop
   })(),
   isSorting: false,
@@ -106,6 +110,15 @@ const useAlgorithmStore = create((set, get) => ({
   // Modified to respect the current arraySize in state
   generateNewArray: () => {
     const { arraySize } = get();
+
+    // Ensure we have a valid size (prevent using 0 or undefined)
+    const sizeToUse =
+      arraySize ||
+      (() => {
+        const screenWidth = window.innerWidth;
+        return screenWidth < 1024 ? 16 : 36;
+      })();
+
     // Remove unused heightMultiplier variable and only keep baseHeight
     const screenWidth = window.innerWidth;
     let baseHeight;
@@ -122,13 +135,14 @@ const useAlgorithmStore = create((set, get) => ({
     }
 
     // Use the current arraySize explicitly
-    const newArray = Array.from({ length: arraySize }, () =>
+    const newArray = Array.from({ length: sizeToUse }, () =>
       Math.floor(Math.random() * (200 - baseHeight) + baseHeight)
     );
 
     set((state) => ({
       ...state,
       array: newArray,
+      arraySize: sizeToUse, // Ensure arraySize is consistent
       currentIndex: -1,
       compareIndex: -1,
       isPlaying: false,
@@ -139,7 +153,7 @@ const useAlgorithmStore = create((set, get) => ({
     }));
 
     // Return array size for sync purposes
-    return arraySize;
+    return sizeToUse;
   },
 
   generateSearchArray: () => {
@@ -166,15 +180,21 @@ const useAlgorithmStore = create((set, get) => ({
   },
 
   setCurrentAlgorithm: (algorithm) => {
-    // Don't reset array size when changing algorithms - this was part of the problem
-    set({
+    // Only get the defaultArraySize, not any other state
+    const screenWidth = window.innerWidth;
+    const defaultSize = screenWidth < 1024 ? 16 : 36;
+
+    // Reset to consistent default size when changing algorithms
+    set((state) => ({
+      ...state,
       currentAlgorithm: algorithm,
+      arraySize: defaultSize, // Always use the calculated default size
       isSorting: false,
       isPlaying: false,
       isSorted: false,
-    });
+    }));
 
-    // Generate new array but preserve size
+    // Generate new array with correct default size
     get().generateNewArray();
   },
 
@@ -359,6 +379,60 @@ const useAlgorithmStore = create((set, get) => ({
 
   pauseSearch: () => set({ isSearchPlaying: false, isSearchPaused: true }),
   resumeSearch: () => set({ isSearchPlaying: true, isSearchPaused: false }),
+
+  setCustomSearchArray: (array) => {
+    // Make sure the array contains only numbers
+    const processedArray = array.map((num) => Number(num));
+
+    // Sort the array if we're using binary search
+    const { currentAlgorithm } = get();
+    const shouldSort = currentAlgorithm?.toLowerCase().includes("binary");
+
+    if (shouldSort) {
+      processedArray.sort((a, b) => a - b);
+    }
+
+    set({
+      searchArray: processedArray,
+      searchArraySize: processedArray.length,
+      currentSearchIndex: -1,
+      searchResult: null,
+      searchTarget: null,
+      isSearching: false,
+      isSearchPlaying: false,
+      isSearchPaused: false,
+    });
+
+    return processedArray.length;
+  },
+
+  // Add method to handle window resize and recalculate default sizes
+  updateSizeBasedOnScreen: () => {
+    const screenWidth = window.innerWidth;
+    const defaultSize = screenWidth < 1024 ? 16 : 36;
+
+    set({
+      defaultArraySize: defaultSize,
+    });
+
+    // Only update current size if not actively sorting
+    if (!get().isSorting) {
+      set({ arraySize: defaultSize });
+      get().generateNewArray();
+    }
+  },
+
+  // Add a simpler update function that doesn't automatically regenerate arrays
+  updateDefaultSizes: () => {
+    const screenWidth = window.innerWidth;
+    const defaultSize = screenWidth < 1024 ? 16 : 36;
+
+    set({
+      defaultArraySize: defaultSize,
+    });
+
+    // Note: We're NOT setting arraySize or regenerating arrays here
+  },
 }));
 
 export default useAlgorithmStore;

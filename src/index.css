@@ -39,12 +39,7 @@ body {
   place-items: center;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
+#race {
   border-radius: 8px;
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
@@ -55,26 +50,21 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
-button:hover {
+
+#race:hover {
   border-color: #646cff;
 }
-button:focus,
-button:focus-visible {
+
+#race:focus,
+#race:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
 }
+
 
 /* Custom scrollbar styles */
 ::-webkit-scrollbar {
@@ -95,12 +85,9 @@ button:focus-visible {
 }
 
 @layer components {
-  .btn-primary {
-    @apply px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors;
-  }
 
   .card {
-    @apply bg-slate-800 rounded-lg shadow-lg p-4;
+    @apply p-4 rounded-lg shadow-lg bg-slate-800;
   }
 
   /* Responsive container classes */

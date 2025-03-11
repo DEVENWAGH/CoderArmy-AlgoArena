@@ -160,12 +160,6 @@ main {
 
 /* Touch-friendly adjustments */
 @media (pointer: coarse) {
-  .btn,
-  button,
-  .clickable {
-    min-height: 44px;
-    min-width: 44px;
-  }
 
   input[type="range"] {
     height: 24px;

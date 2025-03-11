@@ -11,7 +11,7 @@ import { HoverBorderGradient } from "./ui/hover-border-gradient";
 const SortIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    className="h-6 w-6"
+    className="w-6 h-6"
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -28,7 +28,7 @@ const SortIcon = () => (
 const SearchIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    className="h-6 w-6"
+    className="w-6 h-6"
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -45,7 +45,7 @@ const SearchIcon = () => (
 const GraphIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    className="h-6 w-6"
+    className="w-6 h-6"
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -62,7 +62,7 @@ const GraphIcon = () => (
 const DPIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    className="h-6 w-6"
+    className="w-6 h-6"
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -79,7 +79,7 @@ const DPIcon = () => (
 const RaceIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    className="h-6 w-6"
+    className="w-6 h-6"
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -105,7 +105,7 @@ const AlgorithmCategory = ({
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="bg-slate-800 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+    <div className="overflow-hidden transition-all duration-300 shadow-lg bg-slate-800 rounded-xl hover:shadow-xl hover:-translate-y-1">
       <div
         className="p-5 cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
@@ -121,20 +121,20 @@ const AlgorithmCategory = ({
       >
         <div className="flex items-center mb-3">
           <div
-            className="w-10 h-10 rounded-full flex items-center justify-center mr-3 text-white"
+            className="flex items-center justify-center w-10 h-10 mr-3 text-white rounded-full"
             style={{ backgroundColor: color }}
           >
             {icon}
           </div>
           <h3 className="text-xl font-bold text-white">{title}</h3>
         </div>
-        <p className="text-gray-300 text-sm md:text-base mb-3">{description}</p>
+        <p className="mb-3 text-sm text-gray-300 md:text-base">{description}</p>
 
-        <div className="flex justify-between items-center">
+        <div className="flex items-center justify-between">
           {path.includes(":algorithm") && algorithms.length > 0 ? (
             <Link
               to={path.replace(":algorithm", algorithms[0].id)}
-              className="text-blue-400 text-sm font-medium hover:text-blue-300"
+              className="text-sm font-medium text-blue-400 hover:text-blue-300"
               onClick={(e) => e.stopPropagation()}
             >
               View Algorithms
@@ -142,7 +142,7 @@ const AlgorithmCategory = ({
           ) : (
             <Link
               to={path}
-              className="text-blue-400 text-sm font-medium hover:text-blue-300"
+              className="text-sm font-medium text-blue-400 hover:text-blue-300"
               onClick={(e) => e.stopPropagation()}
             >
               Try {title}
@@ -160,7 +160,7 @@ const AlgorithmCategory = ({
               {isExpanded ? (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
+                  className="w-5 h-5"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
@@ -173,7 +173,7 @@ const AlgorithmCategory = ({
               ) : (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
+                  className="w-5 h-5"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
@@ -191,20 +191,20 @@ const AlgorithmCategory = ({
 
       {/* Expanded algorithm list */}
       {isExpanded && algorithms.length > 0 && (
-        <div className="bg-slate-700 px-5 py-3">
-          <h4 className="text-sm font-medium text-gray-300 mb-2">
+        <div className="px-5 py-3 bg-slate-700">
+          <h4 className="mb-2 text-sm font-medium text-gray-300">
             Popular algorithms:
           </h4>
-          <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
             {algorithms.map((algo) => (
               <li key={algo.id}>
                 <Link
                   to={path.replace(":algorithm", algo.id)}
-                  className="text-white hover:text-blue-300 text-sm flex items-center py-1"
+                  className="flex items-center py-1 text-sm text-white hover:text-blue-300"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <span
-                    className="w-2 h-2 rounded-full mr-2"
+                    className="w-2 h-2 mr-2 rounded-full"
                     style={{ backgroundColor: color }}
                   ></span>
                   {algo.name}
@@ -318,10 +318,10 @@ const Home = () => {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen w-full bg-slate-900 text-white">
+    <div className="flex flex-col w-full min-h-screen text-white bg-slate-900">
       <WavyBackground
         containerClassName="w-full min-h-screen absolute inset-0"
-        className="w-full relative"
+        className="relative w-full"
         colors={["#2563eb", "#4f46e5", "#7e22ce", "#a21caf"]}
         waveWidth={50}
         backgroundFill="#0f172a"
@@ -329,7 +329,7 @@ const Home = () => {
         waveOpacity={0.5}
       />
 
-      <div className="container mx-auto px-4 pt-24 pb-12 flex-grow overflow-x-hidden relative z-10">
+      <div className="container relative z-10 flex-grow px-4 pt-24 pb-12 mx-auto overflow-x-hidden">
         <div className="flex flex-col items-center justify-center flex-1 p-8 mt-20">
           <Cover>
             <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500">
@@ -345,8 +345,9 @@ const Home = () => {
               onClick={handleRaceModeClick}
               containerClassName="rounded-full"
               as="button"
-              className="dark:bg-slate-800/95 bg-slate-900/95 text-white flex items-center space-x-3 text-base md:text-lg"
+              className="flex items-center space-x-3 text-base text-white dark:bg-slate-800/95 bg-slate-900/95 md:text-lg"
               duration={1.5}
+              id="race"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -358,7 +359,7 @@ const Home = () => {
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="h-6 w-6 text-blue-500"
+                className="w-6 h-6 text-blue-500"
               >
                 <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path>
               </svg>

@@ -24,17 +24,17 @@ const SortingVisualizer = () => {
     setCustomArray,
     isAscending,
     toggleSortOrder,
+    defaultArraySize,
+    updateSizeBasedOnScreen,
   } = useAlgorithmStore();
 
   const [isSorting, setIsSorting] = useState(false);
-  const [customSize, setCustomSize] = useState(arraySize);
+  const [customSize, setCustomSize] = useState(arraySize || defaultArraySize);
   const [customArrayInput, setCustomArrayInput] = useState("");
   // Removed unused showCustomInput state
   const scrollContainerRef = useRef(null);
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(false);
-
-  // Store the user's last manually set size using ref
-  const userSelectedSizeRef = useRef(arraySize);
+  const firstRender = useRef(true);
 
   // First effect - for algorithm setup
   useEffect(() => {
@@ -43,18 +43,20 @@ const SortingVisualizer = () => {
         .split("-")
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ");
+
+      // Always set the algorithm when route changes
       setCurrentAlgorithm(formattedAlgo);
     }
 
     // Only generate a new array if this is the initial mount
-    // Don't reset array size or generate new array on re-renders
     if (!array.length) {
       generateNewArray();
     }
 
     setIsSorting(false);
-    // Keep customSize synced with arraySize
-    setCustomSize(arraySize);
+
+    // Keep customSize synced with arraySize - use proper fallbacks
+    setCustomSize(arraySize || (window.innerWidth < 1024 ? 16 : 36));
   }, [
     algorithm,
     setCurrentAlgorithm,
@@ -63,36 +65,27 @@ const SortingVisualizer = () => {
     arraySize,
   ]);
 
-  // Update ref when array size changes
-  useEffect(() => {
-    userSelectedSizeRef.current = arraySize;
-    setCustomSize(arraySize); // Keep customSize synced with actual array size
-  }, [arraySize]);
-
-  // Separate effect for window resize
+  // Handle window resize to maintain correct default sizes
   useEffect(() => {
     const handleResize = () => {
-      // Only change size automatically if window size category changes dramatically
+      // Only update custom size to match current array size (no auto-regeneration)
+      const defaultSize = window.innerWidth < 1024 ? 16 : 36;
+
+      // Only update if there's a significant width change (mobile <-> desktop)
       const width = window.innerWidth;
+      const wasDesktop = customSize > 16;
+      const nowMobile = width < 1024;
 
-      // If user has manually set a size, don't override it on minor resize events
-      if (
-        (width < 640 && arraySize > 40) ||
-        (width >= 640 && width < 1024 && arraySize > 80) ||
-        (width >= 1024 && arraySize > 150)
-      ) {
-        // Only adjust for major device category changes (like desktop to mobile)
-        let newSize;
-        if (width < 640) newSize = 16;
-        else if (width < 1024) newSize = 26;
-        else newSize = 36;
-
-        setArraySize(newSize);
-        setCustomSize(newSize);
+      // If we crossed device threshold AND we're not sorting
+      if ((wasDesktop && nowMobile) || (!wasDesktop && !nowMobile)) {
+        if (!isSorting) {
+          setCustomSize(defaultSize);
+          setArraySize(defaultSize);
+        }
       }
     };
 
-    // Use a debounced version of the resize handler to prevent frequent updates
+    // Use a debounced version of the resize handler
     let resizeTimeout;
     const debouncedHandleResize = () => {
       clearTimeout(resizeTimeout);
@@ -104,7 +97,7 @@ const SortingVisualizer = () => {
       window.removeEventListener("resize", debouncedHandleResize);
       clearTimeout(resizeTimeout);
     };
-  }, [arraySize, setArraySize]);
+  }, [setArraySize, customSize, isSorting]);
 
   // Clean up effect
   useEffect(() => {
@@ -112,7 +105,7 @@ const SortingVisualizer = () => {
       pauseSorting();
       setIsSorting(false);
     };
-  }, [pauseSorting]); // Added missing dependency
+  }, [pauseSorting]);
 
   const handleSizeChange = (e) => {
     const value = Number(e.target.value);
