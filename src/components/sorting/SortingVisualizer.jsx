@@ -25,18 +25,14 @@ const SortingVisualizer = () => {
     isAscending,
     toggleSortOrder,
     defaultArraySize,
-    updateSizeBasedOnScreen,
   } = useAlgorithmStore();
 
   const [isSorting, setIsSorting] = useState(false);
   const [customSize, setCustomSize] = useState(arraySize || defaultArraySize);
   const [customArrayInput, setCustomArrayInput] = useState("");
-  // Removed unused showCustomInput state
   const scrollContainerRef = useRef(null);
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(false);
-  const firstRender = useRef(true);
 
-  // First effect - for algorithm setup
   useEffect(() => {
     if (algorithm) {
       const formattedAlgo = algorithm
@@ -46,24 +42,25 @@ const SortingVisualizer = () => {
 
       // Always set the algorithm when route changes
       setCurrentAlgorithm(formattedAlgo);
+
+      // Force reset to default size when algorithm changes
+      const screenWidth = window.innerWidth;
+      const defaultSize = screenWidth < 640 ? 15 : screenWidth < 1024 ? 20 : 36;
+
+      // Use timeout to ensure this happens after algorithm is set
+      setTimeout(() => {
+        setArraySize(defaultSize);
+        setCustomSize(defaultSize);
+      }, 100);
     }
 
-    // Only generate a new array if this is the initial mount
+    // Only generate a new array if this is the initial mount AND array is empty
     if (!array.length) {
       generateNewArray();
     }
 
     setIsSorting(false);
-
-    // Keep customSize synced with arraySize - use proper fallbacks
-    setCustomSize(arraySize || (window.innerWidth < 1024 ? 16 : 36));
-  }, [
-    algorithm,
-    setCurrentAlgorithm,
-    generateNewArray,
-    array.length,
-    arraySize,
-  ]);
+  }, [algorithm]); // Only run when algorithm changes
 
   // Handle window resize to maintain correct default sizes
   useEffect(() => {
@@ -112,25 +109,31 @@ const SortingVisualizer = () => {
     setCustomSize(value);
   };
 
-  // Modified to prevent immediate array size reset
+  // Modified to handle array size changes with proper feedback
   const handleSizeSubmit = () => {
     if (isSorting) return; // Don't change during active sorting
 
     // Ensure size is within allowed limits
     const minSize = getMinSize();
     const maxSize = getMaxSize();
-
     const size = Math.min(Math.max(minSize, customSize), maxSize);
 
-    // Update both local and global state
-    setCustomSize(size);
-
-    // Apply the size directly without relying on the store to reset it
+    // Apply the new size
     const arrayLength = setArraySize(size);
 
-    // Ensure our local customSize stays in sync
-    if (arrayLength && arrayLength !== size) {
+    // Only update local state if successful
+    if (arrayLength) {
       setCustomSize(arrayLength);
+
+      // Show user feedback
+      const feedbackEl = document.getElementById("sizeFeedback");
+      if (feedbackEl) {
+        feedbackEl.textContent = `Size set to ${arrayLength}`;
+        feedbackEl.style.opacity = 1;
+        setTimeout(() => {
+          feedbackEl.style.opacity = 0;
+        }, 2000);
+      }
     }
   };
 
@@ -153,6 +156,26 @@ const SortingVisualizer = () => {
     if (e.key === "Enter") {
       handleSizeSubmit();
     }
+  };
+
+  // Improved slider handling to be more reliable
+  const handleSliderSizeChange = (e) => {
+    const value = Number(e.target.value);
+    // Just update the UI state immediately
+    setCustomSize(value);
+
+    // Clear any existing timeout
+    if (sliderTimeoutRef.current) {
+      clearTimeout(sliderTimeoutRef.current);
+    }
+
+    // Apply the size change after delay
+    sliderTimeoutRef.current = setTimeout(() => {
+      if (!isSorting) {
+        // Use the handleSizeSubmit function for consistency
+        handleSizeSubmit();
+      }
+    }, 600); // Longer delay to ensure user is done sliding
   };
 
   const handleSpeedChange = (e) => {
@@ -213,24 +236,72 @@ const SortingVisualizer = () => {
     setIsSorting(false);
   };
 
+  // Enhanced custom array handler without alerts and console logs
   const handleCustomArraySubmit = () => {
     try {
-      const values = customArrayInput
-        .split(",")
-        .map((num) => parseInt(num.trim()))
-        .filter((num) => !isNaN(num));
+      // Enhanced parsing logic for robust handling of different input formats
+      const input = customArrayInput.trim();
+      if (!input) return;
 
-      if (values.length > 0) {
-        // Apply custom values directly
-        setCustomArray(values);
-        setCustomArrayInput(""); // Clear input field after applying
-        setCustomSize(values.length); // Update customSize to match the new array length
+      // Support multiple delimiter types: commas, semicolons, spaces, tabs
+      const delimiters = /[,;\s\t]+/;
+      const rawValues = input.split(delimiters);
+
+      // Parse values and filter out invalid ones
+      const values = rawValues
+        .map((item) => {
+          const trimmed = item.trim();
+          if (!trimmed) return NaN; // Skip empty items
+          return parseFloat(trimmed);
+        })
+        .filter((num) => !isNaN(num) && isFinite(num));
+
+      if (values.length === 0) {
+        // Replace alert with visual feedback
+        const feedbackEl = document.getElementById("customArrayFeedback");
+        if (feedbackEl) {
+          feedbackEl.textContent = "Please enter valid numbers";
+          feedbackEl.style.opacity = 1;
+          feedbackEl.style.color = "#f87171"; // Red color
+          setTimeout(() => {
+            feedbackEl.style.opacity = 0;
+          }, 2000);
+        }
+        return;
+      }
+
+      // Apply the custom array directly
+      const arrayLength = setCustomArray(values);
+
+      // Update local state to match
+      setCustomSize(arrayLength);
+      setCustomArrayInput(""); // Clear input field after applying
+
+      // Visual feedback
+      const feedbackEl = document.getElementById("customArrayFeedback");
+      if (feedbackEl) {
+        feedbackEl.textContent = `Applied array with ${arrayLength} values`;
+        feedbackEl.style.opacity = 1;
+        feedbackEl.style.color = "#4ade80"; // Green color
+        setTimeout(() => {
+          feedbackEl.style.opacity = 0;
+        }, 2000);
       }
     } catch (error) {
-      console.error("Invalid input:", error);
+      // Added the error parameter here
+      const feedbackEl = document.getElementById("customArrayFeedback");
+      if (feedbackEl) {
+        feedbackEl.textContent = "Error processing input";
+        feedbackEl.style.opacity = 1;
+        feedbackEl.style.color = "#f87171"; // Red color
+        setTimeout(() => {
+          feedbackEl.style.opacity = 0;
+        }, 2000);
+      }
     }
   };
 
+  // Improved getBarDimensions with minimum width guarantee for 3-digit numbers
   const getBarDimensions = () => {
     if (!array || array.length === 0) {
       return { barWidth: 0, gap: 0, containerWidth: "w-full" };
@@ -255,18 +326,30 @@ const SortingVisualizer = () => {
     }
 
     // Calculate bar width based on available space
+    // Improved minimum width for 3 digits - set higher minimum
+    const minBarWidth = isMobile ? 14 : isTablet ? 18 : 22; // Increased minimum widths
+
     let barWidth = Math.max(
-      8, // Minimum width for visibility
+      minBarWidth, // Higher minimum width to accommodate 3 digits
       Math.floor(
         (containerWidth - rightPadding - array.length * minGap) / array.length
       )
     );
 
-    // Ensure bars aren't too wide on devices
-    if (isMobile) {
-      barWidth = Math.min(barWidth, 30);
-    } else if (isTablet) {
-      barWidth = Math.min(barWidth, 40);
+    // If we can't fit all bars with minimum width, reduce the gap first
+    if (barWidth < minBarWidth && minGap > 1) {
+      minGap = 1;
+      barWidth = Math.max(
+        minBarWidth,
+        Math.floor(
+          (containerWidth - rightPadding - array.length * minGap) / array.length
+        )
+      );
+    }
+
+    // For very large arrays, we may need to scroll anyway
+    if (barWidth < minBarWidth) {
+      barWidth = minBarWidth; // Force minimum width even if it requires scrolling
     }
 
     // Calculate total width needed
@@ -281,30 +364,6 @@ const SortingVisualizer = () => {
 
   const toggleSettingsSidebar = () => {
     setShowSettingsSidebar(!showSettingsSidebar);
-  };
-
-  // Add real-time size change handler for range slider
-  // Modified slider handler to use a debounce pattern
-  const handleSliderSizeChange = (e) => {
-    const value = Number(e.target.value);
-    setCustomSize(value);
-
-    if (sliderTimeoutRef.current) {
-      clearTimeout(sliderTimeoutRef.current);
-    }
-
-    // Use ref to store the timeout ID
-    sliderTimeoutRef.current = setTimeout(() => {
-      if (!isSorting) {
-        // Apply the size directly like handleSizeSubmit
-        const arrayLength = setArraySize(value);
-
-        // Ensure our local customSize stays in sync
-        if (arrayLength && arrayLength !== value) {
-          setCustomSize(arrayLength);
-        }
-      }
-    }, 300); // 300ms debounce
   };
 
   // Create a ref to store the timeout ID for the slider
@@ -492,6 +551,10 @@ const SortingVisualizer = () => {
               />
               <div className="text-xs text-center text-gray-400">
                 Current size: {arraySize}
+                <div
+                  id="sizeFeedback"
+                  className="mt-1 text-xs text-green-400 transition-opacity duration-300 opacity-0"
+                ></div>
               </div>
             </div>
           </div>
@@ -516,7 +579,7 @@ const SortingVisualizer = () => {
                   >
                     <path
                       fillRule="evenodd"
-                      d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                      d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a 1 1 0 010 1.414z"
                       clipRule="evenodd"
                     />
                   </svg>
@@ -532,7 +595,7 @@ const SortingVisualizer = () => {
                   >
                     <path
                       fillRule="evenodd"
-                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 011.414 1.414l-4 4a1 1 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 011.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
                       clipRule="evenodd"
                     />
                   </svg>
@@ -588,10 +651,19 @@ const SortingVisualizer = () => {
               <textarea
                 value={customArrayInput}
                 onChange={(e) => setCustomArrayInput(e.target.value)}
-                placeholder="Enter comma-separated numbers"
+                placeholder="Enter numbers separated by commas (e.g., 50,30,43,65)"
                 className="w-full h-20 px-2 py-1 text-white border rounded bg-slate-700 border-slate-600"
                 disabled={isSorting}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && e.ctrlKey) {
+                    e.preventDefault();
+                    handleCustomArraySubmit();
+                  }
+                }}
               />
+              <div className="text-xs text-gray-400 mt-1">
+                Press Ctrl+Enter to apply or use the button below
+              </div>
               <button
                 onClick={handleCustomArraySubmit}
                 className="w-full px-3 py-2 text-sm bg-blue-500 rounded hover:bg-blue-600 disabled:opacity-50"
@@ -599,6 +671,10 @@ const SortingVisualizer = () => {
               >
                 Apply Custom Array
               </button>
+              <div
+                id="customArrayFeedback"
+                className="mt-1 text-xs text-center text-green-400 transition-opacity duration-300 opacity-0"
+              ></div>
             </div>
           </div>
 

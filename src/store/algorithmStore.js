@@ -6,7 +6,9 @@ const useAlgorithmStore = create((set, get) => ({
   currentAlgorithm: null,
   currentCategory: null,
   searchQuery: "",
-  searchResults: [], // Add this line
+  searchResults: [],
+  // Add missing preventArrayGeneration flag
+  preventArrayGeneration: false,
   algorithmCategories: {
     Sorting: [
       "Bubble Sort",
@@ -71,44 +73,71 @@ const useAlgorithmStore = create((set, get) => ({
   isSearchPlaying: false,
   isSearchPaused: false,
 
-  // Fixed setArraySize to prevent unwanted resets
+  // Fixed setArraySize without debug logging
   setArraySize: (size) => {
-    const { currentAlgorithm } = get();
-    // Update size limits based on device
-    const screenWidth = window.innerWidth;
-    let maxSize;
-    let minSize;
+    // Always track that we're deliberately setting the array size
+    // This should override any automatic size resets
+    set({ preventArrayGeneration: true });
 
-    if (screenWidth < 640) {
-      minSize = 10;
-      maxSize = 30; // More restrictive for mobile
-    } else if (screenWidth < 1024) {
-      minSize = 16;
-      maxSize = 50; // Medium restriction for tablet
-    } else {
-      minSize = 20;
-      maxSize = 200; // Large limit for desktop
+    try {
+      const { currentAlgorithm } = get();
+      // Update size limits based on device
+      const screenWidth = window.innerWidth;
+      let maxSize;
+      let minSize;
+
+      if (screenWidth < 640) {
+        minSize = 5; // Allow smaller size on mobile
+        maxSize = 30;
+      } else if (screenWidth < 1024) {
+        minSize = 8; // Allow smaller size on tablet
+        maxSize = 50;
+      } else {
+        minSize = 10;
+        maxSize = 100; // Reduce maximum to ensure reasonable bar widths
+      }
+
+      const adjustedSize = Math.min(Math.max(size, minSize), maxSize);
+
+      // Generate new array with the exact requested size
+      const newArray = Array.from({ length: adjustedSize }, () => {
+        // Fix the syntax error here - remove the extra colon
+        const baseHeight =
+          screenWidth < 640 ? 20 : screenWidth < 1024 ? 15 : 10;
+
+        return Math.floor(Math.random() * (200 - baseHeight) + baseHeight);
+      });
+
+      // Update all state at once to avoid race conditions
+      set({
+        array: newArray,
+        arraySize: adjustedSize,
+        currentIndex: -1,
+        compareIndex: -1,
+        isPlaying: false,
+        isSorting: false,
+        isSorted: false,
+        isPaused: false,
+        currentAlgorithm, // Maintain current algorithm
+      });
+
+      // Return the adjusted size
+      return adjustedSize;
+    } finally {
+      // Reset the flag with a slight delay to prevent auto-regeneration
+      setTimeout(() => {
+        set({ preventArrayGeneration: false });
+      }, 200);
     }
-
-    const adjustedSize = Math.min(Math.max(size, minSize), maxSize);
-
-    // Store the size first, but DON'T generate a new array automatically
-    set((state) => ({
-      ...state,
-      arraySize: adjustedSize,
-      // Don't reset sorting state here - this caused the issue
-      currentAlgorithm, // Maintain current algorithm
-    }));
-
-    // Generate new array with the updated size
-    get().generateNewArray();
-
-    // Return the adjusted size so component state can be updated if needed
-    return adjustedSize;
   },
 
-  // Modified to respect the current arraySize in state
+  // Modified to respect preventArrayGeneration flag without logging
   generateNewArray: () => {
+    // Skip generation if flag is set
+    if (get().preventArrayGeneration) {
+      return get().arraySize;
+    }
+
     const { arraySize } = get();
 
     // Ensure we have a valid size (prevent using 0 or undefined)
@@ -179,23 +208,52 @@ const useAlgorithmStore = create((set, get) => ({
     });
   },
 
+  // Clean up setCurrentAlgorithm
   setCurrentAlgorithm: (algorithm) => {
-    // Only get the defaultArraySize, not any other state
+    // Calculate appropriate default size based on device
     const screenWidth = window.innerWidth;
-    const defaultSize = screenWidth < 1024 ? 16 : 36;
+    const defaultSize = screenWidth < 640 ? 15 : screenWidth < 1024 ? 20 : 36;
 
-    // Reset to consistent default size when changing algorithms
+    // First set the algorithm
     set((state) => ({
       ...state,
       currentAlgorithm: algorithm,
-      arraySize: defaultSize, // Always use the calculated default size
       isSorting: false,
       isPlaying: false,
       isSorted: false,
     }));
 
-    // Generate new array with correct default size
-    get().generateNewArray();
+    // Then reset the array size and generate a new array
+    // We need to ensure this runs regardless of current array state
+    set({ preventArrayGeneration: true });
+
+    try {
+      // Force the array size to reset
+      set({ arraySize: defaultSize });
+
+      // Create a new array with the default size
+      const baseHeight = screenWidth < 640 ? 20 : screenWidth < 1024 ? 15 : 10;
+
+      const newArray = Array.from({ length: defaultSize }, () =>
+        Math.floor(Math.random() * (200 - baseHeight) + baseHeight)
+      );
+
+      // Update array and related state
+      set({
+        array: newArray,
+        currentIndex: -1,
+        compareIndex: -1,
+        isPlaying: false,
+        isSorting: false,
+        isSorted: false,
+        isPaused: false,
+      });
+    } finally {
+      // Clear the prevention flag
+      setTimeout(() => {
+        set({ preventArrayGeneration: false });
+      }, 100);
+    }
   },
 
   // Search functionality
@@ -276,7 +334,7 @@ const useAlgorithmStore = create((set, get) => ({
         });
       }
     } catch (error) {
-      console.error("Sorting error:", error);
+      // Added the error parameter here
       set({
         isSorting: false,
         isPlaying: false,
@@ -347,25 +405,46 @@ const useAlgorithmStore = create((set, get) => ({
   },
 
   setCustomArray: (values) => {
-    // Ensure we're working with simple numbers
-    const processedValues = values.map((value) =>
-      typeof value === "object" ? value.value : Number(value)
-    );
+    try {
+      // Set flag first
+      set({ preventArrayGeneration: true });
 
-    // Update state with new array
-    set({
-      array: processedValues,
-      arraySize: processedValues.length,
-      currentIndex: -1,
-      compareIndex: -1,
-      isPlaying: false,
-      isSorting: false,
-      isSorted: false,
-      isPaused: false,
-    });
+      // Process values to ensure they're valid numbers
+      const processedValues = values.map((value) => {
+        // Handle different value types
+        let numValue;
+        if (typeof value === "object" && value !== null) {
+          numValue = value.value;
+        } else if (typeof value === "string") {
+          numValue = parseFloat(value.trim());
+        } else {
+          numValue = Number(value);
+        }
 
-    // Return the length so it can be used to update local state if needed
-    return processedValues.length;
+        // Return a valid number or default to a random value if invalid
+        return isNaN(numValue)
+          ? Math.floor(Math.random() * 200 + 20)
+          : numValue;
+      });
+
+      // Update state with new array and ensure arraySize matches
+      set({
+        array: processedValues,
+        arraySize: processedValues.length,
+        currentIndex: -1,
+        compareIndex: -1,
+        isPlaying: false,
+        isSorting: false,
+        isSorted: false,
+        isPaused: false,
+      });
+
+      // Return the length so it can be used to update local state if needed
+      return processedValues.length;
+    } finally {
+      // Reset the flag immediately
+      set({ preventArrayGeneration: false });
+    }
   },
 
   toggleSortOrder: () => {
