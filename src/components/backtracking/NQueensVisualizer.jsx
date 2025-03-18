@@ -3,8 +3,15 @@ import { motion, AnimatePresence } from "motion/react";
 import useBacktrackingStore from "../../store/backtrackingStore";
 
 const NQueensVisualizer = () => {
-  const { board, boardSize, solutions, currentSolution, isPlaying } =
-    useBacktrackingStore();
+  const {
+    board,
+    boardSize,
+    solutions,
+    currentSolution,
+    isPlaying,
+    speed,
+    setSpeed,
+  } = useBacktrackingStore();
   const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
 
   // Add responsive viewport tracking
@@ -44,8 +51,29 @@ const NQueensVisualizer = () => {
   return (
     <div className="flex flex-col gap-4 sm:gap-6">
       {/* Algorithm explanation - simplified for mobile */}
-      <div className="p-3 mt-20 rounded-lg sm:p-4 bg-slate-800">
-        <h3 className="mb-2 text-lg font-bold text-white">N-Queens Problem</h3>
+      <div className="p-3 mt-30 md:mt-20 lg:mt-12 rounded-lg sm:p-4 bg-slate-800">
+        <div className="flex flex-wrap justify-between items-center mb-2">
+          <h3 className="mb-2 text-lg font-bold text-white">
+            N-Queens Problem
+          </h3>
+
+          {/* Add speed control for desktop view */}
+          <div className="hidden lg:flex items-center gap-2 mt-2 md:mt-0">
+            <label className="text-gray-300 whitespace-nowrap">Speed:</label>
+            <input
+              type="range"
+              min="1"
+              max="100"
+              value={speed}
+              onChange={(e) => setSpeed(Number(e.target.value))}
+              className="w-24 md:w-32"
+            />
+            <span className="text-gray-300 min-w-[2rem] text-center">
+              {speed}%
+            </span>
+          </div>
+        </div>
+
         <p className="hidden mb-2 text-sm text-gray-300 lg:flex sm:text-base">
           Place N queens on an N×N chessboard so that no queen threatens any
           other queen horizontally, vertically, or diagonally.

@@ -1,17 +1,11 @@
-import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; // Import useLocation
-import { motion, AnimatePresence } from "framer-motion"; // Import AnimatePresence
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import useAlgorithmStore from "../store/algorithmStore";
 import MobileSidebar from "./MobileSidebar";
-import Sidebar from "./Sidebar"; // Import Sidebar component
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const location = useLocation(); // Use useLocation to get the current route
-  const isHomePage = location.pathname === "/"; // Check if the current route is the home page
-  const isRaceModePage = location.pathname === "/race-mode"; // Check if the current route is the race mode page
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(false); // Add state for sidebar visibility
   const {
     currentAlgorithm,
     searchQuery,
@@ -38,8 +32,7 @@ const Navbar = () => {
       const urlPath = `/${categoryPath}/${algorithmPath}`;
       setCurrentAlgorithm(algorithm);
       setSearchQuery("");
-      setShowMobileSidebar(false); // Hide sidebar after selection
-      setShowSidebar(false); // Hide sidebar after selection on larger devices
+      setShowMobileSidebar(false);
       navigate(urlPath);
     }
   };
@@ -83,9 +76,9 @@ const Navbar = () => {
               </svg>
               {searchQuery && (
                 <div className="absolute z-10 w-full mt-2 bg-gray-800 rounded-lg shadow-lg">
-                  {searchResults.map((result, index) => (
+                  {searchResults.map((result) => (
                     <button
-                      key={index}
+                      key={result.name}
                       onClick={() => handleAlgorithmClick(result.name)}
                       className="block w-full px-4 py-2 text-left text-white hover:bg-gray-700"
                     >
@@ -99,7 +92,6 @@ const Navbar = () => {
               )}
             </div>
 
-            {/* Mobile/Tablet button - visible on screens < xl */}
             <button
               onClick={() => setShowMobileSidebar(true)}
               className="px-4 py-2 font-medium border rounded-lg text-sky-400 
@@ -132,7 +124,6 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* Use MobileSidebar for all screen sizes */}
       <MobileSidebar
         isOpen={showMobileSidebar}
         onClose={() => setShowMobileSidebar(false)}

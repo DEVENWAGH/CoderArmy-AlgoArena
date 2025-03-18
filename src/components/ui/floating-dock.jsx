@@ -1,9 +1,3 @@
-/**
- * Note: Use position fixed according to your needs
- * Desktop navbar is better positioned at the bottom
- * Mobile navbar is better positioned at bottom right.
- **/
-
 import { cn } from "../../lib/utils";
 import {
   AnimatePresence,
@@ -11,22 +5,31 @@ import {
   useMotionValue,
   useSpring,
   useTransform,
-} from "framer-motion";
+} from "motion/react";
 import { Link } from "react-router-dom";
 import { useRef, useState } from "react";
+import PropTypes from "prop-types"; // Add PropTypes import
 
-export const FloatingDock = ({ items, desktopClassName, mobileClassName }) => {
-  return (
-    <>
-      <FloatingDockDesktop items={items} className={desktopClassName} />
-    </>
-  );
+export const FloatingDock = ({ items, desktopClassName }) => {
+  // Return the component directly instead of using a fragment
+  return <FloatingDockDesktop items={items} className={desktopClassName} />;
 };
 
-// Remove the FloatingDockMobile component since we're not using it anymore
+// Add PropTypes validation
+FloatingDock.propTypes = {
+  items: PropTypes.arrayOf(
+    PropTypes.shape({
+      title: PropTypes.string.isRequired,
+      href: PropTypes.string.isRequired,
+      icon: PropTypes.node.isRequired,
+    })
+  ).isRequired,
+  desktopClassName: PropTypes.string,
+};
 
 const FloatingDockDesktop = ({ items, className }) => {
   let mouseX = useMotionValue(Infinity);
+
   return (
     <motion.div
       onMouseMove={(e) => mouseX.set(e.pageX)}
@@ -35,12 +38,43 @@ const FloatingDockDesktop = ({ items, className }) => {
         "mx-auto flex h-20 gap-5 items-end rounded-2xl bg-gray-50 dark:bg-neutral-900 px-5 pb-4",
         className
       )}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: 0.6,
+        delay: 0.3,
+        type: "spring",
+        stiffness: 100,
+      }}
     >
-      {items.map((item) => (
-        <IconContainer mouseX={mouseX} key={item.title} {...item} />
+      {items.map((item, i) => (
+        <motion.div
+          key={item.title}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            delay: 0.5 + i * 0.1,
+            type: "spring",
+            stiffness: 100,
+          }}
+        >
+          <IconContainer mouseX={mouseX} key={item.title} {...item} />
+        </motion.div>
       ))}
     </motion.div>
   );
+};
+
+// Add PropTypes validation
+FloatingDockDesktop.propTypes = {
+  items: PropTypes.arrayOf(
+    PropTypes.shape({
+      title: PropTypes.string.isRequired,
+      href: PropTypes.string.isRequired,
+      icon: PropTypes.node.isRequired,
+    })
+  ).isRequired,
+  className: PropTypes.string,
 };
 
 function IconContainer({ mouseX, title, icon, href }) {
@@ -117,3 +151,11 @@ function IconContainer({ mouseX, title, icon, href }) {
     </Link>
   );
 }
+
+// Add PropTypes validation
+IconContainer.propTypes = {
+  mouseX: PropTypes.object.isRequired,
+  title: PropTypes.string.isRequired,
+  icon: PropTypes.node.isRequired,
+  href: PropTypes.string.isRequired,
+};

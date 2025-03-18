@@ -932,9 +932,6 @@ const DPVisualizer = () => {
         <div className="hidden lg:block fixed right-4 bottom-4 w-80 bg-slate-900 bg-opacity-90 p-4 rounded-lg shadow-lg border border-slate-700 z-30">
           <div className="flex justify-between items-center mb-2">
             <h3 className="text-lg font-bold text-blue-400">Explanation</h3>
-            <div className="px-2 py-1 rounded bg-slate-700 text-xs text-gray-300">
-              {getAlgorithmStatus()}
-            </div>
           </div>
 
           {currentCell !== null && (

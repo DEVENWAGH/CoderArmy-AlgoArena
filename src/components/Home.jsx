@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import PropTypes from "prop-types";
-import Footer from "./Footer"; // Re-add Footer import
+import Footer from "./Footer";
 import { Cover } from "./ui/cover";
 import { TextGenerateEffect } from "./ui/text-generate-effect";
 import { WavyBackground } from "./ui/wavy-background";
 import { HoverBorderGradient } from "./ui/hover-border-gradient";
+import Seo from "./SEO";
+import { motion } from "motion/react";
+import { CardBody, CardContainer, CardItem } from "./ui/3d-card";
 
 // Define SVG icon components outside of the main component
 const SortIcon = () => (
@@ -93,7 +96,78 @@ const RaceIcon = () => (
   </svg>
 );
 
-// Create the AlgorithmCategory component with PropTypes
+const GreedyIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="w-6 h-6"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+    />
+  </svg>
+);
+
+const BacktrackingIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="w-6 h-6"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z"
+    />
+  </svg>
+);
+
+const TreeIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="w-6 h-6"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <circle cx="12" cy="5" r="2" strokeWidth="2" />
+    <circle cx="6" cy="12" r="2" strokeWidth="2" />
+    <circle cx="18" cy="12" r="2" strokeWidth="2" />
+    <circle cx="6" cy="19" r="2" strokeWidth="2" />
+    <circle cx="18" cy="19" r="2" strokeWidth="2" />
+    <line x1="12" y1="7" x2="6" y2="10" strokeWidth="2" />
+    <line x1="12" y1="7" x2="18" y2="10" strokeWidth="2" />
+    <line x1="6" y1="14" x2="6" y2="17" strokeWidth="2" />
+    <line x1="18" y1="14" x2="18" y2="17" strokeWidth="2" />
+  </svg>
+);
+
+const MathIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="w-6 h-6"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+    />
+  </svg>
+);
+
+// Simplified AlgorithmCategory component without dropdown functionality
 const AlgorithmCategory = ({
   title,
   description,
@@ -102,119 +176,114 @@ const AlgorithmCategory = ({
   color,
   algorithms,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Generate lighter shade of the primary color
+  const getLighterColor = (hexColor) => {
+    // Remove the # if present
+    const hex = hexColor.replace("#", "");
+
+    // Convert to RGB
+    let r = parseInt(hex.substring(0, 2), 16);
+    let g = parseInt(hex.substring(2, 4), 16);
+    let b = parseInt(hex.substring(4, 6), 16);
+
+    // Make it lighter
+    r = Math.min(255, r + 40);
+    g = Math.min(255, g + 40);
+    b = Math.min(255, b + 40);
+
+    // Convert back to hex
+    return `#${r.toString(16).padStart(2, "0")}${g
+      .toString(16)
+      .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+  };
+
+  const lighterColor = getLighterColor(color);
+  const glowColor = color + "40"; // 40 is hex for 25% opacity
+
+  // Determine the link path - direct to first algorithm if available
+  const linkPath =
+    algorithms.length > 0 ? path.replace(":algorithm", algorithms[0].id) : path;
 
   return (
-    <div className="overflow-hidden transition-all duration-300 shadow-lg bg-slate-800 rounded-xl hover:shadow-xl hover:-translate-y-1">
-      <div
-        className="p-5 cursor-pointer"
-        onClick={() => setIsExpanded(!isExpanded)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            setIsExpanded(!isExpanded);
-          }
+    <CardContainer className="h-full">
+      <CardBody
+        className="bg-slate-800 relative group/card hover:shadow-2xl border-slate-700 border w-auto h-full rounded-xl overflow-visible"
+        style={{
+          boxShadow: isHovered ? `0 0 20px 5px ${glowColor}` : "none",
         }}
-        role="button"
-        tabIndex={0}
-        aria-expanded={isExpanded}
       >
-        <div className="flex items-center mb-3">
-          <div
-            className="flex items-center justify-center w-10 h-10 mr-3 text-white rounded-full"
-            style={{ backgroundColor: color }}
-          >
-            {icon}
-          </div>
-          <h3 className="text-xl font-bold text-white">{title}</h3>
-        </div>
-        <p className="mb-3 text-sm text-gray-300 md:text-base">{description}</p>
-
-        <div className="flex items-center justify-between">
-          {path.includes(":algorithm") && algorithms.length > 0 ? (
-            <Link
-              to={path.replace(":algorithm", algorithms[0].id)}
-              className="text-sm font-medium text-blue-400 hover:text-blue-300"
-              onClick={(e) => e.stopPropagation()}
-            >
-              View Algorithms
-            </Link>
-          ) : (
-            <Link
-              to={path}
-              className="text-sm font-medium text-blue-400 hover:text-blue-300"
-              onClick={(e) => e.stopPropagation()}
-            >
-              Try {title}
-            </Link>
-          )}
-          {algorithms.length > 0 && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsExpanded(!isExpanded);
+        {/* Add role and tabIndex for accessibility */}
+        <div
+          className="p-6 cursor-pointer flex-1 flex flex-col h-full"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          style={{
+            background: isHovered
+              ? `linear-gradient(135deg, ${color}15, ${lighterColor}30)`
+              : "transparent",
+          }}
+          role="button"
+          tabIndex={0}
+          aria-label={`Explore ${title}`}
+        >
+          <CardItem translateZ="40" className="flex items-center mb-4">
+            <div
+              className={`flex items-center justify-center w-12 h-12 mr-4 text-white rounded-lg transition-all duration-300 ${
+                isHovered ? "scale-110" : ""
+              }`}
+              style={{
+                backgroundColor: color,
+                boxShadow: isHovered ? `0 0 15px ${color}80` : "none",
               }}
-              className="text-gray-400 hover:text-white"
-              aria-label={isExpanded ? "Collapse" : "Expand"}
             >
-              {isExpanded ? (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              )}
-            </button>
-          )}
-        </div>
-      </div>
+              {icon}
+            </div>
+            <h3 className="text-xl font-bold text-white">{title}</h3>
+          </CardItem>
 
-      {/* Expanded algorithm list */}
-      {isExpanded && algorithms.length > 0 && (
-        <div className="px-5 py-3 bg-slate-700">
-          <h4 className="mb-2 text-sm font-medium text-gray-300">
-            Popular algorithms:
-          </h4>
-          <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            {algorithms.map((algo) => (
-              <li key={algo.id}>
-                <Link
-                  to={path.replace(":algorithm", algo.id)}
-                  className="flex items-center py-1 text-sm text-white hover:text-blue-300"
-                  onClick={(e) => e.stopPropagation()}
+          <CardItem translateZ="50" className="flex-grow">
+            <p className="mb-6 text-sm text-gray-300 md:text-base">
+              {description}
+            </p>
+          </CardItem>
+
+          <CardItem translateZ="30" className="w-full">
+            <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-700">
+              <Link
+                to={linkPath}
+                className={`text-sm font-medium transition-colors duration-300 flex items-center ${
+                  isHovered ? "text-blue-300" : "text-blue-400"
+                }`}
+              >
+                <span>
+                  {algorithms.length > 0
+                    ? `Try ${algorithms[0].name}`
+                    : `Try ${title}`}
+                </span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className={`w-4 h-4 ml-1 transition-transform duration-300 ${
+                    isHovered ? "translate-x-1" : ""
+                  }`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
-                  <span
-                    className="w-2 h-2 mr-2 rounded-full"
-                    style={{ backgroundColor: color }}
-                  ></span>
-                  {algo.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7l5 5-5 5M5 12h13"
+                  />
+                </svg>
+              </Link>
+            </div>
+          </CardItem>
         </div>
-      )}
-    </div>
+      </CardBody>
+    </CardContainer>
   );
 };
 
@@ -269,6 +338,29 @@ const Home = () => {
     { id: "edit-distance", name: "Edit Distance" },
   ];
 
+  const greedyAlgorithms = [
+    { id: "activity-selection", name: "Activity Selection" },
+    { id: "huffman-coding", name: "Huffman Coding" },
+  ];
+
+  const backtrackingAlgorithms = [
+    { id: "n-queens", name: "N-Queens" },
+    { id: "sudoku-solver", name: "Sudoku Solver" },
+  ];
+
+  const treeAlgorithms = [
+    { id: "tree-traversals", name: "Tree Traversals" },
+    { id: "binary-search-tree", name: "Binary Search Tree" },
+    { id: "avl-tree", name: "AVL Tree" },
+    { id: "red-black-tree", name: "Red-Black Tree" },
+  ];
+
+  const mathAlgorithms = [
+    { id: "gcd-euclidean", name: "GCD (Euclidean)" },
+    { id: "sieve-of-eratosthenes", name: "Sieve of Eratosthenes" },
+    { id: "prime-factorization", name: "Prime Factorization" },
+  ];
+
   const categories = [
     {
       title: "Sorting Algorithms",
@@ -307,6 +399,42 @@ const Home = () => {
       algorithms: dpAlgorithms,
     },
     {
+      title: "Greedy Algorithms",
+      description:
+        "Learn optimization algorithms that make locally optimal choices at each step to find a global optimum.",
+      icon: <GreedyIcon />,
+      path: "/greedy-algorithm/:algorithm",
+      color: "#166534",
+      algorithms: greedyAlgorithms,
+    },
+    {
+      title: "Backtracking",
+      description:
+        "Explore recursive algorithms that build solutions incrementally and abandon paths that fail to satisfy constraints.",
+      icon: <BacktrackingIcon />,
+      path: "/backtracking/:algorithm",
+      color: "#7E22CE",
+      algorithms: backtrackingAlgorithms,
+    },
+    {
+      title: "Tree Algorithms",
+      description:
+        "Discover algorithms that create, traverse and manipulate hierarchical tree data structures.",
+      icon: <TreeIcon />,
+      path: "/tree-algorithms/:algorithm",
+      color: "#0E7490",
+      algorithms: treeAlgorithms,
+    },
+    {
+      title: "Mathematical Algorithms",
+      description:
+        "Implement fundamental mathematical algorithms for computations like prime numbers, GCD and factorization.",
+      icon: <MathIcon />,
+      path: "/mathematical-algorithms/:algorithm",
+      color: "#C2410C",
+      algorithms: mathAlgorithms,
+    },
+    {
       title: "Race Mode",
       description:
         "Compare different algorithms head-to-head in an interactive race visualization.",
@@ -319,6 +447,12 @@ const Home = () => {
 
   return (
     <div className="flex flex-col w-full min-h-screen text-white bg-slate-900">
+      <Seo
+        title="Algorithm Visualization Platform"
+        description="Interactive platform to visualize and learn algorithms through animations. Compare algorithm performances in real-time with Race Mode."
+        keywords="algorithm visualization, sorting algorithms, searching algorithms, data structures, algorithm race"
+      />
+
       <WavyBackground
         containerClassName="w-full min-h-screen absolute inset-0"
         className="relative w-full"
@@ -329,22 +463,27 @@ const Home = () => {
         waveOpacity={0.5}
       />
 
-      <div className="container relative z-10 flex-grow px-4 pt-24 pb-12 mx-auto overflow-x-hidden">
+      <div className="container relative z-10 flex-grow px-4 pt-24 pb-12 mx-auto">
+        {/* Hero section without animations */}
         <div className="flex flex-col items-center justify-center flex-1 p-8 mt-20">
+          {/* Static heading without motion animations */}
           <Cover>
             <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500">
               Visualize Data Structures & Algorithms
             </h1>
           </Cover>
+
+          {/* Static text without motion animations */}
           <TextGenerateEffect
             words="Explore, understand, and master algorithms through interactive visualizations. Compare algorithm performance in real-time with our unique Race Mode."
             className="mt-4 text-center text-gray-300"
           />
+
+          {/* Static button without motion animations */}
           <div className="flex mt-8 space-x-4">
             <HoverBorderGradient
               onClick={handleRaceModeClick}
               containerClassName="rounded-full"
-              as="button"
               className="flex items-center space-x-3 text-base text-white dark:bg-slate-800/95 bg-slate-900/95 md:text-lg"
               duration={1.5}
               id="race"
@@ -367,9 +506,44 @@ const Home = () => {
             </HoverBorderGradient>
           </div>
         </div>
+
+        {/* Fixed scroll-based animations for algorithm category cards with reduced vertical gaps */}
+        <div
+          className="grid grid-cols-1 gap-x-4 gap-y-1 mt-16 sm:grid-cols-2 lg:grid-cols-3 auto-rows-auto sm:gap-x-5 sm:gap-y-1 lg:mt-24"
+          style={{ alignItems: "start" }}
+        >
+          {categories.map((category, index) => (
+            <motion.div
+              key={category.title}
+              initial={{ opacity: 0, y: 50, scale: 0.95 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{
+                margin: "-50px 0px",
+                amount: 0.2,
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 100,
+                damping: 15,
+                delay: index * 0.05,
+                duration: 0.5,
+              }}
+              className="h-full mb-1"
+            >
+              <AlgorithmCategory
+                title={category.title}
+                description={category.description}
+                icon={category.icon}
+                path={category.path}
+                color={category.color}
+                algorithms={category.algorithms}
+              />
+            </motion.div>
+          ))}
+        </div>
       </div>
 
-      {/* Add Footer component back */}
+      {/* Footer */}
       <Footer />
     </div>
   );

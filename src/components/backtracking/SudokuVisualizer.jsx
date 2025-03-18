@@ -151,16 +151,19 @@ const SudokuVisualizer = () => {
   return (
     <div className="flex flex-col gap-4 sm:gap-6">
       {/* Algorithm explanation - Simplified on mobile */}
-      <div className="p-3 sm:p-4 bg-slate-800 rounded-lg">
+      <div className="p-3 sm:p-4 bg-slate-800 rounded-lg lg:mt-4">
         <div className="flex justify-between items-center mb-2">
           <h3 className="text-lg font-bold text-white">Sudoku Solver</h3>
+
+          {/* Improved button positioning for all screen sizes */}
           <button
             onClick={() => setShowCode(!showCode)}
-            className="absolute z-100 left-1/2 transform -translate-x-1/2 lg:right-4 lg:top-26 px-3 mt-6 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-full"
+            className="px-3 z-100 mt-20 md:mt-24 lg:mt-6 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors duration-200"
           >
             {showCode ? "Hide Code" : "Show Code"}
           </button>
         </div>
+
         {!isMobile && (
           <p className="text-gray-300 mb-2">
             Sudoku is a 9×9 grid that must be filled with digits 1-9 so that

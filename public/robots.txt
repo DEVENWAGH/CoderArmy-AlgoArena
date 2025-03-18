@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
+# Sitemap location
 Sitemap: https://coder-army-algo-arena.vercel.app/sitemap.xml

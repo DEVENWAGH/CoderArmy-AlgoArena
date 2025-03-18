@@ -3,9 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/logo.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=5.0"
+    />
 
-    <!-- Primary Meta Tags -->
+    <!-- Primary Meta Tags - Basic SEO for non-JS crawlers -->
     <title>
       Algorithm Arena - Interactive Algorithm Visualization & Racing Platform
     </title>
@@ -22,6 +25,12 @@
       content="algorithms, data structures, algorithm visualization, sorting algorithms, searching algorithms, algorithm race, computer science learning"
     />
     <meta name="author" content="Deven Wagh" />
+
+    <!-- Pre-connect to domain for faster loading -->
+    <link rel="preconnect" href="https://coder-army-algo-arena.vercel.app" />
+
+    <!-- Page load optimization - Preload critical assets -->
+    <link rel="preload" href="/logo.png" as="image" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -55,14 +64,17 @@
     />
     <meta property="twitter:image" content="/og-image.png" />
 
-    <!-- Preconnect to domain for faster loading -->
-    <link rel="preconnect" href="https://coder-army-algo-arena.vercel.app" />
-
     <!-- Theme color for browser UI -->
     <meta name="theme-color" content="#0f172a" />
 
+    <!-- Crawler directives -->
+    <meta name="robots" content="index, follow" />
+
     <!-- Canonical URL -->
     <link rel="canonical" href="https://coder-army-algo-arena.vercel.app" />
+
+    <!-- Web app manifest for PWA capabilities -->
+    <link rel="manifest" href="/manifest.json" />
   </head>
   <body>
     <div id="root"></div>
