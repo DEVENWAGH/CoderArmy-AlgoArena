@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet";
-import Seo from "./SEO";
+import Seo from "./Seo";
 
 const FAQ = () => {
   const [activeIndex, setActiveIndex] = useState(null);
