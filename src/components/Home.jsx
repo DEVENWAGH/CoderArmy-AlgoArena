@@ -6,7 +6,7 @@ import { Cover } from "./ui/cover";
 import { TextGenerateEffect } from "./ui/text-generate-effect";
 import { WavyBackground } from "./ui/wavy-background";
 import { HoverBorderGradient } from "./ui/hover-border-gradient";
-import Seo from "./SEO";
+import Seo from "./Seo";
 import { motion } from "motion/react";
 import { CardBody, CardContainer, CardItem } from "./ui/3d-card";
 
